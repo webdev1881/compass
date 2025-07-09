@@ -1,0 +1,193 @@
+  <div class="sales-table-container table-container">
+    <div v-if="loading" class="loading-bar">
+      <div class="loading-progress"></div>
+    </div>
+
+    <div class="controls-panel" v-if="!loading && !error">
+      <div class="sorting-controls">
+        <label>Сортировка:</label>
+        <select v-model="sortBy" @change="handleSort" :disabled="isAnimating">
+          <option value="regionRank">По рангу регионов</option>
+          <option value="regionTotalPercent">Регионы по % выполнения</option>
+          <option value="storePercent">Магазины по % выполнения</option>
+        </select>
+
+        <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
+          {{ sortOrder === 'asc' ? '↑' : '↓' }}
+        </button>
+
+        <!-- <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
+          🔄 Обновить
+        </button> -->
+
+        <!-- <button @click="showPlanFactColumns = !showPlanFactColumns" class="toggle-columns-btn">
+          {{ showPlanFactColumns ? '👁️ Скрыть План/Факт' : '👁️‍🗨️ Показать План/Факт' }}
+        </button> -->
+
+        <!-- <button @click="toggleColumn = !toggleColumn" class="toggle-columns-btn">
+          {{ toggleColumn ? '👁️ Скрыть План/Факт' : '👁️‍🗨️ Показать План/Факт' }}
+        </button> -->
+
+      </div>
+    </div>
+
+    <div v-if="!loading && !error">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th style="width: 230px;" rowspan="3" class="store-name-column">Регион / Магазин</th>
+
+            <th v-for="week in weeks" :key="week.id" :colspan="11" class="week-group">{{ week.name }} ({{ week.dateRange
+              }})</th>
+            <th v-for="week in weeks" :key="week.id" :colspan="showPlanFactColumns ? 11 : 9" class="week-group"></th>
+          </tr>
+          <tr>
+            <template v-for="week in weeks" :key="week.id">
+              <th colspan="2" class="metric-header">Загальний бал</th>
+
+              <!-- <th colspan="4" class="metric-header">Виторг</th> -->
+
+              <th :colspan="showPlanFactColumns ? 4 : 2" class="metric-header">Виторг <span
+                  @click="showPlanFactColumns = !showPlanFactColumns" class="add">+/-</span> </th>
+
+              <th rowspan="2" class="metric-header">Втрати<br>Списання</th>
+              <th rowspan="2" class="metric-header">Недостачі</th>
+              <th rowspan="2" class="metric-header">ФОП</th>
+              <th rowspan="2" class="metric-header">Від'ємні<br>залишки</th>
+              <th rowspan="2" class="metric-header">Не проведені<br>списання</th>
+            </template>
+          </tr>
+          <tr>
+            <template v-for="week in weeks" :key="week.id">
+              <th class="store-rank-column">РАНГ</th>
+              <th class="score-max">900</th>
+              <th class="score-current">100</th>
+
+              <th v-if="showPlanFactColumns" class="plan-column">План</th>
+
+              <!-- <div class="city-cell">План</div> -->
+
+
+              <th v-if="showPlanFactColumns" class="fact-column">Факт</th>
+
+              <th class="percent-column">%</th>
+            </template>
+          </tr>
+        </thead>
+
+        <tbody name="table-row" is="transition-group" tag="tbody" class="total_tbody">
+          <transition-group appear>
+            <tr v-for="region in sortedRegions" :key="`region-${region.id}`" class="region-row">
+              <td class="region-name">
+                <div class="region-info">
+                  <span class="region-indicator" :style="{ backgroundColor: colors[region.name] }"></span>
+                  <span class="region-title">{{ region.name }}</span>
+                </div>
+              </td>
+              <template v-for="week in weeks" :key="week.id">
+                <td class="region-rank">{{ getRegionRank(region) }}</td>
+
+                <td class="score-max">{{ getRegionTotalScore(region).max }}</td>
+                <td class="score-current" :class="getScoreClass(getRegionTotalScore(region).current)">{{
+                  getRegionTotalScore(region).current }}</td>
+
+                <!-- <td class="plan">{{ formatNumber(getRegionWeekData(region, week.id).plan) }}</td>
+                <td class="fact">{{ formatNumber(getRegionWeekData(region, week.id).fact) }}</td>
+                <td class="percent" :class="getPercentClass(getRegionWeekData(region, week.id).percent)"> {{ getRegionWeekData(region, week.id).percent }}%</td> -->
+                <td v-if="showPlanFactColumns" class="plan">{{ formatNumber(getRegionWeekData(region, week.id).plan) }}
+                </td>
+                <td v-if="showPlanFactColumns" class="fact">{{ formatNumber(getRegionWeekData(region, week.id).fact) }}
+                </td>
+                <td class="percent" :class="getPercentClass(getRegionWeekData(region, week.id).percent)"> {{
+                  getRegionWeekData(region, week.id).percent }}%</td>
+                <!-- <td class="percent" :class="getPercentClass(getRegionWeekData(region, week.id).percent)"></td> -->
+
+
+                <td class="losses">{{ formatNumber(getRegionWeekData(region, week.id).losses) }}</td>
+                <td class="shortages">{{ formatNumber(getRegionWeekData(region, week.id).shortages) }}</td>
+                <td class="fop">{{ formatNumber(getRegionWeekData(region, week.id).fop) }}</td>
+                <td class="shift">
+                  <span v-if="getRegionWeekData(region, week.id).shiftRemainder" class="status-value negative">
+                    {{ getRegionWeekData(region, week.id).shiftRemainder }}
+                  </span>
+                  <span v-else class="status-value">-</span>
+                </td>
+                <td class="unprocessed">
+                  <span v-if="getRegionWeekData(region, week.id).unprocessed" class="status-value negative">
+                    {{ getRegionWeekData(region, week.id).unprocessed }}
+                  </span>
+                  <span v-else class="status-value">-</span>
+                </td>
+              </template>
+            </tr>
+          </transition-group>
+        </tbody>
+
+        <br>
+
+        <tbody name="table-row" is="transition-group" tag="tbody" class="total_tbody">
+          <transition-group appear>
+            <tr v-for="store in getAllSortedStores()" :key="`store-${store.id}`" class="store-row">
+              <td class="store-name">
+                <div class="store-info">
+                  <span class="region-indicator" :style="{ backgroundColor: colors[store.regionName] }"></span>
+                  <span class="store-rank-number">{{ store.rank }}</span>
+                  <span class="store-title">{{ store.name }}</span>
+                </div>
+              </td>
+              <template v-for="week in weeks" :key="week.id">
+                <td class="store-rank">{{ store.rank }}</td>
+
+                <!-- <td class="score-max">{{ getRegionTotalScore(store.regionName).max }}</td>
+                <td class="score-current" :class="getRegionTotalScore(store.regionName).current">{{ getRegionTotalScore(store.regionName).current }}</td> -->
+
+                <td class="score-max">{{ getRegionTotalScore(store.regionName).max }}</td>
+                <td class="score-current" :class="getScoreClass(getRegionTotalScore(store.regionName).current)">{{
+                  getRegionTotalScore(store.regionName).current }}</td>
+
+                <!-- <td class="plan">{{ formatNumber(getStoreWeekData(store, week.id).plan) }}</td>
+                <td class="fact">{{ formatNumber(getStoreWeekData(store, week.id).fact) }}</td>
+                <td class="percent" :class="getPercentClass(getStoreWeekData(store, week.id).percent)">{{ getStoreWeekData(store, week.id).percent }}%</td> -->
+
+                <td v-if="showPlanFactColumns" class="plan">{{ formatNumber(getStoreWeekData(store, week.id).plan) }}
+                </td>
+                <td v-if="showPlanFactColumns" class="fact">{{ formatNumber(getStoreWeekData(store, week.id).fact) }}
+                </td>
+                <td class="percent" :class="getPercentClass(getStoreWeekData(store, week.id).percent)">{{
+                  getStoreWeekData(store, week.id).percent }}%</td>
+                <!-- <td class="percent" :class="getPercentClass(getStoreWeekData(store, week.id).percent)"></td> -->
+
+                <td class="losses">{{ formatNumber(getStoreWeekData(store, week.id).losses) }}</td>
+                <td class="shortages">{{ formatNumber(getStoreWeekData(store, week.id).shortages) }}</td>
+                <td class="fop">{{ formatNumber(getStoreWeekData(store, week.id).fop) }}</td>
+                <td class="shift">
+                  <span v-if="getStoreWeekData(store, week.id).shiftRemainder" class="status-value negative">
+                    {{ getStoreWeekData(store, week.id).shiftRemainder }}
+                  </span>
+                  <span v-else class="status-value">-</span>
+                </td>
+                <td class="unprocessed">
+                  <span v-if="getStoreWeekData(store, week.id).unprocessed" class="status-value negative">
+                    {{ getStoreWeekData(store, week.id).unprocessed }}
+                  </span>
+                  <span v-else class="status-value">-</span>
+                </td>
+              </template>
+            </tr>
+          </transition-group>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-else-if="loading" class="loading">
+      <div class="loading-spinner"></div>
+      <p>Загрузка данных...</p>
+    </div>
+
+    <div v-else-if="error" class="error">
+      <div class="error-icon">⚠️</div>
+      <h3>Ошибка загрузки данных</h3>
+      <p>{{ error }}</p>
+      <button @click="loadData" class="retry-btn">Попробовать снова</button>
+    </div>
+  </div>

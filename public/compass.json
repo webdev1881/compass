@@ -1,0 +1,133 @@
+{
+  "weeks": [
+    {
+      "id": 1,
+      "name": "34 тиждень",
+      "dateRange": "25.05.25 - 31.05.25"
+    },
+    {
+      "id": 2,
+      "name": "35 тиждень",
+      "dateRange": "01.06.25 - 07.06.25"
+    }
+  ],
+  "regions": {
+    "3": {
+      "id": 3,
+      "name": "Київ",
+      "stores": [
+        {
+          "id": 752,
+          "name": "001 Киев (РУЛЬКА)",
+          "weeklyData": [
+            {
+              "weekId": 1,
+              "plan": 920000,
+              "fact": 580000,
+              "losses": 42000,
+              "shortages": 45000,
+              "fop": 68000,
+              "shiftRemainder": 3,
+              "unprocessed": 1
+            },
+            {
+              "weekId": 2,
+              "plan": 1045845,
+              "fact": 685028,
+              "losses": 48157,
+              "shortages": 47814,
+              "fop": 73618,
+              "shiftRemainder": 1,
+              "unprocessed": 2
+            }
+          ]
+        },
+        {
+          "id": 752,
+          "name": "001 Киев (РУЛЬКА)",
+          "weeklyData": [
+            {
+              "weekId": 1,
+              "plan": 920000,
+              "fact": 580000,
+              "losses": 42000,
+              "shortages": 45000,
+              "fop": 68000,
+              "shiftRemainder": 3,
+              "unprocessed": 1
+            },
+            {
+              "weekId": 2,
+              "plan": 1045845,
+              "fact": 685028,
+              "losses": 48157,
+              "shortages": 47814,
+              "fop": 73618,
+              "shiftRemainder": 1,
+              "unprocessed": 2
+            }
+          ]
+        }
+      ]
+    },
+    "4": {
+      "id": 4,
+      "name": "Біла Церква",
+      "stores": [
+        {
+          "id": 2,
+          "name": "113 БЦ (ДАН)",
+          "weeklyData": [
+            {
+              "weekId": 1,
+              "plan": 950000,
+              "fact": 590000,
+              "losses": 35000,
+              "shortages": 38000,
+              "fop": 65000,
+              "shiftRemainder": 5,
+              "unprocessed": 2
+            },
+            {
+              "weekId": 2,
+              "plan": 1072356,
+              "fact": 654137,
+              "percent": 61,
+              "losses": 48157,
+              "shortages": 47814,
+              "fop": 73618,
+              "shiftRemainder": 1,
+              "unprocessed": 4
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "87 БЦ (ЩЕДРИК) Грушевского",
+          "weeklyData": [
+            {
+              "weekId": 1,
+              "plan": 580000,
+              "fact": 210000,
+              "losses": 10000,
+              "shortages": 14000,
+              "fop": 2500,
+              "shiftRemainder": 4,
+              "unprocessed": 2
+            },
+            {
+              "weekId": 2,
+              "plan": 158662,
+              "fact": 78538,
+              "losses": 29546,
+              "shortages": 97006,
+              "fop": 2933,
+              "shiftRemainder": 1,
+              "unprocessed": 3
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

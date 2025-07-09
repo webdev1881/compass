@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="smk_custom_page.VueAdminTemplate">
+        <div id="vue-app"></div>
+<!--        <script src="/smk_custom_page/static/src/vue/dist/js/app.js"></script>-->
+
+<!--                <app-root></app-root>-->
+<!--        <script src="/smk_custom_page/static/src/js/main.js"></script>-->
+    </t>
+</templates>

@@ -1,0 +1,533 @@
+{
+  "data": {
+    "weekInfo": {
+      "number": 35,
+      "startDate": "01.06.25",
+      "endDate": "07.06.25"
+    },
+    "regionsSummary": [
+      {
+        "id": 1,
+        "name": "Белая Церковь",
+        "color": "red",
+        "rank": 1,
+        "generalScore": 109,
+        "revenue": {
+          "score": 89,
+          "plan": 2278863,
+          "fact": 1417704,
+          "percent": 62
+        },
+        "losses": {
+          "writeOffs": 99002,
+          "shortages": 22987,
+          "fop": 3729,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 2,
+        "name": "Днепр",
+        "color": "yellow",
+        "rank": 2,
+        "generalScore": 86,
+        "revenue": {
+          "score": 56,
+          "plan": 235727,
+          "fact": 91933,
+          "percent": 39
+        },
+        "losses": {
+          "writeOffs": 34187,
+          "shortages": 69305,
+          "fop": 57213,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 3,
+        "name": "Киев",
+        "color": "green",
+        "rank": 3,
+        "generalScore": 55,
+        "revenue": {
+          "score": 82,
+          "plan": 1074356,
+          "fact": 619313,
+          "percent": 58
+        },
+        "losses": {
+          "writeOffs": 47365,
+          "shortages": 66906,
+          "fop": 29636,
+          "negativeBalances": 2,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 4,
+        "name": "Харьков",
+        "color": "blue",
+        "rank": 4,
+        "generalScore": 55,
+        "revenue": {
+          "score": 65,
+          "plan": 1937738,
+          "fact": 835481,
+          "percent": 43
+        },
+        "losses": {
+          "writeOffs": 68501,
+          "shortages": 63038,
+          "fop": 352,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      }
+    ],
+    "stores": [
+      {
+        "id": 101,
+        "networkId": 1,
+        "networkName": "Белая Церковь",
+        "networkColor": "red",
+        "name": "100 БЦ (РУЛЬКА)",
+        "rank": 1,
+        "generalScore": 50,
+        "revenue": {
+          "score": 94,
+          "plan": 1045845,
+          "fact": 685028,
+          "percent": 66
+        },
+        "losses": {
+          "writeOffs": 48157,
+          "shortages": 47814,
+          "fop": 73618,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 102,
+        "networkId": 1,
+        "networkName": "Белая Церковь",
+        "networkColor": "red",
+        "name": "113 БЦ (ДАН)",
+        "rank": 2,
+        "generalScore": 65,
+        "revenue": {
+          "score": 87,
+          "plan": 1072356,
+          "fact": 654137,
+          "percent": 61
+        },
+        "losses": {
+          "writeOffs": 48157,
+          "shortages": 47814,
+          "fop": 73618,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 103,
+        "networkId": 1,
+        "networkName": "Белая Церковь",
+        "networkColor": "red",
+        "name": "87 БЦ (ЩЕДРИК) Грушевского",
+        "rank": 3,
+        "generalScore": 80,
+        "revenue": {
+          "score": 71,
+          "plan": 158662,
+          "fact": 78538,
+          "percent": 50
+        },
+        "losses": {
+          "writeOffs": 29546,
+          "shortages": 97006,
+          "fop": 2933,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 201,
+        "networkId": 2,
+        "networkName": "Днепр",
+        "networkColor": "yellow",
+        "name": "001 Днепр (РУЛЬКА)",
+        "rank": 4,
+        "generalScore": 63,
+        "revenue": {
+          "score": 56,
+          "plan": 235727,
+          "fact": 91933,
+          "percent": 39
+        },
+        "losses": {
+          "writeOffs": 23117,
+          "shortages": 65004,
+          "fop": 11786,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 301,
+        "networkId": 3,
+        "networkName": "Киев",
+        "networkColor": "green",
+        "name": "013 Борисполь",
+        "rank": 5,
+        "generalScore": 69,
+        "revenue": {
+          "score": 100,
+          "plan": 399932,
+          "fact": 279953,
+          "percent": 70
+        },
+        "losses": {
+          "writeOffs": 74550,
+          "shortages": 66642,
+          "fop": 19997,
+          "negativeBalances": 3,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 302,
+        "networkId": 3,
+        "networkName": "Киев", 
+        "networkColor": "green",
+        "name": "108 Мена (РУЛЬКА)",
+        "rank": 6,
+        "generalScore": 89,
+        "revenue": {
+          "score": 54,
+          "plan": 289412,
+          "fact": 109977,
+          "percent": 38
+        },
+        "losses": {
+          "writeOffs": 92848,
+          "shortages": 71366,
+          "fop": 14471,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 303,
+        "networkId": 3,
+        "networkName": "Киев",
+        "networkColor": "green",
+        "name": "112 Борисполь",
+        "rank": 7,
+        "generalScore": 63,
+        "revenue": {
+          "score": 83,
+          "plan": 175766,
+          "fact": 101944,
+          "percent": 58
+        },
+        "losses": {
+          "writeOffs": 45241,
+          "shortages": 89199,
+          "fop": 3788,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 304,
+        "networkId": 3,
+        "networkName": "Киев",
+        "networkColor": "green",
+        "name": "132 Борисполь",
+        "rank": 8,
+        "generalScore": 96,
+        "revenue": {
+          "score": 87,
+          "plan": 209245,
+          "fact": 127640,
+          "percent": 61
+        },
+        "losses": {
+          "writeOffs": 44361,
+          "shortages": 10,
+          "fop": 10462,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 5
+        }
+      },
+      {
+        "id": 401,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "199 Первомайский (РУЛЬКА)",
+        "rank": 9,
+        "generalScore": 62,
+        "revenue": {
+          "score": 51,
+          "plan": 444757,
+          "fact": 157869,
+          "percent": 36
+        },
+        "losses": {
+          "writeOffs": 34181,
+          "shortages": 47224,
+          "fop": 22238,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 402,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "211 Богодухов",
+        "rank": 10,
+        "generalScore": 57,
+        "revenue": {
+          "score": 85,
+          "plan": 174577,
+          "fact": 103873,
+          "percent": 60
+        },
+        "losses": {
+          "writeOffs": 50002,
+          "shortages": 22987,
+          "fop": 3729,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 403,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "220 Орешаны (РУЛЬКА)",
+        "rank": 11,
+        "generalScore": 57,
+        "revenue": {
+          "score": 79,
+          "plan": 1144254,
+          "fact": 629340,
+          "percent": 55
+        },
+        "losses": {
+          "writeOffs": 34187,
+          "shortages": 69305,
+          "fop": 57213,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 404,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "222 Лозовая (РУЛЬКА)",
+        "rank": 12,
+        "generalScore": 89,
+        "revenue": {
+          "score": 76,
+          "plan": 593166,
+          "fact": 323276,
+          "percent": 55
+        },
+        "losses": {
+          "writeOffs": 47365,
+          "shortages": 66906,
+          "fop": 29658,
+          "negativeBalances": 2,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 405,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "227 Богодухов Ерш",
+        "rank": 13,
+        "generalScore": 83,
+        "revenue": {
+          "score": 96,
+          "plan": 117038,
+          "fact": 79000,
+          "percent": 68
+        },
+        "losses": {
+          "writeOffs": 68501,
+          "shortages": 63038,
+          "fop": 352,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 406,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "229 Красноград (РУЛЬКА)",
+        "rank": 14,
+        "generalScore": 71,
+        "revenue": {
+          "score": 43,
+          "plan": 1112359,
+          "fact": 333708,
+          "percent": 30
+        },
+        "losses": {
+          "writeOffs": 52010,
+          "shortages": 73625,
+          "fop": 55618,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 407,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "230 Чугуев (РУЛЬКА)",
+        "rank": 15,
+        "generalScore": 109,
+        "revenue": {
+          "score": 66,
+          "plan": 1207644,
+          "fact": 561555,
+          "percent": 47
+        },
+        "losses": {
+          "writeOffs": 70902,
+          "shortages": 69596,
+          "fop": 60382,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 3
+        }
+      },
+      {
+        "id": 408,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "234 Богодухов Кондитерка",
+        "rank": 16,
+        "generalScore": 86,
+        "revenue": {
+          "score": 64,
+          "plan": 142509,
+          "fact": 64129,
+          "percent": 45
+        },
+        "losses": {
+          "writeOffs": 82230,
+          "shortages": 54049,
+          "fop": 2125,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 409,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "235 Харьков (РУЛЬКА)",
+        "rank": 17,
+        "generalScore": 55,
+        "revenue": {
+          "score": 92,
+          "plan": 522564,
+          "fact": 337054,
+          "percent": 65
+        },
+        "losses": {
+          "writeOffs": 40656,
+          "shortages": 53593,
+          "fop": 26128,
+          "negativeBalances": 3,
+          "unprocessedWriteOffs": 3
+        }
+      },
+      {
+        "id": 410,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "240 Богодухов (РУЛЬКА)",
+        "rank": 18,
+        "generalScore": 55,
+        "revenue": {
+          "score": 52,
+          "plan": 840276,
+          "fact": 306701,
+          "percent": 37
+        },
+        "losses": {
+          "writeOffs": 63458,
+          "shortages": 63900,
+          "fop": 42014,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      },
+      {
+        "id": 411,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "267 Новоселочное (РУЛЬКА)",
+        "rank": 19,
+        "generalScore": 50,
+        "revenue": {
+          "score": 46,
+          "plan": 470018,
+          "fact": 152756,
+          "percent": 33
+        },
+        "losses": {
+          "writeOffs": 22485,
+          "shortages": 91938,
+          "fop": 23501,
+          "negativeBalances": 0,
+          "unprocessedWriteOffs": 0
+        }
+      },
+      {
+        "id": 412,
+        "networkId": 4,
+        "networkName": "Харьков",
+        "networkColor": "blue",
+        "name": "271 Горького (ЩЕДРИК)",
+        "rank": 20,
+        "generalScore": 86,
+        "revenue": {
+          "score": 90,
+          "plan": 168575,
+          "fact": 106203,
+          "percent": 63
+        },
+        "losses": {
+          "writeOffs": 60727,
+          "shortages": 36990,
+          "fop": 3429,
+          "negativeBalances": 1,
+          "unprocessedWriteOffs": 1
+        }
+      }
+    ]
+  }
+}

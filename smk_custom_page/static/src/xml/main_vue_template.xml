@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="smk_custom_page.MainVueAdminTemplate">
+        <div class="o_container">
+            <h2>Vue компонент внутри админки</h2>
+            <button t-on-click="onClick">+1</button>
+            <p>Счётчик: {{ counter }}</p>
+        </div>
+    </t>
+</templates>
