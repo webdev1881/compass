@@ -14,35 +14,10 @@
             <option value="regionTotalPercent">Регионы по % выполнения</option>
             <option value="storePercent">Магазины по % выполнения</option>
           </select>
-  
-          <!-- <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
-              {{ sortOrder === 'asc' ? '↑' : '↓' }}
-            </button> -->
-  
-  
-          <!-- <button @click="showPlanFactColumns = !showPlanFactColumns" class="toggle-columns-btn">
-              {{ showPlanFactColumns ? '👁️ Скрыть План/Факт' : '👁️‍🗨️ Показать План/Факт' }}
-            </button> -->
-  
-          <!-- <button @click="toggleColumn = !toggleColumn" class="toggle-columns-btn">
-              {{ toggleColumn ? '👁️ Скрыть План/Факт' : '👁️‍🗨️ Показать План/Факт' }}
-            </button> -->
-  
           </div>
           <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
             Обновить
           </button>
-  
-        <!-- <div class="week-toggles">
-          <div v-for="week in weeks" :key="'toggle-' + week.id" class="week-toggle-group">
-            <span class="week-label">{{ week.name }}:</span>
-            <button @click="toggleWeekColumns(week.id)" class="toggle-columns-btn"
-              :class="{ 'is-hidden': !showPlanFactColumns[week.id] }">
-              {{ showPlanFactColumns[week.id] ? '👁️ Скрыть План/Факт' : '👁️‍🗨️ Показать План/Факт' }}
-            </button>
-          </div>
-        </div> -->
-  
       </div>
   
       <div v-if="!loading && !error" class="custom-table">
@@ -154,7 +129,6 @@
           </template>
         </div>
   
-        <!-- Таблица регионов -->
         <div class="table-body regions-body">
           <transition-group name="table-row" tag="div" class="transition-wrapper">
             <div v-for="region in sortedRegions" :key="`region-${region.id}`" class="data-row region-row"
@@ -220,7 +194,6 @@
         <!-- Разделитель -->
         <div class="table-separator"></div>
   
-        <!-- Таблица магазинов -->
         <div class="table-body stores-body">
           <transition-group name="table-row" tag="div" class="transition-wrapper">
             <div v-for="store in getAllSortedStores()" :key="`store-${store.id}`" class="data-row store-row"
@@ -592,7 +565,7 @@ export default {
       const isCurrentlyShown = showPlanFactColumns.value[weekId] !== false
 
       if (isCurrentlyShown) {
-        // Скрываем с анимацией
+
         planColumns.forEach(col => {
           col.style.transition = 'all 0.3s ease-out'
           col.style.maxWidth = '0'
@@ -613,17 +586,14 @@ export default {
           col.style.minWidth = '0'
         })
 
-        // Анимируем grid-template-columns
         setTimeout(() => {
           showPlanFactColumns.value[weekId] = false
           updateGridColumns()
         }, 300)
       } else {
-        // Сначала обновляем состояние и grid
         showPlanFactColumns.value[weekId] = true
         updateGridColumns()
 
-        // Затем анимируем появление
         setTimeout(() => {
           planColumns.forEach(col => {
             col.style.transition = 'all 0.3s ease-out'
@@ -1111,7 +1081,7 @@ $padding-lg: 15px 20px;
   font-weight: 600;
 }
 
-/* Цветовые классы */
+
 .success {
   // color: #2e7d32;
 }
@@ -1137,13 +1107,11 @@ $padding-lg: 15px 20px;
   color: #c62828;
 }
 
-/* Разделитель между таблицами */
 .table-separator {
   height: 10px;
   background: #e3f2fd;
 }
 
-/* Состояния загрузки и ошибки */
 .loading,
 .error {
   display: flex;
@@ -1272,7 +1240,7 @@ $padding-lg: 15px 20px;
 //   min-width: 76px;
 // }
 
-/* Добавьте в секцию <style> */
+
 .grid-col-5,
 .grid-col-6,
 .grid-col-16,
