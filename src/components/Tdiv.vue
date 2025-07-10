@@ -14,12 +14,12 @@
             <option value="regionTotalPercent">Регионы по % выполнения</option>
             <option value="storePercent">Магазины по % выполнения</option>
           </select>
-          </div>
-          <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
-            Обновить
-          </button>
+        </div>
+        <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
+          Обновить
+        </button>
       </div>
-  
+
       <div v-if="!loading && !error" class="custom-table">
         <div class="table-header" :style="{ gridTemplateColumns: gridTemplateColumns }">
           <div class="header-cell store-name-column c_1">Регион / Магазин</div>
@@ -33,50 +33,48 @@
             </div>
             <div class="header-cell metric-header" :style="`grid-column: ${4 + weekIndex * 11} / span 4; grid-row: 2;`">
               <div class="vtrg">Виторг<span class="togler">
-                    <svg @click="toggleWeekColumns(week.id)" v-if="!showPlanFactColumns[week.id]"
-                      viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg"
-                      xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
-                      fill="#555555" stroke="#555555">
-                      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                      <g id="SVGRepo_iconCarrier">
-                        <title>plus-square</title>
-                        <desc>Created with Sketch Beta.</desc>
-                        <defs> </defs>
-                        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"
-                          sketch:type="MSPage">
-                          <g id="Icon-Set-Filled" sketch:type="MSLayerGroup"
-                            transform="translate(-102.000000, -1037.000000)" fill="#1976d2">
-                            <path
-                              d="M124,1054 L119,1054 L119,1059 C119,1059.55 118.552,1060 118,1060 C117.448,1060 117,1059.55 117,1059 L117,1054 L112,1054 C111.448,1054 111,1053.55 111,1053 C111,1052.45 111.448,1052 112,1052 L117,1052 L117,1047 C117,1046.45 117.448,1046 118,1046 C118.552,1046 119,1046.45 119,1047 L119,1052 L124,1052 C124.552,1052 125,1052.45 125,1053 C125,1053.55 124.552,1054 124,1054 L124,1054 Z M130,1037 L106,1037 C103.791,1037 102,1038.79 102,1041 L102,1065 C102,1067.21 103.791,1069 106,1069 L130,1069 C132.209,1069 134,1067.21 134,1065 L134,1041 C134,1038.79 132.209,1037 130,1037 L130,1037 Z"
-                              id="plus-square" sketch:type="MSShapeGroup"> </path>
-                          </g>
+                  <svg @click="toggleWeekColumns(week.id)" v-if="!showPlanFactColumns[week.id]" viewBox="0 0 32 32"
+                    version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                    xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="#555555" stroke="#555555">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <title>plus-square</title>
+                      <desc>Created with Sketch Beta.</desc>
+                      <defs> </defs>
+                      <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"
+                        sketch:type="MSPage">
+                        <g id="Icon-Set-Filled" sketch:type="MSLayerGroup"
+                          transform="translate(-102.000000, -1037.000000)" fill="#1976d2">
+                          <path
+                            d="M124,1054 L119,1054 L119,1059 C119,1059.55 118.552,1060 118,1060 C117.448,1060 117,1059.55 117,1059 L117,1054 L112,1054 C111.448,1054 111,1053.55 111,1053 C111,1052.45 111.448,1052 112,1052 L117,1052 L117,1047 C117,1046.45 117.448,1046 118,1046 C118.552,1046 119,1046.45 119,1047 L119,1052 L124,1052 C124.552,1052 125,1052.45 125,1053 C125,1053.55 124.552,1054 124,1054 L124,1054 Z M130,1037 L106,1037 C103.791,1037 102,1038.79 102,1041 L102,1065 C102,1067.21 103.791,1069 106,1069 L130,1069 C132.209,1069 134,1067.21 134,1065 L134,1041 C134,1038.79 132.209,1037 130,1037 L130,1037 Z"
+                            id="plus-square" sketch:type="MSShapeGroup"> </path>
                         </g>
                       </g>
-                    </svg>
-                    <svg @click="toggleWeekColumns(week.id)" v-if="showPlanFactColumns[week.id]"
-                      viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg"
-                      xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
-                      fill="#000000">
-                      <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                      <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                      <g id="SVGRepo_iconCarrier">
-                        <title>minus-square</title>
-                        <desc>Created with Sketch Beta.</desc>
-                        <defs> </defs>
-                        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"
-                          sketch:type="MSPage">
-                          <g id="Icon-Set-Filled" sketch:type="MSLayerGroup"
-                            transform="translate(-154.000000, -1037.000000)" fill="#1976d2">
-                            <path
-                              d="M176,1054 L164,1054 C163.448,1054 163,1053.55 163,1053 C163,1052.45 163.448,1052 164,1052 L176,1052 C176.552,1052 177,1052.45 177,1053 C177,1053.55 176.552,1054 176,1054 L176,1054 Z M182,1037 L158,1037 C155.791,1037 154,1038.79 154,1041 L154,1065 C154,1067.21 155.791,1069 158,1069 L182,1069 C184.209,1069 186,1067.21 186,1065 L186,1041 C186,1038.79 184.209,1037 182,1037 L182,1037 Z"
-                              id="minus-square" sketch:type="MSShapeGroup"> </path>
-                          </g>
+                    </g>
+                  </svg>
+                  <svg @click="toggleWeekColumns(week.id)" v-if="showPlanFactColumns[week.id]" viewBox="0 0 32 32"
+                    version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                    xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="#000000">
+                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                    <g id="SVGRepo_iconCarrier">
+                      <title>minus-square</title>
+                      <desc>Created with Sketch Beta.</desc>
+                      <defs> </defs>
+                      <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"
+                        sketch:type="MSPage">
+                        <g id="Icon-Set-Filled" sketch:type="MSLayerGroup"
+                          transform="translate(-154.000000, -1037.000000)" fill="#1976d2">
+                          <path
+                            d="M176,1054 L164,1054 C163.448,1054 163,1053.55 163,1053 C163,1052.45 163.448,1052 164,1052 L176,1052 C176.552,1052 177,1052.45 177,1053 C177,1053.55 176.552,1054 176,1054 L176,1054 Z M182,1037 L158,1037 C155.791,1037 154,1038.79 154,1041 L154,1065 C154,1067.21 155.791,1069 158,1069 L182,1069 C184.209,1069 186,1067.21 186,1065 L186,1041 C186,1038.79 184.209,1037 182,1037 L182,1037 Z"
+                            id="minus-square" sketch:type="MSShapeGroup"> </path>
                         </g>
                       </g>
-                    </svg>
-                  </span>
-                </div>
+                    </g>
+                  </svg>
+                </span>
+              </div>
             </div>
             <div class="header-cell metric-header c_8" :style="`grid-column: ${8 + weekIndex * 11}; grid-row: 2 / 4;`">
               Втрати<br>Списання
@@ -84,19 +82,23 @@
             <div class="header-cell metric-header c_9" :style="`grid-column: ${9 + weekIndex * 11}; grid-row: 2 / 4;`">
               Недостачі
             </div>
-            <div class="header-cell metric-header c_10" :style="`grid-column: ${10 + weekIndex * 11}; grid-row: 2 / 4;`">
+            <div class="header-cell metric-header c_10"
+              :style="`grid-column: ${10 + weekIndex * 11}; grid-row: 2 / 4;`">
               ФОП
             </div>
-            <div class="header-cell metric-header c_11" :style="`grid-column: ${11 + weekIndex * 11}; grid-row: 2 / 4;`">
+            <div class="header-cell metric-header c_11"
+              :style="`grid-column: ${11 + weekIndex * 11}; grid-row: 2 / 4;`">
               Від'ємні<br>залишки
             </div>
-            <div class="header-cell metric-header c_12" :style="`grid-column: ${12 + weekIndex * 11}; grid-row: 2 / 4;`">
+            <div class="header-cell metric-header c_12"
+              :style="`grid-column: ${12 + weekIndex * 11}; grid-row: 2 / 4;`">
               Не проведені<br>списання
             </div>
           </template>
 
           <template v-for="(week, weekIndex) in weeks" :key="'week3-' + week.id">
-            <div class="header-cell sub-header score-max c_2" :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
+            <div class="header-cell sub-header score-max c_2"
+              :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
               РАНГ
             </div>
             <div class="header-cell sub-header c_3" :style="`grid-column: ${3 + weekIndex * 11}; grid-row: 3;`">
@@ -119,29 +121,31 @@
             </div>
           </template>
         </div>
-  
+
         <div class="table-body regions-body">
           <transition-group name="table-row" tag="div" class="transition-wrapper">
             <div v-for="region in sortedRegions" :key="`region-${region.id}`" class="data-row region-row"
               :style="{ gridTemplateColumns: gridTemplateColumns }">
-  
+
               <div class="data-cell region-name c_1">
                 <div class="region-info">
                   <span class="region-indicator" :style="{ backgroundColor: region.color }"></span>
                   <span class="region-title">{{ region.name }}</span>
                 </div>
               </div>
-  
+
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
-                <div class="data-cell region-rank score-max c_2" :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
+                <div class="data-cell region-rank score-max c_2"
+                  :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
                   {{ getRegionRank(region) }}
                 </div>
                 <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
-                  {{ getRegionTotalScore(region).max }}
+                  {{ '-' }}
                 </div>
                 <div class="data-cell score-current c_4" :class="getScoreClass(getRegionTotalScore(region).current)"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'scoreCurrent')}`">
-                  {{ getRegionTotalScore(region).current }}
+                  {{ getRegionRank(region) }}
+                  {{ getRegionWeekData(region, week.id[percent])?.current || 0 }}
                 </div>
                 <div :class="`data-cell plan c_5 grid-col-${getGridColumn(weekIndex, 'plan')}`"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'plan')}`">
@@ -181,34 +185,36 @@
             </div>
           </transition-group>
         </div>
-  
+
         <!-- Разделитель -->
         <div class="table-separator"></div>
-  
+
         <div class="table-body stores-body">
           <transition-group name="table-row" tag="div" class="transition-wrapper">
             <div v-for="store in getAllSortedStores()" :key="`store-${store.id}`" class="data-row store-row"
               :style="{ gridTemplateColumns: gridTemplateColumns }">
-  
+
               <div class="data-cell store-name c_1">
                 <div class="store-info">
                   <span class="region-indicator" :style="{ backgroundColor: store.regionColor }"></span>
 
-                    <span class="store-title">{{ store.name }}</span>
+                  <span class="store-title">{{ store.name }}</span>
 
                 </div>
               </div>
-  
+
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
-                <div class="data-cell store-rank score-max c_2" :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
+                <div class="data-cell store-rank score-max c_2"
+                  :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
                   {{ store.rank }}
                 </div>
                 <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
-                  {{ "88" }}
+                  {{ "-" }}
                 </div>
                 <div class="data-cell score-current c_4"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'scoreCurrent')}`">
-                  {{ "77" }}
+                  {{ calculateCurrentScores(week.id)?.scores[store?.id] }}
+                  <!-- {{ store.id  }} -->
                 </div>
                 <div :class="`data-cell plan c_5 grid-col-${getGridColumn(weekIndex, 'plan')}`"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'plan')}`">
@@ -249,12 +255,12 @@
           </transition-group>
         </div>
       </div>
-  
+
       <div v-else-if="loading" class="loading">
         <div class="loading-spinner"></div>
         <p>Загрузка данных...</p>
       </div>
-  
+
       <div v-else-if="error" class="error">
         <div class="error-icon">⚠️</div>
         <h3>Ошибка загрузки данных</h3>
@@ -280,6 +286,7 @@ export default {
     const sortOrder = ref('asc')
     const isAnimating = ref(false)
     const showPlanFactColumns = ref({})
+    const weeklyScoresCache = ref({})
 
     const loadData = async () => {
       try {
@@ -291,7 +298,7 @@ export default {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const data = await response.json()     
+        const data = await response.json()
 
         if (!data.weeks || !data.regions) {
           throw new Error('Неверная структура данных')
@@ -315,7 +322,7 @@ export default {
 
     const weeks = computed(() => salesData.value?.weeks || [])
     const regions = computed(() => Object.values(salesData.value?.regions) || [])
-    
+
     const totalColumns = weeks.value.length * 11
 
     const gridTemplateColumns = computed(() => {
@@ -342,6 +349,7 @@ export default {
 
     const getRegionWeekData = (region, weekId) => {
       const stores = region.stores || []
+
       const weekData = {
         plan: 0,
         fact: 0,
@@ -349,7 +357,8 @@ export default {
         shortages: 0,
         fop: 0,
         shiftRemainder: 0,
-        unprocessed: 0
+        unprocessed: 0,
+        max: 0,
       }
 
       stores.forEach(store => {
@@ -366,6 +375,7 @@ export default {
       })
 
       weekData.percent = weekData.plan > 0 ? Math.round((weekData.fact / weekData.plan) * 100) : 0
+
 
       return weekData
     }
@@ -413,10 +423,10 @@ export default {
       return totalPlan
     }
 
+
     const getTotalFactForRegion = (region) => {
       let totalFact = 0
       const stores = region.stores || []
-
       stores.forEach(store => {
         if (store.weeklyData) {
           store.weeklyData.forEach(week => {
@@ -424,9 +434,11 @@ export default {
           })
         }
       })
-
       return totalFact
     }
+
+
+
 
     const getTotalPercentForRegion = (region) => {
       const totalPlan = getTotalPlanForRegion(region)
@@ -458,7 +470,7 @@ export default {
     })
 
 
-    
+
 
     const getStoreWeekData = (store, weekId) => {
       if (!store || !store.weeklyData) {
@@ -469,6 +481,59 @@ export default {
       weekData.percent = weekData.plan > 0 ? Math.round((weekData.fact / weekData.plan) * 100) : 0
       return weekData || { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
     }
+
+    const calculatePercent = (plan, fact) => {
+      if (!plan || plan === 0) return 0
+      return Math.round((fact / plan) * 100)
+    }
+
+
+
+
+    // Расчет текущих баллов (current) для всех магазинов за конкретную неделю
+    const calculateCurrentScores = (weekId) => {
+      const allStores = []
+      const allRegions = {}
+
+      // Собираем все магазины с их процентами
+      regions.value.forEach(region => {
+        region.stores?.forEach(store => {
+          const weekData = store.weeklyData?.find(w => w.weekId === weekId)
+          if (weekData) {
+            const percent = calculatePercent(weekData.plan, weekData.fact)
+            allStores.push({
+              storeId: store.id,
+              percent: percent,
+              region_id: region.id,
+            })
+          }
+        })
+      })
+
+      const maxPercent = Math.max(...allStores.map(s => s.percent), 0)
+      // const maxR = Math.max(allRegions.map(s => s.fact/s.plan ), 0)
+      // debugger
+
+
+      const scores = {}
+      allStores.forEach(store => {
+        if (maxPercent > 0) {
+          scores[store.storeId] = Math.round((store.percent / maxPercent) * 100)
+        } else {
+          scores[store.storeId] = 0
+        }
+      })
+
+      console.log(allRegions);
+
+      return { scores, allRegions }
+    }
+
+
+
+
+
+
 
     const getTotalPercentForStore = (store) => {
       if (!store || !store.weeklyData) return 0
@@ -505,7 +570,7 @@ export default {
           return sortOrder.value === 'asc' ? aPercent - bPercent : bPercent - aPercent
         })
       } else {
-        allStores.sort((a, b) => (a.rank || 0) - (b.rank || 0))
+        // allStores.sort((a, b) => (a.rank || 0) - (b.rank || 0))
       }
 
       return allStores
@@ -664,6 +729,7 @@ export default {
       showPlanFactColumns,
       gridTemplateColumns,
       updateGridColumns,
+      calculateCurrentScores,
       getGridColumn,
       getRegionWeekData,
       getRegionTotalScore,
@@ -930,7 +996,7 @@ $padding-lg: 15px 20px;
   margin: 20px;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
+  // overflow-x: auto;
 }
 
 /* Заголовки таблицы */
@@ -1255,8 +1321,8 @@ $padding-lg: 15px 20px;
   top: 2px;
   margin-left: 5px;
   font-size: 10px;
-  width: 15px;
-  height: 15px;
+  width: 13px;
+  height: 13px;
   color: white;
 
   background-color: white;
@@ -1275,6 +1341,7 @@ $padding-lg: 15px 20px;
   z-index: 10;
   position: relative;
 }
+
 .unprocessed {
   border-right: 1px solid $border-week;
 }

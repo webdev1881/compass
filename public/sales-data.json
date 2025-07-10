@@ -17,7 +17,6 @@
                 {
                     "id": 9,
                     "name": "199 Первомайский (РУЛЬКА)",
-                    "rank": 9,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -46,7 +45,6 @@
                 {
                     "id": 10,
                     "name": "211 Богодухов",
-                    "rank": 10,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -75,7 +73,6 @@
                 {
                     "id": 11,
                     "name": "220 Орешаны (РУЛЬКА)",
-                    "rank": 11,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -104,7 +101,6 @@
                 {
                     "id": 12,
                     "name": "222 Лозовая (РУЛЬКА)",
-                    "rank": 12,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -133,7 +129,6 @@
                 {
                     "id": 13,
                     "name": "227 Богодухов Ерш",
-                    "rank": 13,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -162,7 +157,6 @@
                 {
                     "id": 14,
                     "name": "229 Красноград (РУЛЬКА)",
-                    "rank": 14,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -198,7 +192,6 @@
                 {
                     "id": 752,
                     "name": "001 Днепр (РУЛЬКА)",
-                    "rank": 6,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -230,9 +223,8 @@
         "3": {
             "stores": [
                 {
-                    "id": 752,
+                    "id": 444,
                     "name": "БЦ-100 (РУЛЬКА)",
-                    "rank": 15,
                     "weeklyData": [
                         {
                             "weekId": 1,
@@ -266,7 +258,6 @@
                 {
           "id": 5,
           "name": "013 Борисполь",
-          "rank": 5,
           "weeklyData": [
             {
               "weekId": 1,
@@ -295,7 +286,6 @@
         {
           "id": 6,
           "name": "108 Мена (РУЛЬКА)",
-          "rank": 16,
           "weeklyData": [
             {
               "weekId": 1,
@@ -324,7 +314,6 @@
         {
           "id": 7,
           "name": "112 Борисполь",
-          "rank": 7,
           "weeklyData": [
             {
               "weekId": 1,
@@ -353,7 +342,6 @@
         {
           "id": 8,
           "name": "132 Борисполь",
-          "rank": 8,
           "weeklyData": [
             {
               "weekId": 1,
