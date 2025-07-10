@@ -764,7 +764,7 @@ $padding-lg: 15px 20px;
   width: 100%;
   min-height: 100vh;
   max-width: 2300px;
-  // max-width: 1916px;
+  max-width: 1966px;
   background: $background-white;
 }
 
