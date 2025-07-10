@@ -21,24 +21,16 @@
       </div>
   
       <div v-if="!loading && !error" class="custom-table">
-        <!-- Заголовки таблицы -->
         <div class="table-header" :style="{ gridTemplateColumns: gridTemplateColumns }">
-          <!-- Все ячейки заголовков в одной сетке -->
           <div class="header-cell store-name-column c_1">Регион / Магазин</div>
-  
-          <!-- Первый уровень - недели -->
           <div v-for="(week, weekIndex) in weeks" :key="'week1-' + week.id" class="header-cell week-group"
             :style="`grid-column: ${2 + weekIndex * 11} / span 11; grid-row: 1;`">
             {{ week.name }} ({{ week.dateRange }})
           </div>
-  
-          <!-- Второй уровень -->
           <template v-for="(week, weekIndex) in weeks" :key="'week2-' + week.id">
             <div class="header-cell metric-header" :style="`grid-column: ${2 + weekIndex * 11} / span 2; grid-row: 2;`">
               Загальний бал
             </div>
-
-
             <div class="header-cell metric-header" :style="`grid-column: ${4 + weekIndex * 11} / span 4; grid-row: 2;`">
               <div class="vtrg">Виторг<span class="togler">
                     <svg @click="toggleWeekColumns(week.id)" v-if="!showPlanFactColumns[week.id]"
@@ -102,8 +94,7 @@
               Не проведені<br>списання
             </div>
           </template>
-  
-          <!-- Третий уровень -->
+
           <template v-for="(week, weekIndex) in weeks" :key="'week3-' + week.id">
             <div class="header-cell sub-header c_2" :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
               РАНГ
@@ -314,9 +305,8 @@ export default {
 
         salesData.value = data
 
-        updateGridColumns()
+        // updateGridColumns()
 
-        // Инициализируем showPlanFactColumns для каждой недели
         data.weeks.forEach(week => {
           showPlanFactColumns.value[week.id] = true
         })
@@ -522,8 +512,6 @@ export default {
 
       return allStores
     }
-
-
 
     const updateGridColumns = () => {
       const header = document.querySelector('.table-header')
@@ -734,7 +722,7 @@ $padding-lg: 15px 20px;
   width: 100%;
   min-height: 100vh;
   max-width: 2300px;
-  max-width: 1966px;
+  // max-width: 1966px;
   background: $background-white;
 }
 
