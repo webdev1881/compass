@@ -225,7 +225,7 @@ export default {
       try {
         loading.value = true
         error.value = null
-        const response = await fetch('/sales-data.json')
+        const response = await fetch('/sales.json')
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)

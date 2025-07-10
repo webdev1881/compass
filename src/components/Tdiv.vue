@@ -96,10 +96,10 @@
           </template>
 
           <template v-for="(week, weekIndex) in weeks" :key="'week3-' + week.id">
-            <div class="header-cell sub-header c_2" :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
+            <div class="header-cell sub-header score-max c_2" :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
               РАНГ
             </div>
-            <div class="header-cell sub-header score-max c_3" :style="`grid-column: ${3 + weekIndex * 11}; grid-row: 3;`">
+            <div class="header-cell sub-header c_3" :style="`grid-column: ${3 + weekIndex * 11}; grid-row: 3;`">
               900
             </div>
             <div class="header-cell sub-header score-current c_4"
@@ -127,16 +127,16 @@
   
               <div class="data-cell region-name c_1">
                 <div class="region-info">
-                  <span class="region-indicator" :style="{ backgroundColor: colors[region.name] }"></span>
+                  <span class="region-indicator" :style="{ backgroundColor: region.color }"></span>
                   <span class="region-title">{{ region.name }}</span>
                 </div>
               </div>
   
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
-                <div class="data-cell region-rank c_2" :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
+                <div class="data-cell region-rank score-max c_2" :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
                   {{ getRegionRank(region) }}
                 </div>
-                <div class="data-cell score-max c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
+                <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
                   {{ getRegionTotalScore(region).max }}
                 </div>
                 <div class="data-cell score-current c_4" :class="getScoreClass(getRegionTotalScore(region).current)"
@@ -192,17 +192,18 @@
   
               <div class="data-cell store-name c_1">
                 <div class="store-info">
-                  <span class="region-indicator" :style="{ backgroundColor: colors[store.regionName] }"></span>
-                  <span class="store-rank-number">{{ store.rank }}</span>
-                  <span class="store-title">{{ store.name }}</span>
+                  <span class="region-indicator" :style="{ backgroundColor: store.regionColor }"></span>
+
+                    <span class="store-title">{{ store.name }}</span>
+
                 </div>
               </div>
   
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
-                <div class="data-cell store-rank c_2" :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
+                <div class="data-cell store-rank score-max c_2" :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
                   {{ store.rank }}
                 </div>
-                <div class="data-cell score-max c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
+                <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
                   {{ "88" }}
                 </div>
                 <div class="data-cell score-current c_4"
@@ -280,13 +281,6 @@ export default {
     const isAnimating = ref(false)
     const showPlanFactColumns = ref({})
 
-    const colors = ref({
-      'Белая Церковь': '#f44336',
-      'Днепр': '#ffc107',
-      'Киев': '#4caf50',
-      'Харьков': '#2196f3',
-    })
-
     const loadData = async () => {
       try {
         loading.value = true
@@ -297,7 +291,7 @@ export default {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
 
-        const data = await response.json()
+        const data = await response.json()     
 
         if (!data.weeks || !data.regions) {
           throw new Error('Неверная структура данных')
@@ -320,7 +314,8 @@ export default {
     }
 
     const weeks = computed(() => salesData.value?.weeks || [])
-    const regions = computed(() => salesData.value?.regions || [])
+    const regions = computed(() => Object.values(salesData.value?.regions) || [])
+    
     const totalColumns = weeks.value.length * 11
 
     const gridTemplateColumns = computed(() => {
@@ -391,7 +386,9 @@ export default {
     }
 
     const getRegionRank = (region) => {
-      const allRegions = [...regions.value]
+      // const allRegions = [...regions.value]
+      const allRegions = Object.values(regions.value)
+
       allRegions.sort((a, b) => {
         const aPercent = getTotalPercentForRegion(a)
         const bPercent = getTotalPercentForRegion(b)
@@ -439,9 +436,7 @@ export default {
 
     const sortedRegions = computed(() => {
       if (!regions.value) return []
-
-      const sorted = [...regions.value]
-
+      const sorted = regions.value
       sorted.sort((a, b) => {
         let aValue, bValue
 
@@ -457,19 +452,21 @@ export default {
           default:
             return 0
         }
-
         return sortOrder.value === 'asc' ? aValue - bValue : bValue - aValue
       })
-
       return sorted
     })
 
+
+    
+
     const getStoreWeekData = (store, weekId) => {
       if (!store || !store.weeklyData) {
-        return { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
+        return { plan: 0, fact: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
       }
 
       const weekData = store.weeklyData.find(w => w.weekId === weekId)
+      weekData.percent = weekData.plan > 0 ? Math.round((weekData.fact / weekData.plan) * 100) : 0
       return weekData || { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
     }
 
@@ -495,7 +492,8 @@ export default {
         stores.forEach(store => {
           allStores.push({
             ...store,
-            regionName: region.name
+            regionName: region.name,
+            regionColor: region.color,
           })
         })
       })
@@ -522,10 +520,10 @@ export default {
       weeks.value.forEach(week => {
         const isShown = showPlanFactColumns.value[week.id]
         if (isShown) {
-          columns += '51px 51px 35px 82px 82px 43px 72px 76px 72px 69px 96px'
+          columns += '44px 51px 35px 82px 82px 43px 72px 76px 72px 69px 96px'
         } else {
           // columns += ' 0 0 0 0 0 0 0 0 0 0 0'
-          columns += ' 77px 77px 65px 0px 0px 63px 92px 92px 92px 69px 96px'
+          columns += ' 44px 77px 65px 0px 0px 63px 92px 92px 92px 69px 96px'
         }
       })
 
@@ -663,7 +661,6 @@ export default {
       sortBy,
       sortOrder,
       isAnimating,
-      colors,
       showPlanFactColumns,
       gridTemplateColumns,
       updateGridColumns,
@@ -708,7 +705,9 @@ $text-primary: #333;
 $text-secondary: #555;
 $text-week: #0f4478;
 $text-disabled: #6c757d;
+$separator-week: #0f4478;
 
+$border-week: #91b6db;
 $border-radius: 4px;
 $border-radius-lg: 8px;
 $font-size-sm: 11px;
@@ -949,8 +948,9 @@ $padding-lg: 15px 20px;
   text-align: center;
   font-weight: 600;
   color: #333;
-  border-right: 1px solid #87919b;
-  border-bottom: 1px solid #87919b;
+  border-right: 1px solid $border-week;
+  border-bottom: 1px solid $border-week;
+  // border-top: 1px solid $border-week;
   background: #e3f2fd;
   display: flex;
   align-items: center;
@@ -988,7 +988,7 @@ $padding-lg: 15px 20px;
 
 /* Тело таблицы */
 .table-body {
-  min-height: 100px;
+  // min-height: 100px;
 }
 
 .data-row {
@@ -1071,7 +1071,7 @@ $padding-lg: 15px 20px;
 
 
 .success {
-  // color: #2e7d32;
+  color: #2e7d32;
 }
 
 .warning {
@@ -1181,7 +1181,7 @@ $padding-lg: 15px 20px;
 
 
 .c_2 {
-  min-width: 77px;
+  min-width: 44px;
 }
 
 .c_3 {
@@ -1276,6 +1276,6 @@ $padding-lg: 15px 20px;
   position: relative;
 }
 .unprocessed {
-  border-right: #d32f2f;
+  border-right: 1px solid $border-week;
 }
 </style>

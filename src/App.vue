@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <!-- <TableComponent /> -->
-    <!-- <Tt /> -->
     <Tdiv />
+    <Tt />
     <!-- <T /> -->
     <!-- <TableComponent0 /> -->
   </div>
