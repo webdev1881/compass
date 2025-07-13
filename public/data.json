@@ -1,96 +1,323 @@
 {
-  "data": [
-    {
-      "weekInfo": {
-        "number": 34,
-        "startDate": "2025-07-08T10:00:00",
-        "endDate": "2025-07-16T10:00:00"
-      },
-      "regions": {
-        "3": {
-          "id": 3,
-          "name": "Київ",
-          "shops": [
-            {
-              "shop": {
-                "id": 752,
-                "name": "001 Днепр (РУЛЬКА)"
-              },
-              "sales": {
-                "plan": 2344,
-                "fact": 234
-              }
-            },
-            {
-              "shop": {
-                "id": 752,
-                "name": "001 Днепр (РУЛЬКА)"
-              },
-              "sales": {
-                "plan": 2344,
-                "fact": 234
-              }
-            }
-          ]
+    "weeks": [
+        {
+            "id": 1,
+            "name": "34 тиждень",
+            "dateRange": "23.06.25 - 29.06.25"
         },
-        "4": {
-          "id": 4,
-          "name": "Біла Церква",
-          "shops": [
-            {
-              "shop": {
-                "id": 737,
-                "name": "013 Борисполь"
-              },
-              "sales": {
-                "plan": 2344,
-                "fact": 234
-              }
-            }
-          ]
+        {
+            "id": 2,
+            "name": "35 тиждень",
+            "dateRange": "30.06.25 - 06.07.25"
         }
-      }
-    },
-    {
-      "weekInfo": {
-        "number": 35,
-        "startDate": "2025-07-17T10:00:00",
-        "endDate": "2025-07-23T10:00:00"
-      },
-      "regions": {
-        "3": {
-          "id": 3,
-          "name": "Київ",
-          "shops": [
-            {
-              "shop": {
-                "id": 752,
-                "name": "001 Днепр (РУЛЬКА)"
-              },
-              "sales": {
-                "plan": 2344,
-                "fact": 234
-              }
-            }
-          ]
+    ],
+    "regions": {
+        "2": {
+            "stores": [
+                {
+                    "id": 719,
+                    "name": "100 БЦ (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 7187909,
+                            "fact": 5208630,
+                            "losses": 45844,
+                            "shortages": 70725,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 7831863,
+                            "fact": 5152542,
+                            "losses": 0,
+                            "shortages": 0,
+                            "fop": 1044507,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 552,
+                    "name": "199 Первомайский (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 4612898,
+                            "fact": 3494620,
+                            "losses": 41699,
+                            "shortages": 1215,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 5692556,
+                            "fact": 3513924,
+                            "losses": 10675,
+                            "shortages": 0,
+                            "fop": 712677,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 559,
+                    "name": "220 Ольшаны (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 6549944,
+                            "fact": 4425638,
+                            "losses": 46703,
+                            "shortages": 6641,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 5874371,
+                            "fact": 4518747,
+                            "losses": 3971,
+                            "shortages": 0,
+                            "fop": 826607,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 548,
+                    "name": "222 Лозовая (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 8074408,
+                            "fact": 5175903,
+                            "losses": 56310,
+                            "shortages": 253937,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 7082223,
+                            "fact": 5132046,
+                            "losses": 10384,
+                            "shortages": 0,
+                            "fop": 911817,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 555,
+                    "name": "229 Красноград (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 4975407,
+                            "fact": 3798021,
+                            "losses": 34697,
+                            "shortages": 6021,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 4755159,
+                            "fact": 3629893,
+                            "losses": 15917,
+                            "shortages": 0,
+                            "fop": 684690,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 569,
+                    "name": "230 Чугуев (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 9361606,
+                            "fact": 6001030,
+                            "losses": 20191,
+                            "shortages": 0,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 8004669,
+                            "fact": 5717621,
+                            "losses": 7537,
+                            "shortages": 0,
+                            "fop": 844737,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 544,
+                    "name": "240 Богодухов (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 9592582,
+                            "fact": 7267108,
+                            "losses": 36174,
+                            "shortages": 396855,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 8961633,
+                            "fact": 6738070,
+                            "losses": 20607,
+                            "shortages": 457,
+                            "fop": 1065159,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 565,
+                    "name": "267 Пересичное (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 5231774,
+                            "fact": 3791141,
+                            "losses": 29044,
+                            "shortages": 0,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 5645358,
+                            "fact": 3763572,
+                            "losses": 3556,
+                            "shortages": 6799,
+                            "fop": 702620,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                },
+                {
+                    "id": 547,
+                    "name": "271 Горького (ЩЕДРИК)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 377090,
+                            "fact": 265557,
+                            "losses": 7882,
+                            "shortages": 0,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 459899,
+                            "fact": 270529,
+                            "losses": 0,
+                            "shortages": 0,
+                            "fop": 42098,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                }
+            ],
+            "id": 2,
+            "name": "Харків",
+            "color": "#3498db"
         },
-        "4": {
-          "id": 4,
-          "name": "Біла Церква",
-          "shops": [
-            {
-              "shop": {
-                "id": 737,
-                "name": "013 Борисполь"
-              },
-              "sales": {
-                "plan": 2344,
-                "fact": 777
-              }
-            }
-          ]
+        "3": {
+            "stores": [
+                {
+                    "id": 741,
+                    "name": "108 Киев (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 1919483,
+                            "fact": 1432450,
+                            "losses": 0,
+                            "shortages": 8956,
+                            "fop": 5600,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 2292570,
+                            "fact": 1528380,
+                            "losses": 0,
+                            "shortages": 2019,
+                            "fop": 325066,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                }
+            ],
+            "id": 3,
+            "name": "Київ",
+            "color": "#cbb86d"
+        },
+        "6": {
+            "stores": [
+                {
+                    "id": 752,
+                    "name": "001 Днепр (РУЛЬКА)",
+                    "weeklyData": [
+                        {
+                            "weekId": 1,
+                            "plan": 2577734,
+                            "fact": 1982873,
+                            "losses": 24362,
+                            "shortages": 0,
+                            "fop": 0,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        },
+                        {
+                            "weekId": 2,
+                            "plan": 2721959,
+                            "fact": 2001441,
+                            "losses": 5746,
+                            "shortages": 0,
+                            "fop": 541432,
+                            "shiftRemainder": 0,
+                            "unprocessed": 0
+                        }
+                    ]
+                }
+            ],
+            "id": 6,
+            "name": "Дніпро",
+            "color": "#82cda2"
         }
-      }
     }
-  ]
 }

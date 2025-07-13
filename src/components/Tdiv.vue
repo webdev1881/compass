@@ -3,18 +3,36 @@
     <div v-if="loading" class="loading-bar">
       <div style="color: white;" class="loading-progress">_</div>
     </div>
-
     <div v-else class="content">
-
+      
       <div class="controls-panel" v-if="!loading && !error">
         <div class="sorting-controls">
           <label>Сортировка:</label>
+          <select v-model="sortWeek" @change="handleSort" :disabled="isAnimating">
+            <option value="all">По всем неделям</option>
+            <option v-for="week in weeks" :key="'sort-' + week.id" :value="week.id">
+              {{ week.name }}
+            </option>
+          </select>
+          
           <select v-model="sortBy" @change="handleSort" :disabled="isAnimating">
             <option value="regionRank">По рангу регионов</option>
-            <option value="regionTotalPercent">Регионы по % выполнения</option>
+            <option value="regionPercent">Регионы по % выполнения</option>
+            <option value="regionCurrent">Регионы по баллам</option>
             <option value="storePercent">Магазины по % выполнения</option>
-          </select>
-        </div>
+            <option value="storeCurrent">Магазины по баллам</option>
+            {{ isAnimating }}
+        </select>
+
+  <!-- <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
+    {{ sortOrder === 'asc' ? '↑' : '↓' }}
+  </button>
+
+  <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
+    🔄 Обновить
+  </button> -->
+
+</div>
         <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
           Обновить
         </button>
@@ -137,15 +155,14 @@
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
                 <div class="data-cell region-rank score-max c_2"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
-                  {{ getRegionRank(region) }}
+                  {{ getRegionRank(region, weekIndex) }}
                 </div>
                 <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
                   {{ '-' }}
                 </div>
-                <div class="data-cell score-current c_4" :class="getScoreClass(getRegionTotalScore(region).current)"
+                <div class="data-cell score-current c_4" :class="getScoreClass(getRegionCurrent(region, weekIndex))"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'scoreCurrent')}`">
-                  {{ getRegionRank(region) }}
-                  {{ getRegionWeekData(region, week.id[percent])?.current || 0 }}
+                    {{ getRegionCurrent(region, weekIndex) }}
                 </div>
                 <div :class="`data-cell plan c_5 grid-col-${getGridColumn(weekIndex, 'plan')}`"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'plan')}`">
@@ -184,29 +201,28 @@
               </template>
             </div>
           </transition-group>
+          <div class="table-separator"></div>
         </div>
 
         <!-- Разделитель -->
-        <div class="table-separator"></div>
-
+        
         <div class="table-body stores-body">
           <transition-group name="table-row" tag="div" class="transition-wrapper">
-            <div v-for="store in getAllSortedStores()" :key="`store-${store.id}`" class="data-row store-row"
+            <div v-for="(store, storeIndex) in getAllSortedStores()" :key="`store-${store.id}`" class="data-row store-row"
               :style="{ gridTemplateColumns: gridTemplateColumns }">
-
               <div class="data-cell store-name c_1">
                 <div class="store-info">
                   <span class="region-indicator" :style="{ backgroundColor: store.regionColor }"></span>
-
+                  
                   <span class="store-title">{{ store.name }}</span>
-
+                  
                 </div>
               </div>
-
+              
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
                 <div class="data-cell store-rank score-max c_2"
-                  :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
-                  {{ store.rank }}
+                :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
+                  {{ storeIndex+1 }}
                 </div>
                 <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
                   {{ "-" }}
@@ -282,16 +298,18 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const salesData = ref(null)
-    const sortBy = ref('regionRank')
+    const sortBy = ref('regionPercent')
     const sortOrder = ref('asc')
     const isAnimating = ref(false)
     const showPlanFactColumns = ref({})
     const weeklyScoresCache = ref({})
+    const sortWeek = ref('all')
 
     const loadData = async () => {
       try {
         loading.value = true
         error.value = null
+        // const response = await fetch('/data.json')
         const response = await fetch('/sales-data.json')
 
         if (!response.ok) {
@@ -326,7 +344,7 @@ export default {
     const totalColumns = weeks.value.length * 11
 
     const gridTemplateColumns = computed(() => {
-      return `256px repeat(${totalColumns}, 1fr)`
+      // return `256px repeat(${totalColumns}, 1fr)`
     })
 
     const getGridColumn = (weekIndex, columnType) => {
@@ -395,17 +413,23 @@ export default {
       return { max: maxScore, current: currentScore }
     }
 
-    const getRegionRank = (region) => {
-      // const allRegions = [...regions.value]
-      const allRegions = Object.values(regions.value)
-
+    const getRegionRank = (region, weekIndex) => {
+      const allRegions = [...regions.value]
       allRegions.sort((a, b) => {
         const aPercent = getTotalPercentForRegion(a)
         const bPercent = getTotalPercentForRegion(b)
         return bPercent - aPercent
       })
-
       return allRegions.findIndex(r => r.id === region.id) + 1
+    }
+    const getStoreRank = (store, weekIndex) => {
+      const allStores = [...store.value]
+      allStores.sort((a, b) => {
+        const aPercent = getTotalPercentForStore(a)
+        const bPercent = getTotalPercentForStore(b)
+        return bPercent - aPercent
+      })
+      return allStores.findIndex(r => r.id === region.id) + 1
     }
 
     const getTotalPlanForRegion = (region) => {
@@ -437,7 +461,38 @@ export default {
       return totalFact
     }
 
-
+    // Получение текущих баллов региона за конкретную неделю или за все недели
+    const getRegionCurrent = (region, weekId = null) => {
+      const stores = region.stores || []
+      let totalCurrent = 0
+      
+      if (weekId && weekId !== 'all') {
+        // Для конкретной недели
+        if (!weeklyScoresCache.value[weekId]) {
+          weeklyScoresCache.value[weekId] = calculateCurrentScores(weekId)
+        }
+        
+        stores.forEach(store => {
+          totalCurrent += weeklyScoresCache.value[weekId].scores[store.id] || 0
+          // console.log('getRegionCurrent', weeklyScoresCache.value[weekId].scores[store.id] );
+          // console.log('getRegionCurrent', store );
+          // debugger
+        })
+      } else {
+        // Для всех недель
+        weeks.value.forEach(week => {
+          if (!weeklyScoresCache.value[week.id]) {
+            weeklyScoresCache.value[week.id] = calculateCurrentScores(week.id)
+          }
+          
+          stores.forEach(store => {
+            totalCurrent += weeklyScoresCache.value[week.id].scores[store.id] || 0
+          })
+        })
+      }
+      
+      return totalCurrent
+    }
 
 
     const getTotalPercentForRegion = (region) => {
@@ -446,9 +501,24 @@ export default {
       return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
     }
 
+    // Получение процента выполнения региона за конкретную неделю или за все недели
+    const getRegionPercent = (region, weekId = null) => {
+      if (weekId && weekId !== 'all') {
+        const weekData = getRegionWeekData(region, weekId)
+        return calculatePercent(weekData.plan, weekData.fact)
+      }
+      // Для всех недель
+      const totalPlan = getTotalPlanForRegion(region)
+      const totalFact = getTotalFactForRegion(region)
+      return calculatePercent(totalPlan, totalFact)
+    }
+
+    // Обновленная функция сортировки регионов
     const sortedRegions = computed(() => {
       if (!regions.value) return []
-      const sorted = regions.value
+
+      const sorted = [...regions.value]
+
       sorted.sort((a, b) => {
         let aValue, bValue
 
@@ -457,19 +527,23 @@ export default {
             aValue = getRegionRank(a)
             bValue = getRegionRank(b)
             break
-          case 'regionTotalPercent':
-            aValue = getTotalPercentForRegion(a)
-            bValue = getTotalPercentForRegion(b)
+          case 'regionPercent':
+            aValue = getRegionPercent(a, sortWeek.value)
+            bValue = getRegionPercent(b, sortWeek.value)
+            break
+          case 'regionCurrent':
+            aValue = getRegionCurrent(a, sortWeek.value)
+            bValue = getRegionCurrent(b, sortWeek.value)
             break
           default:
             return 0
         }
-        return sortOrder.value === 'asc' ? aValue - bValue : bValue - aValue
+
+        return sortOrder.value === 'asc' ? bValue - aValue : aValue - bValue
       })
+
       return sorted
     })
-
-
 
 
     const getStoreWeekData = (store, weekId) => {
@@ -487,10 +561,6 @@ export default {
       return Math.round((fact / plan) * 100)
     }
 
-
-
-
-    // Расчет текущих баллов (current) для всех магазинов за конкретную неделю
     const calculateCurrentScores = (weekId) => {
       const allStores = []
       const allRegions = {}
@@ -524,15 +594,29 @@ export default {
         }
       })
 
-      console.log(allRegions);
-
       return { scores, allRegions }
     }
 
 
-
-
-
+    const getStoreCurrent = (store, weekId) => {
+      if (!weekId || weekId === 'all') {
+        // Для всех недель суммируем баллы
+        let totalCurrent = 0
+        weeks.value.forEach(week => {
+          if (!weeklyScoresCache.value[week.id]) {
+            weeklyScoresCache.value[week.id] = calculateCurrentScores(week.id)
+          }
+          totalCurrent += weeklyScoresCache.value[week.id][store.id] || 0
+        })
+        return totalCurrent
+      }
+      
+      // Для конкретной недели
+      if (!weeklyScoresCache.value[weekId]) {
+        weeklyScoresCache.value[weekId] = calculateCurrentScores(weekId)
+      }
+      return weeklyScoresCache.value[weekId][store.id] || 0
+    }
 
 
     const getTotalPercentForStore = (store) => {
@@ -549,6 +633,19 @@ export default {
       return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
     }
 
+    // Получение процента выполнения магазина за конкретную неделю или за все недели
+    const getStorePercent = (store, weekId = null) => {
+      if (weekId && weekId !== 'all') {
+        const weekData = store.weeklyData?.find(w => w.weekId === weekId)
+        if (!weekData) return 0
+        return calculatePercent(weekData.plan, weekData.fact)
+      }
+      
+      // Для всех недель
+      return getTotalPercentForStore(store)
+    }
+
+    // Обновленная функция getAllSortedStores
     const getAllSortedStores = () => {
       const allStores = []
 
@@ -563,15 +660,26 @@ export default {
         })
       })
 
-      if (sortBy.value === 'storePercent') {
-        allStores.sort((a, b) => {
-          const aPercent = getTotalPercentForStore(a)
-          const bPercent = getTotalPercentForStore(b)
-          return sortOrder.value === 'asc' ? aPercent - bPercent : bPercent - aPercent
-        })
-      } else {
-        // allStores.sort((a, b) => (a.rank || 0) - (b.rank || 0))
-      }
+      // Сортировка магазинов
+      allStores.sort((a, b) => {
+        let aValue, bValue
+
+        switch (sortBy.value) {
+          case 'storePercent':
+            aValue = getStorePercent(a, sortWeek.value)
+            bValue = getStorePercent(b, sortWeek.value)
+            break
+          case 'storeCurrent':
+            aValue = getStoreCurrent(a, sortWeek.value)
+            bValue = getStoreCurrent(b, sortWeek.value)
+            break
+          default:
+            // По умолчанию сортируем по рангу
+            return (a.current || 0) - (b.current || 0)
+        }
+
+        return sortOrder.value === 'asc' ? bValue - aValue : aValue - bValue
+      })
 
       return allStores
     }
@@ -580,15 +688,15 @@ export default {
       const header = document.querySelector('.table-header')
       const rows = document.querySelectorAll('.data-row')
 
-      let columns = '256px'
+      let columns = '220px'
 
       weeks.value.forEach(week => {
         const isShown = showPlanFactColumns.value[week.id]
         if (isShown) {
-          columns += '44px 51px 35px 82px 82px 43px 72px 76px 72px 69px 96px'
+          columns += '44px 45px 47px 90px 90px 58px 70px 70px 70px 70px 80px'
         } else {
           // columns += ' 0 0 0 0 0 0 0 0 0 0 0'
-          columns += ' 44px 77px 65px 0px 0px 63px 92px 92px 92px 69px 96px'
+          columns += '44px 45px 47px 0px 0px 58px 70px 70px 70px 70px 80px'
         }
       })
 
@@ -599,11 +707,9 @@ export default {
 
       rows.forEach(row => {
         row.style.transition = 'grid-template-columns 0.2s ease-out'
-        // row.style.gridTemplateColumns = columns
+        row.style.gridTemplateColumns = columns
       })
     }
-
-
 
     const toggleWeekColumns = (weekId) => {
       const weekIndex = weeks.value.findIndex(w => w.id === weekId)
@@ -728,6 +834,8 @@ export default {
       isAnimating,
       showPlanFactColumns,
       gridTemplateColumns,
+      sortWeek,
+      getRegionCurrent,
       updateGridColumns,
       calculateCurrentScores,
       getGridColumn,
@@ -897,7 +1005,7 @@ $padding-lg: 15px 20px;
 }
 
 .refresh-btn {
-  background: #28a745;
+  background: #1976d2;
   color: white;
   display: flex;
   align-items: center;
@@ -996,7 +1104,8 @@ $padding-lg: 15px 20px;
   margin: 20px;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  // overflow-x: auto;
+  overflow-x: auto;
+  scrollbar-color: #1976d2 #e3f2fd;
 }
 
 /* Заголовки таблицы */
@@ -1010,7 +1119,7 @@ $padding-lg: 15px 20px;
 }
 
 .header-cell {
-  padding: 8px;
+  padding: 8px 0;
   text-align: center;
   font-weight: 600;
   color: #333;
@@ -1240,7 +1349,7 @@ $padding-lg: 15px 20px;
 
 
 .c_1 {
-  min-width: 256px;
+  min-width: 220px;
 }
 
 
@@ -1251,43 +1360,43 @@ $padding-lg: 15px 20px;
 }
 
 .c_3 {
-  min-width: 77px;
+  min-width: 45px;
 }
 
 .c_4 {
-  min-width: 65px;
+  min-width: 47px;
 }
 
 .c_5 {
-  min-width: 82px;
+  min-width: 90px;
 }
 
 .c_6 {
-  min-width: 82px;
+  min-width: 90px;
 }
 
 .c_7 {
-  min-width: 63px;
+  min-width: 58px;
 }
 
 .c_8 {
-  min-width: 92px;
+  min-width: 70px;
 }
 
 .c_9 {
-  min-width: 92px;
+  min-width: 70px;
 }
 
 .c_10 {
-  min-width: 92px;
+  min-width: 70px;
 }
 
 .c_11 {
-  min-width: 69px;
+  min-width: 70px;
 }
 
 .c_12 {
-  min-width: 96px;
+  min-width: 80px;
 }
 
 // .c_13 {

@@ -3,7 +3,7 @@
     <!-- <TableComponent /> -->
     <Tdiv />
     <!-- <Tt /> -->
-    <!-- <T /> -->
+    <T />
     <!-- <TableComponent0 /> -->
   </div>
 </template>
