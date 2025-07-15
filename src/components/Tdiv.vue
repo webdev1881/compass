@@ -4,7 +4,7 @@
       <div style="color: white;" class="loading-progress">_</div>
     </div>
     <div v-else class="content">
-      
+
       <div class="controls-panel" v-if="!loading && !error">
         <div class="sorting-controls">
           <label>Сортировка:</label>
@@ -14,7 +14,7 @@
               {{ week.name }}
             </option>
           </select>
-          
+
           <select v-model="sortBy" @change="handleSort" :disabled="isAnimating">
             <option value="regionRank">По рангу регионов</option>
             <option value="regionPercent">Регионы по % выполнения</option>
@@ -22,9 +22,10 @@
             <option value="storePercent">Магазины по % выполнения</option>
             <option value="storeCurrent">Магазины по баллам</option>
             {{ isAnimating }}
-        </select>
+          </select>
+          {{ sortBy }}
 
-  <!-- <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
+          <!-- <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
     {{ sortOrder === 'asc' ? '↑' : '↓' }}
   </button>
 
@@ -32,7 +33,7 @@
     🔄 Обновить
   </button> -->
 
-</div>
+        </div>
         <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
           Обновить
         </button>
@@ -115,28 +116,69 @@
           </template>
 
           <template v-for="(week, weekIndex) in weeks" :key="'week3-' + week.id">
-            <div class="header-cell sub-header score-max c_2"
+            <div class="header-cell sub-header sort_class score-max c_2"
               :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
               РАНГ
             </div>
             <div class="header-cell sub-header c_3" :style="`grid-column: ${3 + weekIndex * 11}; grid-row: 3;`">
               900
             </div>
-            <div class="header-cell sub-header score-current c_4"
+
+            <div :class="`header-cell c_4 sub-header sort_class fact-column grid-col-${6 + weekIndex * 11}`"
+              :style="`grid-column: ${4 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByCurrent(week.id)">
+              <span>100</span>
+              <span v-if="sortBy === 'regionCurrent' && sortWeek === week.id" class="sort-indicator">
+                {{ sortOrder === 'desc' ? '↑' : '↓' }}
+              </span>
+            </div>
+            <!-- <div class="header-cell sub-header score-current c_4"
               :style="`grid-column: ${4 + weekIndex * 11}; grid-row: 3;`">
               100
+            </div> -->
+
+
+            <div :class="`header-cell c_5 sub-header fact-column sort_class grid-col-${6 + weekIndex * 11}`"
+              :style="`grid-column: ${5 + weekIndex * 11}; grid-row: 3;  cursor: pointer;`" @click="sortByPlan(week.id)">
+              <span>План</span>
+              <span v-if="sortBy === 'regionPlan' && sortWeek === week.id" class="sort-indicator">
+                {{ sortOrder === 'desc' ? '↑' : '↓' }}
+              </span>
             </div>
-            <div :class="`header-cell c_5 sub-header plan-column grid-col-${5 + weekIndex * 11}`"
+
+
+            <!-- <div :class="`header-cell c_5 sub-header plan-column grid-col-${5 + weekIndex * 11}`"
               :style="`grid-column: ${5 + weekIndex * 11}; grid-row: 3;`">
               План
+            </div> -->
+
+            <!-- Замените существующий заголовок "Факт" на: -->
+            <div :class="`header-cell c_6 sub-header sort_class fact-column grid-col-${6 + weekIndex * 11}`"
+              :style="`grid-column: ${6 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByFact(week.id)">
+              <span>Факт</span>
+              <span v-if="sortBy === 'regionFact' && sortWeek === week.id" class="sort-indicator">
+                {{ sortOrder === 'asc' ? '↑' : '↓' }}
+              </span>
             </div>
-            <div :class="`header-cell c_6 sub-header fact-column grid-col-${6 + weekIndex * 11}`"
+
+
+            <!-- <div :class="`header-cell c_6 sub-header fact-column grid-col-${6 + weekIndex * 11}`"
               :style="`grid-column: ${6 + weekIndex * 11}; grid-row: 3;`">
               Факт
+            </div> -->
+
+            <div :class="`header-cell c_7 sub-header sort_class fact-column grid-col-${6 + weekIndex * 11}`"
+              :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByPercent(week.id)">
+              <span>%</span>
+              <span v-if="sortBy === 'regionPercent'" class="sort-indicator">
+                {{ sortOrder === 'desc' ? '↑' : '↓' }}
+              </span>
             </div>
-            <div class="header-cell sub-header c_7" :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3;`">
+            
+            
+            <!-- <div class="header-cell sub-header c_7" :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3;`">
               %
-            </div>
+            </div> -->
+
           </template>
         </div>
 
@@ -162,7 +204,7 @@
                 </div>
                 <div class="data-cell score-current c_4" :class="getScoreClass(getRegionCurrent(region, weekIndex))"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'scoreCurrent')}`">
-                    {{ getRegionCurrent(region, weekIndex) }}
+                  {{ getRegionCurrent(region, weekIndex) }}
                 </div>
                 <div :class="`data-cell plan c_5 grid-col-${getGridColumn(weekIndex, 'plan')}`"
                   :style="`grid-column: ${getGridColumn(weekIndex, 'plan')}`">
@@ -205,24 +247,24 @@
         </div>
 
         <!-- Разделитель -->
-        
+
         <div class="table-body stores-body">
           <transition-group name="table-row" tag="div" class="transition-wrapper">
-            <div v-for="(store, storeIndex) in getAllSortedStores()" :key="`store-${store.id}`" class="data-row store-row"
-              :style="{ gridTemplateColumns: gridTemplateColumns }">
+            <div v-for="(store, storeIndex) in getAllSortedStores()" :key="`store-${store.id}`"
+              class="data-row store-row" :style="{ gridTemplateColumns: gridTemplateColumns }">
               <div class="data-cell store-name c_1">
                 <div class="store-info">
                   <span class="region-indicator" :style="{ backgroundColor: store.regionColor }"></span>
-                  
+
                   <span class="store-title">{{ store.name }}</span>
-                  
+
                 </div>
               </div>
-              
+
               <template v-for="(week, weekIndex) in weeks" :key="week.id">
                 <div class="data-cell store-rank score-max c_2"
-                :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
-                  {{ storeIndex+1 }}
+                  :style="`grid-column: ${getGridColumn(weekIndex, 'rank')}`">
+                  {{ storeIndex + 1 }}
                 </div>
                 <div class="data-cell c_3" :style="`grid-column: ${getGridColumn(weekIndex, 'scoreMax')}`">
                   {{ "-" }}
@@ -465,32 +507,20 @@ export default {
     const getRegionCurrent = (region, weekId = null) => {
       const stores = region.stores || []
       let totalCurrent = 0
-      
-      if (weekId && weekId !== 'all') {
-        // Для конкретной недели
-        if (!weeklyScoresCache.value[weekId]) {
-          weeklyScoresCache.value[weekId] = calculateCurrentScores(weekId)
-        }
-        
-        stores.forEach(store => {
-          totalCurrent += weeklyScoresCache.value[weekId].scores[store.id] || 0
-          // console.log('getRegionCurrent', weeklyScoresCache.value[weekId].scores[store.id] );
-          // console.log('getRegionCurrent', store );
-          // debugger
-        })
-      } else {
+
+
         // Для всех недель
         weeks.value.forEach(week => {
           if (!weeklyScoresCache.value[week.id]) {
             weeklyScoresCache.value[week.id] = calculateCurrentScores(week.id)
           }
-          
+
           stores.forEach(store => {
             totalCurrent += weeklyScoresCache.value[week.id].scores[store.id] || 0
           })
         })
-      }
       
+
       return totalCurrent
     }
 
@@ -535,7 +565,15 @@ export default {
             aValue = getRegionCurrent(a, sortWeek.value)
             bValue = getRegionCurrent(b, sortWeek.value)
             break
-          default:
+            default:
+            case 'regionPlan':
+              aValue = getRegionPlan(a, sortWeek.value)
+              bValue = getRegionPlan(b, sortWeek.value)
+              break
+            case 'regionFact':
+              aValue = getRegionFact(a, sortWeek.value)
+              bValue = getRegionFact(b, sortWeek.value)
+              break
             return 0
         }
 
@@ -610,7 +648,7 @@ export default {
         })
         return totalCurrent
       }
-      
+
       // Для конкретной недели
       if (!weeklyScoresCache.value[weekId]) {
         weeklyScoresCache.value[weekId] = calculateCurrentScores(weekId)
@@ -640,7 +678,7 @@ export default {
         if (!weekData) return 0
         return calculatePercent(weekData.plan, weekData.fact)
       }
-      
+
       // Для всех недель
       return getTotalPercentForStore(store)
     }
@@ -819,6 +857,120 @@ export default {
       await loadData()
     }
 
+
+
+
+
+
+
+    // Функция для сортировки по факту при клике на заголовок
+    const sortByFact = (weekId) => {
+      isAnimating.value = true
+
+      // Если уже сортируем по факту этой недели, меняем направление
+      if (sortBy.value === 'regionFact' && sortWeek.value === weekId) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Иначе устанавливаем новую сортировку
+        sortBy.value = 'regionFact'
+        sortWeek.value = weekId
+        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+      }
+
+      setTimeout(() => {
+        isAnimating.value = false
+      }, 600)
+    }
+
+    const getRegionFact = (region, weekId) => {
+      if (!weekId || weekId === 'all') {
+        return getTotalFactForRegion(region)
+      }
+
+      const weekData = getRegionWeekData(region, weekId)
+      return weekData.fact
+    }
+
+
+    // Функция для сортировки по факту при клике на заголовок
+    const sortByPlan = (weekId) => {
+      isAnimating.value = true
+
+      // Если уже сортируем по факту этой недели, меняем направление
+      if (sortBy.value === 'regionPlan' && sortWeek.value === weekId) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Иначе устанавливаем новую сортировку
+        sortBy.value = 'regionPlan'
+        sortWeek.value = weekId
+        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+      }
+
+      setTimeout(() => {
+        isAnimating.value = false
+      }, 600)
+    }
+
+    const getRegionPlan = (region, weekId) => {
+      if (!weekId || weekId === 'all') {
+        return getTotalFactForRegion(region)
+      }
+
+      const weekData = getRegionWeekData(region, weekId)
+      return weekData.fact
+    }
+
+    // Функция для сортировки по факту при клике на заголовок
+    const sortByCurrent = (weekId) => {
+      isAnimating.value = true
+
+      // Если уже сортируем по факту этой недели, меняем направление
+      if (sortBy.value === 'regionCurrent' && sortWeek.value === weekId) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Иначе устанавливаем новую сортировку
+        sortBy.value = 'regionCurrent'
+        sortWeek.value = weekId
+        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+      }
+
+      setTimeout(() => {
+        isAnimating.value = false
+      }, 600)
+    }
+
+        // Функция для сортировки по факту при клике на заголовок
+    const sortByPercent = (weekId) => {
+      isAnimating.value = true
+
+      // Если уже сортируем по факту этой недели, меняем направление
+      if (sortBy.value === 'regionPercent' && sortWeek.value === weekId) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        // Иначе устанавливаем новую сортировку
+        sortBy.value = 'regionPercent'
+        sortWeek.value = weekId
+        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+      }
+
+      setTimeout(() => {
+        isAnimating.value = false
+      }, 600)
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     onMounted(() => {
       loadData()
     })
@@ -851,7 +1003,11 @@ export default {
       handleSort,
       toggleSortOrder,
       refreshData,
-      loadData
+      loadData,
+      sortByFact,
+      sortByPlan,
+      sortByCurrent,
+      sortByPercent,
     }
   }
 }
@@ -1148,6 +1304,7 @@ $padding-lg: 15px 20px;
 .metric-header {
   background: $background-week;
   font-size: 12px;
+  
 }
 
 .sub-header {
@@ -1454,4 +1611,20 @@ $padding-lg: 15px 20px;
 .unprocessed {
   border-right: 1px solid $border-week;
 }
+
+
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 15px;
+  color: #0f4478;
+  font-weight: bold;
+}
+
+.header-cell:hover .sort-indicator {
+  color: #66b1ff;
+}
+.sort_class:hover {
+    background-color: #c9ddf1;
+}
+
 </style>
