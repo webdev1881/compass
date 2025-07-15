@@ -4,36 +4,24 @@
       <div style="color: white;" class="loading-progress">_</div>
     </div>
     <div v-else class="content">
+      <!-- {{ isAnimating }} -->
 
       <div class="controls-panel" v-if="!loading && !error">
-        <div class="sorting-controls">
-          <label>Сортировка:</label>
-          <select v-model="sortWeek" @change="handleSort" :disabled="isAnimating">
-            <option value="all">По всем неделям</option>
-            <option v-for="week in weeks" :key="'sort-' + week.id" :value="week.id">
-              {{ week.name }}
-            </option>
-          </select>
-
-          <select v-model="sortBy" @change="handleSort" :disabled="isAnimating">
-            <option value="regionRank">По рангу регионов</option>
-            <option value="regionPercent">Регионы по % выполнения</option>
-            <option value="regionCurrent">Регионы по баллам</option>
-            <option value="storePercent">Магазины по % выполнения</option>
-            <option value="storeCurrent">Магазины по баллам</option>
-            {{ isAnimating }}
-          </select>
-          {{ sortBy }}
-
-          <!-- <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
-    {{ sortOrder === 'asc' ? '↑' : '↓' }}
-  </button>
-
-  <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
-    🔄 Обновить
-  </button> -->
-
+        <div class="region-filters">
+          <div class="checkbox-group">
+            <label v-for="region in regions" :key="'filter-' + region.id" class="checkbox-wrapper">
+              <input type="checkbox" :value="region.name" v-model="selectedRegions" class="region-checkbox" />
+              <span class="checkbox-custom">
+                <span class="checkbox-indicator" :style="{ backgroundColor: region.color }"></span>
+              </span>
+              <span class="checkbox-label">{{ region.name }}</span>
+            </label>
+          </div>
+          <button v-if="selectedRegions.length > 0" @click="selectedRegions = []" class="clear-filters-btn">
+            Очистить фильтры
+          </button>
         </div>
+
         <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
           Обновить
         </button>
@@ -116,42 +104,37 @@
           </template>
 
           <template v-for="(week, weekIndex) in weeks" :key="'week3-' + week.id">
-            <div class="header-cell sub-header sort_class score-max c_2"
-              :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3;`">
-              РАНГ
+
+            <div :class="`header-cell c_2 sub-header sort_class fact-column grid-col-${2 + weekIndex * 11}`"
+              :style="`grid-column: ${2 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByRank(week.id)">
+              <span>100</span>
+              <span v-if="sortBy === 'regionRank' && sortWeek === week.id" class="sort-indicator">
+                {{ sortOrder === 'desc' ? '↑' : '↓' }}
+              </span>
             </div>
+
             <div class="header-cell sub-header c_3" :style="`grid-column: ${3 + weekIndex * 11}; grid-row: 3;`">
               900
             </div>
 
-            <div :class="`header-cell c_4 sub-header sort_class fact-column grid-col-${6 + weekIndex * 11}`"
-              :style="`grid-column: ${4 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByCurrent(week.id)">
+            <div :class="`header-cell c_4 sub-header sort_class fact-column grid-col-${4 + weekIndex * 11}`"
+              :style="`grid-column: ${4 + weekIndex * 11}; grid-row: 3; cursor: pointer;`"
+              @click="sortByCurrent(week.id)">
               <span>100</span>
               <span v-if="sortBy === 'regionCurrent' && sortWeek === week.id" class="sort-indicator">
                 {{ sortOrder === 'desc' ? '↑' : '↓' }}
               </span>
             </div>
-            <!-- <div class="header-cell sub-header score-current c_4"
-              :style="`grid-column: ${4 + weekIndex * 11}; grid-row: 3;`">
-              100
-            </div> -->
 
-
-            <div :class="`header-cell c_5 sub-header fact-column sort_class grid-col-${6 + weekIndex * 11}`"
-              :style="`grid-column: ${5 + weekIndex * 11}; grid-row: 3;  cursor: pointer;`" @click="sortByPlan(week.id)">
+            <div :class="`header-cell c_5 sub-header fact-column sort_class grid-col-${5 + weekIndex * 11}`"
+              :style="`grid-column: ${5 + weekIndex * 11}; grid-row: 3;  cursor: pointer;`"
+              @click="sortByPlan(week.id)">
               <span>План</span>
               <span v-if="sortBy === 'regionPlan' && sortWeek === week.id" class="sort-indicator">
                 {{ sortOrder === 'desc' ? '↑' : '↓' }}
               </span>
             </div>
 
-
-            <!-- <div :class="`header-cell c_5 sub-header plan-column grid-col-${5 + weekIndex * 11}`"
-              :style="`grid-column: ${5 + weekIndex * 11}; grid-row: 3;`">
-              План
-            </div> -->
-
-            <!-- Замените существующий заголовок "Факт" на: -->
             <div :class="`header-cell c_6 sub-header sort_class fact-column grid-col-${6 + weekIndex * 11}`"
               :style="`grid-column: ${6 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByFact(week.id)">
               <span>Факт</span>
@@ -160,24 +143,14 @@
               </span>
             </div>
 
-
-            <!-- <div :class="`header-cell c_6 sub-header fact-column grid-col-${6 + weekIndex * 11}`"
-              :style="`grid-column: ${6 + weekIndex * 11}; grid-row: 3;`">
-              Факт
-            </div> -->
-
-            <div :class="`header-cell c_7 sub-header sort_class fact-column grid-col-${6 + weekIndex * 11}`"
-              :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" @click="sortByPercent(week.id)">
+            <div :class="`header-cell c_7 sub-header sort_class fact-column grid-col-${7 + weekIndex * 11}`"
+              :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3; cursor: pointer;`"
+              @click="sortByPercent(week.id)">
               <span>%</span>
               <span v-if="sortBy === 'regionPercent'" class="sort-indicator">
                 {{ sortOrder === 'desc' ? '↑' : '↓' }}
               </span>
             </div>
-            
-            
-            <!-- <div class="header-cell sub-header c_7" :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3;`">
-              %
-            </div> -->
 
           </template>
         </div>
@@ -243,7 +216,16 @@
               </template>
             </div>
           </transition-group>
-          <div class="table-separator"></div>
+          <div class="table-separator">
+            <div  @click="sortByStorePercent(week.id)" class="data-cell regione-name c_1"></div>
+            <div v-for="(week, weekIndex) in weeks" :key="week.id" class="sorter">
+              <div @click="sortByStorePercent(week.id)" class="sorter_item" :style="`grid-column: ${7 + weekIndex * 11}; grid-row: 3; cursor: pointer;`" v-for="(week, idx) in 11" :class="` c_${idx+2}`">
+                <div class="ind_wrap">
+                  <span v-if="idx === 0" class="sort-indicato">{{ sortOrder === 'desc' ? '↑' : '↓' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Разделитель -->
@@ -346,6 +328,7 @@ export default {
     const showPlanFactColumns = ref({})
     const weeklyScoresCache = ref({})
     const sortWeek = ref('all')
+    const selectedRegions = ref([])
 
     const loadData = async () => {
       try {
@@ -366,7 +349,13 @@ export default {
 
         salesData.value = data
 
-        // updateGridColumns()
+        if (data.weeks.length >= 2) {
+          sortWeek.value = data.weeks[0].id
+        } else if (data.weeks.length > 0) {
+          sortWeek.value = data.weeks[1].id
+        } else {
+          sortWeek.value = 'all'
+        }
 
         data.weeks.forEach(week => {
           showPlanFactColumns.value[week.id] = true
@@ -503,23 +492,20 @@ export default {
       return totalFact
     }
 
-    // Получение текущих баллов региона за конкретную неделю или за все недели
     const getRegionCurrent = (region, weekId = null) => {
       const stores = region.stores || []
       let totalCurrent = 0
 
+      weeks.value.forEach(week => {
+        if (!weeklyScoresCache.value[week.id]) {
+          weeklyScoresCache.value[week.id] = calculateCurrentScores(week.id)
+        }
 
-        // Для всех недель
-        weeks.value.forEach(week => {
-          if (!weeklyScoresCache.value[week.id]) {
-            weeklyScoresCache.value[week.id] = calculateCurrentScores(week.id)
-          }
-
-          stores.forEach(store => {
-            totalCurrent += weeklyScoresCache.value[week.id].scores[store.id] || 0
-          })
+        stores.forEach(store => {
+          totalCurrent += weeklyScoresCache.value[week.id].scores[store.id] || 0
         })
-      
+      })
+
 
       return totalCurrent
     }
@@ -531,25 +517,27 @@ export default {
       return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
     }
 
-    // Получение процента выполнения региона за конкретную неделю или за все недели
     const getRegionPercent = (region, weekId = null) => {
       if (weekId && weekId !== 'all') {
         const weekData = getRegionWeekData(region, weekId)
         return calculatePercent(weekData.plan, weekData.fact)
       }
-      // Для всех недель
       const totalPlan = getTotalPlanForRegion(region)
       const totalFact = getTotalFactForRegion(region)
       return calculatePercent(totalPlan, totalFact)
     }
 
-    // Обновленная функция сортировки регионов
+
     const sortedRegions = computed(() => {
       if (!regions.value) return []
 
-      const sorted = [...regions.value]
+      let filtered = [...regions.value]
 
-      sorted.sort((a, b) => {
+      if (selectedRegions.value.length > 0) {
+        filtered = filtered.filter(region => selectedRegions.value.includes(region.name))
+      }
+
+      filtered.sort((a, b) => {
         let aValue, bValue
 
         switch (sortBy.value) {
@@ -565,22 +553,18 @@ export default {
             aValue = getRegionCurrent(a, sortWeek.value)
             bValue = getRegionCurrent(b, sortWeek.value)
             break
-            default:
-            case 'regionPlan':
-              aValue = getRegionPlan(a, sortWeek.value)
-              bValue = getRegionPlan(b, sortWeek.value)
-              break
-            case 'regionFact':
-              aValue = getRegionFact(a, sortWeek.value)
-              bValue = getRegionFact(b, sortWeek.value)
-              break
+          case 'regionFact':
+            aValue = getRegionFact(a, sortWeek.value)
+            bValue = getRegionFact(b, sortWeek.value)
+            break
+          default:
             return 0
         }
 
-        return sortOrder.value === 'asc' ? bValue - aValue : aValue - bValue
+        return sortOrder.value === 'asc' ? aValue - bValue : bValue - aValue
       })
 
-      return sorted
+      return filtered
     })
 
 
@@ -603,7 +587,6 @@ export default {
       const allStores = []
       const allRegions = {}
 
-      // Собираем все магазины с их процентами
       regions.value.forEach(region => {
         region.stores?.forEach(store => {
           const weekData = store.weeklyData?.find(w => w.weekId === weekId)
@@ -638,7 +621,6 @@ export default {
 
     const getStoreCurrent = (store, weekId) => {
       if (!weekId || weekId === 'all') {
-        // Для всех недель суммируем баллы
         let totalCurrent = 0
         weeks.value.forEach(week => {
           if (!weeklyScoresCache.value[week.id]) {
@@ -648,8 +630,6 @@ export default {
         })
         return totalCurrent
       }
-
-      // Для конкретной недели
       if (!weeklyScoresCache.value[weekId]) {
         weeklyScoresCache.value[weekId] = calculateCurrentScores(weekId)
       }
@@ -671,7 +651,6 @@ export default {
       return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
     }
 
-    // Получение процента выполнения магазина за конкретную неделю или за все недели
     const getStorePercent = (store, weekId = null) => {
       if (weekId && weekId !== 'all') {
         const weekData = store.weeklyData?.find(w => w.weekId === weekId)
@@ -679,15 +658,17 @@ export default {
         return calculatePercent(weekData.plan, weekData.fact)
       }
 
-      // Для всех недель
       return getTotalPercentForStore(store)
     }
 
-    // Обновленная функция getAllSortedStores
+
     const getAllSortedStores = () => {
       const allStores = []
 
       regions.value.forEach(region => {
+        if (selectedRegions.value.length > 0 && !selectedRegions.value.includes(region.name)) {
+          return
+        }
         const stores = region.stores || []
         stores.forEach(store => {
           allStores.push({
@@ -712,15 +693,15 @@ export default {
             bValue = getStoreCurrent(b, sortWeek.value)
             break
           default:
-            // По умолчанию сортируем по рангу
-            return (a.current || 0) - (b.current || 0)
+            return (a.rank || 0) - (b.rank || 0)
         }
 
-        return sortOrder.value === 'asc' ? bValue - aValue : aValue - bValue
+        return sortOrder.value === 'asc' ? aValue - bValue : bValue - aValue
       })
 
       return allStores
     }
+
 
     const updateGridColumns = () => {
       const header = document.querySelector('.table-header')
@@ -762,17 +743,19 @@ export default {
       if (isCurrentlyShown) {
 
         planColumns.forEach(col => {
-          col.style.transition = 'all 0.3s ease-out'
+          // col.style.transition = 'all 0.3s ease-out'
           col.style.maxWidth = '0'
           col.style.opacity = '0'
           col.style.overflow = 'hidden'
           col.style.padding = '0 0'
           col.style.borderRightWidth = '0'
           col.style.minWidth = '0'
+          // col.style.gridColumn = '6'
+
         })
 
         factColumns.forEach(col => {
-          col.style.transition = 'all 0.3s ease-out'
+          // col.style.transition = 'all 0.3s ease-out'
           col.style.maxWidth = '0'
           col.style.opacity = '0'
           col.style.overflow = 'hidden'
@@ -791,8 +774,8 @@ export default {
 
         setTimeout(() => {
           planColumns.forEach(col => {
-            col.style.transition = 'all 0.3s ease-out'
-            col.style.maxWidth = '100px'
+            // col.style.transition = 'all 0.3s ease-out'
+            col.style.maxWidth = ''
             col.style.opacity = '1'
             col.style.overflow = ''
             col.style.padding = ''
@@ -801,8 +784,8 @@ export default {
           })
 
           factColumns.forEach(col => {
-            col.style.transition = 'all 0.3s ease-out'
-            col.style.maxWidth = '90px'
+            // col.style.transition = 'all 0.3s ease-out'
+            col.style.maxWidth = ''
             col.style.opacity = '1'
             col.style.overflow = ''
             col.style.padding = ''
@@ -858,23 +841,14 @@ export default {
     }
 
 
-
-
-
-
-
-    // Функция для сортировки по факту при клике на заголовок
     const sortByFact = (weekId) => {
       isAnimating.value = true
-
-      // Если уже сортируем по факту этой недели, меняем направление
       if (sortBy.value === 'regionFact' && sortWeek.value === weekId) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
       } else {
-        // Иначе устанавливаем новую сортировку
         sortBy.value = 'regionFact'
         sortWeek.value = weekId
-        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+        sortOrder.value = 'asc' 
       }
 
       setTimeout(() => {
@@ -891,19 +865,15 @@ export default {
       return weekData.fact
     }
 
-
-    // Функция для сортировки по факту при клике на заголовок
     const sortByPlan = (weekId) => {
       isAnimating.value = true
 
-      // Если уже сортируем по факту этой недели, меняем направление
       if (sortBy.value === 'regionPlan' && sortWeek.value === weekId) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
       } else {
-        // Иначе устанавливаем новую сортировку
         sortBy.value = 'regionPlan'
         sortWeek.value = weekId
-        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+        sortOrder.value = 'asc' 
       }
 
       setTimeout(() => {
@@ -920,15 +890,13 @@ export default {
       return weekData.fact
     }
 
-    // Функция для сортировки по факту при клике на заголовок
+
     const sortByCurrent = (weekId) => {
       isAnimating.value = true
 
-      // Если уже сортируем по факту этой недели, меняем направление
       if (sortBy.value === 'regionCurrent' && sortWeek.value === weekId) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
       } else {
-        // Иначе устанавливаем новую сортировку
         sortBy.value = 'regionCurrent'
         sortWeek.value = weekId
         sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
@@ -939,20 +907,29 @@ export default {
       }, 600)
     }
 
-        // Функция для сортировки по факту при клике на заголовок
     const sortByPercent = (weekId) => {
       isAnimating.value = true
-
-      // Если уже сортируем по факту этой недели, меняем направление
       if (sortBy.value === 'regionPercent' && sortWeek.value === weekId) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
       } else {
-        // Иначе устанавливаем новую сортировку
         sortBy.value = 'regionPercent'
         sortWeek.value = weekId
-        sortOrder.value = 'asc' // По умолчанию сортируем по убыванию
+        sortOrder.value = 'asc' 
       }
+      setTimeout(() => {
+        isAnimating.value = false
+      }, 600)
+    }
 
+    const sortByRank = (weekId) => {
+      isAnimating.value = true
+      if (sortBy.value === 'regionRank' && sortWeek.value === weekId) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        sortBy.value = 'regionRank'
+        sortWeek.value = weekId
+        sortOrder.value = 'asc' 
+      }
       setTimeout(() => {
         isAnimating.value = false
       }, 600)
@@ -960,16 +937,19 @@ export default {
 
 
 
-
-
-
-
-
-
-
-
-
-
+    const sortByStorePercent = (weekId) => {
+      isAnimating.value = true
+      if (sortBy.value === 'storePercent' && sortWeek.value === weekId) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        sortBy.value = 'storePercent'
+        sortWeek.value = weekId
+        sortOrder.value = 'asc'
+      }
+      setTimeout(() => {
+        isAnimating.value = false
+      }, 600)
+    }
 
     onMounted(() => {
       loadData()
@@ -977,6 +957,7 @@ export default {
 
     return {
       loading,
+      sortByStorePercent,
       error,
       weeks,
       regions,
@@ -1008,6 +989,8 @@ export default {
       sortByPlan,
       sortByCurrent,
       sortByPercent,
+      sortByRank,
+      selectedRegions,
     }
   }
 }
@@ -1117,8 +1100,9 @@ $padding-lg: 15px 20px;
   background: white;
   padding: 15px 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   margin-bottom: 20px;
+  height: 52px;
 }
 
 .sorting-controls {
@@ -1304,13 +1288,14 @@ $padding-lg: 15px 20px;
 .metric-header {
   background: $background-week;
   font-size: 12px;
-  
+
 }
 
 .sub-header {
   background: $background-week;
   font-size: 12px;
   font-weight: 500;
+  height: 36px;
 }
 
 .score-max {
@@ -1427,10 +1412,14 @@ $padding-lg: 15px 20px;
   color: #c62828;
 }
 
-.table-separator {
-  height: 10px;
-  background: #e3f2fd;
-}
+// .table-separator {
+//   display: flex;
+//   height: 22px;
+//   background: #e3f2fd;
+// }
+// .sorter {
+//   display: flex;
+// }
 
 .loading,
 .error {
@@ -1490,7 +1479,7 @@ $padding-lg: 15px 20px;
 .table-row-enter-from,
 .table-row-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateX(-30px);
 }
 
 .table-row-move {
@@ -1615,7 +1604,7 @@ $padding-lg: 15px 20px;
 
 .sort-indicator {
   margin-left: 4px;
-  font-size: 15px;
+  font-size: 14px;
   color: #0f4478;
   font-weight: bold;
 }
@@ -1623,8 +1612,133 @@ $padding-lg: 15px 20px;
 .header-cell:hover .sort-indicator {
   color: #66b1ff;
 }
+
 .sort_class:hover {
-    background-color: #c9ddf1;
+  background-color: #c9ddf1;
 }
 
+
+
+
+
+.region-filters {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.checkbox-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.3s;
+}
+
+.checkbox-wrapper:hover {
+  opacity: 0.8;
+}
+
+.region-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #dcdfe6;
+  border-radius: 4px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  background: white;
+}
+
+.region-checkbox:checked ~ .checkbox-custom {
+  border-color: #1a4b7d;
+  background: #ecf5ff;
+}
+
+.checkbox-indicator {
+  width: 0;
+  height: 0;
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+.region-checkbox:checked ~ .checkbox-custom .checkbox-indicator {
+  width: 12px;
+  height: 12px;
+}
+
+.checkbox-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+.clear-filters-btn {
+  padding: 6px 12px;
+  border: 1px solid #dcdfe6;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #909399;
+  transition: all 0.3s;
+}
+
+.clear-filters-btn:hover {
+  color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+
+
+.table-separator {
+  display: flex;
+  height: 22px;
+  background: #e3f2fd;
+}
+.sorter {
+  display: flex;
+}
+
+.sort_mag {
+  min-width: 240px;
+}
+.sorter {
+  // position: absolute;
+  display: flex;
+  width: 100%;
+}
+
+
+.ind_wrap {
+  position: absolute;
+  
+}
+.sorter_item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sort-indicato {
+  margin-left: 4px;
+  font-size: 13px;
+  color: #0f4478;
+  font-weight: bold;
+}
 </style>
