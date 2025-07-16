@@ -16,8 +16,9 @@
         <div class="sorting-controls">
           <button class="sort-order-btn" 
                   :class="{ active: sortByRank }"
+                  :title="sortByRank ? 'Отключить сортировку по общему рангу' : 'Включить сортировку по общему рангу'"
                   @click="toggleSortByRank">
-            {{ sortByRank ? '↑ Сортировка включена' : 'Сортировка по рангу' }}
+            {{ sortByRank ? '🏆 Сортировка по рангу' : 'Сортировка по рангу' }}
           </button>
           
           <button class="refresh-btn" 
@@ -58,9 +59,15 @@
               <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                 <div class="cols">
                   <div v-for="col in columns" :key="col.key + weekIndex" 
-                       class="cell dynamic header-cell metric-header"
-                       :style="getStyle(col.key, weekIndex)">
-                    <span v-html="col.label"></span>
+                       class="cell dynamic header-cell metric-header sortable-header"
+                       :style="getStyle(col.key, weekIndex)"
+                       @click="handleRegionSort(week.id, col.key)">
+                    <div class="header-content">
+                      <span v-html="col.label"></span>
+                      <span class="sort-arrow" :class="getSortArrowClass(week.id, col.key)">
+                        {{ getSortIcon(week.id, col.key) }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -76,8 +83,7 @@
                      :class="getRegionRowClass(region.regionRank)">
                   <div class="cell static data-cell region-name">
                     <div class="region-info">
-                      <div class="region-indicator" :class="getRegionRowClass(region.regionRank)"></div>
-                      <span class="region-rank-number">{{ region.regionRank }}</span>
+                      <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
                       <span class="region-arrow" :class="getRegionArrowClass(region.regionRank)">
                         {{ getRegionArrow(region.regionRank) }}
                       </span>
@@ -100,57 +106,58 @@
               </transition-group>
             </div>
 
-            <div class="table-separator"></div>
+            <div class="table-separator">
+              <div class="store-sort-controls">
+                <div class="sort-controls-row">
+                  <div class="sort-static-cell"></div>
+                  <div class="sort-weeks">
+                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="sort-week">
+                      <div class="sort-cols">
+                        <div v-for="col in columns" :key="`store-sort-${week.id}-${col.key}`" 
+                             class="sort-control sortable-control"
+                             :class="getStoreSortArrowClass(week.id, col.key)"
+                             :style="getStyle(col.key, weekIndex)"
+                             :title="`Сортировать магазины по ${col.label.replace(/<br>/g, ' ')} (${week.name})`"
+                             @click="handleStoreSort(week.id, col.key)">
+                          <span class="sort-arrow">
+                            {{ getStoreSortIcon(week.id, col.key) }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            <!-- Данные магазинов по регионам -->
+            <!-- Все магазины без группировки -->
             <transition-group name="table-row" tag="div">
-              <template v-for="region in sortedRegions" :key="`region-stores-${region.id}`">
-                <!-- Заголовок региона для группировки магазинов -->
-                <div class="row region-header data-row">
-                  <div class="cell static data-cell region-name">
-                    <div class="region-info">
-                      <span class="region-title">{{ region.name }} - Магазины</span>
-                    </div>
+              <div v-for="store in allStores" :key="`store-${store.id}`" 
+                   class="row store-row data-row"
+                   :class="getStoreRowClass(store.overallRank)">
+                <div class="cell static data-cell store-name">
+                  <div class="store-info">
+                    <div class="store-region-indicator" :style="{ backgroundColor: store.regionColor }"></div>
+                    <span class="rank-arrow" :class="getRankArrowClass(store.overallRank)">
+                      {{ getRankArrow(store.overallRank) }}
+                    </span>
+                    <span class="store-title">{{ store.name }}</span>
+                    <!-- <span class="store-region-label">({{ store.regionName }})</span> -->
                   </div>
-                  <div class="data_cells">
-                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
-                      <div class="cols">
-                        <div v-for="col in columns" :key="`region-header-${region.id}-${week.id}-${col.key}`" 
-                             class="cell dynamic data-cell header-cell sub-header" 
-                             :style="getStyle(col.key, weekIndex)">
-                        </div>
+                </div>
+                <div class="data_cells">
+                  <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
+                    <div class="cols">
+                      <div v-for="col in columns" :key="`store-${store.id}-${week.id}-${col.key}`" 
+                           class="cell dynamic data-cell" 
+                           :class="[getCellClass(col.key, getStoreWeekData(store, week.id)), col.key]"
+                           :style="getStyle(col.key, weekIndex)">
+                        {{ getStoreData(store, week.id, col.key) }}
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <!-- Магазины региона -->
-                <div v-for="store in getSortedStores(region)" :key="`store-${store.id}`" 
-                     class="row store-row data-row"
-                     :class="getStoreRowClass(store.overallRank)">
-                  <div class="cell static data-cell store-name">
-                    <div class="store-info">
-                      <span class="store-rank-number">{{ store.overallRank }}</span>
-                      <span class="rank-arrow" :class="getRankArrowClass(store.overallRank)">
-                        {{ getRankArrow(store.overallRank) }}
-                      </span>
-                      <span class="store-title">{{ store.name }}</span>
-                    </div>
-                  </div>
-                  <div class="data_cells">
-                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
-                      <div class="cols">
-                        <div v-for="col in columns" :key="`store-${store.id}-${week.id}-${col.key}`" 
-                             class="cell dynamic data-cell" 
-                             :class="[getCellClass(col.key, getStoreWeekData(store, week.id)), col.key]"
-                             :style="getStyle(col.key, weekIndex)">
-                          {{ getStoreData(store, week.id, col.key) }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </template>
+              </div>
             </transition-group>
           </div>
         </div>
@@ -167,6 +174,12 @@ const error = ref(null)
 const salesData = ref(null)
 const sortByRank = ref(false)
 const regions = ref([])
+
+// Состояние для сортировки по колонкам регионов
+const regionSortBy = ref({ weekId: 'week35', columnKey: 'percent', direction: 'desc' })
+
+// Состояние для сортировки магазинов
+const storeSortBy = ref({ weekId: 'week35', columnKey: 'percent', direction: 'desc' })
 
 // Определение колонок
 const columns = [
@@ -250,13 +263,22 @@ const loadData = async () => {
 const processData = () => {
   if (!regions.value || !salesData.value) return
 
-  // Собираем все магазины для расчета рейтинга
-  const allStores = []
+  // Добавляем цвета регионов к магазинам
   regions.value.forEach(region => {
     if (region.stores) {
       region.stores.forEach(store => {
         store.regionId = region.id
         store.regionName = region.name
+        store.regionColor = region.color
+      })
+    }
+  })
+
+  // Собираем все магазины для расчета рейтинга
+  const allStores = []
+  regions.value.forEach(region => {
+    if (region.stores) {
+      region.stores.forEach(store => {
         allStores.push(store)
       })
     }
@@ -484,34 +506,197 @@ const sortedRegions = computed(() => {
     region.totalPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
   })
   
-  // Сортируем регионы по общему проценту выполнения
-  sorted.sort((a, b) => b.totalPercent - a.totalPercent)
+  // Сортировка регионов по выбранному критерию
+  sorted.sort((a, b) => {
+    let aValue = 0
+    let bValue = 0
+    
+    if (regionSortBy.value.columnKey === 'percent') {
+      aValue = a.totalPercent
+      bValue = b.totalPercent
+    } else {
+      aValue = getRegionSortValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+      bValue = getRegionSortValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+    }
+    
+    return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
+  })
   
   // Присваиваем ранги регионам
   sorted.forEach((region, index) => {
     region.regionRank = index + 1
   })
   
-  if (sortByRank.value) {
-    // Сортируем магазины внутри каждого региона по рангу
-    sorted.forEach(region => {
-      if (region.stores) {
-        region.stores.sort((a, b) => (a.overallRank || 0) - (b.overallRank || 0))
-      }
-    })
-  }
-  
   return sorted
 })
 
-const getSortedStores = (region) => {
-  if (!region.stores) return []
+// Все магазины без группировки по регионам
+const allStores = computed(() => {
+  const stores = []
   
-  if (sortByRank.value) {
-    return [...region.stores].sort((a, b) => (a.overallRank || 0) - (b.overallRank || 0))
+  regions.value.forEach(region => {
+    if (region.stores) {
+      region.stores.forEach(store => {
+        stores.push({
+          ...store,
+          regionId: region.id,
+          regionName: region.name,
+          regionColor: region.color
+        })
+      })
+    }
+  })
+  
+  // Приоритет сортировки: сначала по колонкам, потом по рангу
+  if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
+    stores.sort((a, b) => {
+      let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+      let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+      
+      // Для негативных показателей инвертируем сортировку
+      const isNegativeMetric = ['losses', 'shortages', 'unprocessed'].includes(storeSortBy.value.columnKey)
+      if (isNegativeMetric) {
+        return storeSortBy.value.direction === 'desc' ? aValue - bValue : bValue - aValue
+      }
+      
+      return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
+    })
+  } else if (sortByRank.value) {
+    stores.sort((a, b) => (a.overallRank || 0) - (b.overallRank || 0))
   }
   
-  return region.stores
+  return stores
+})
+
+const getStoreSortValue = (store, weekId, columnKey) => {
+  const weekData = getStoreWeekData(store, weekId)
+  
+  switch (columnKey) {
+    case 'rank':
+      return weekData.rank || store.overallRank || 0
+    case 'points':
+      return weekData.points || 0
+    case 'plan':
+      return weekData.plan || 0
+    case 'fact':
+      return weekData.fact || 0
+    case 'percent':
+      return weekData.percent || 0
+    case 'losses':
+      return weekData.losses || 0
+    case 'shortages':
+      return weekData.shortages || 0
+    case 'fop':
+      return weekData.fop || 0
+    case 'fillers':
+      return weekData.fillers || 0
+    case 'shift':
+      return weekData.shift || 0
+    case 'unprocessed':
+      return weekData.unprocessed || 0
+    default:
+      return 0
+  }
+}
+
+const handleStoreSort = (weekId, columnKey) => {
+  if (storeSortBy.value.weekId === weekId && storeSortBy.value.columnKey === columnKey) {
+    storeSortBy.value.direction = storeSortBy.value.direction === 'desc' ? 'asc' : 'desc'
+  } else {
+    storeSortBy.value = {
+      weekId,
+      columnKey,
+      direction: 'desc'
+    }
+  }
+}
+
+const getStoreSortIcon = (weekId, columnKey) => {
+  if (storeSortBy.value.weekId === weekId && storeSortBy.value.columnKey === columnKey) {
+    return storeSortBy.value.direction === 'desc' ? '▼' : '▲'
+  }
+  return '↕'
+}
+
+const getStoreSortArrowClass = (weekId, columnKey) => {
+  if (storeSortBy.value.weekId === weekId && storeSortBy.value.columnKey === columnKey) {
+    return storeSortBy.value.direction === 'desc' ? 'sort-active sort-desc' : 'sort-active sort-asc'
+  }
+  return 'sort-inactive'
+}
+
+const getRegionSortValue = (region, weekId, columnKey) => {
+  if (!region.stores) return 0
+  
+  let total = 0
+  let totalPlan = 0
+  let totalFact = 0
+  let totalPoints = 0
+  
+  region.stores.forEach(store => {
+    const weekData = getStoreWeekData(store, weekId)
+    
+    switch (columnKey) {
+      case 'plan':
+        total += weekData.plan || 0
+        break
+      case 'fact':
+        total += weekData.fact || 0
+        break
+      case 'losses':
+        total += weekData.losses || 0
+        break
+      case 'shortages':
+        total += weekData.shortages || 0
+        break
+      case 'fop':
+        total += weekData.fop || 0
+        break
+      case 'fillers':
+        total += weekData.fillers || 0
+        break
+      case 'shift':
+        total += weekData.shift || 0
+        break
+      case 'unprocessed':
+        total += weekData.unprocessed || 0
+        break
+      case 'points':
+        totalPoints += weekData.points || 0
+        break
+    }
+    
+    totalPlan += weekData.plan || 0
+    totalFact += weekData.fact || 0
+  })
+  
+  switch (columnKey) {
+    case 'points':
+      return totalPoints
+    case 'percent':
+      return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
+    default:
+      return total
+  }
+}
+
+const handleRegionSort = (weekId, columnKey) => {
+  if (regionSortBy.value.weekId === weekId && regionSortBy.value.columnKey === columnKey) {
+    regionSortBy.value.direction = regionSortBy.value.direction === 'desc' ? 'asc' : 'desc'
+  } else {
+    regionSortBy.value = {
+      weekId,
+      columnKey,
+      direction: 'desc'
+    }
+  }
+}
+
+const getSortIcon = (weekId, columnKey) => {
+  if (regionSortBy.value.weekId === weekId && regionSortBy.value.columnKey === columnKey) {
+    return regionSortBy.value.direction === 'desc' ? '▼' : '▲'
+  }
+  return '↕'
 }
 
 const getStoreWeekData = (store, weekId) => {
@@ -751,6 +936,13 @@ const toggleSortByRank = () => {
   sortByRank.value = !sortByRank.value
 }
 
+const getSortArrowClass = (weekId, columnKey) => {
+  if (regionSortBy.value.weekId === weekId && regionSortBy.value.columnKey === columnKey) {
+    return regionSortBy.value.direction === 'desc' ? 'sort-active sort-desc' : 'sort-active sort-asc'
+  }
+  return 'sort-inactive'
+}
+
 const refreshData = async () => {
   await loadData()
 }
@@ -761,44 +953,44 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-$primary-color: #2196f3;
-$success-color: #2e7d32;
-$warning-color: #f57c00;
-$danger-color: #d32f2f;
-$light-success: #28a745;
-$light-warning: #ffebee;
-$light-danger: #c62828;
-
-$border-color: #e0e0e0;
-$border-light: #dee2e6;
-$background-light: #f5f5f5;
-$background-white: white;
-$background-hover: #fafafa;
-$background-week: #e3f2fd;
-$background-negative: #ffebee;
-$header-background: #f5f5f5;
-
-$text-primary: #333;
-$text-secondary: #555;
-$text-week: #0f4478;
-$text-disabled: #6c757d;
-$separator-week: #0f4478;
-
-$border-week: #91b6db;
-$border-radius: 4px;
-$border-radius-lg: 8px;
-$font-size-sm: 11px;
-$font-size-base: 12px;
-$font-size-lg: 16px;
-$padding-sm: 6px 8px;
-$padding-base: 8px 12px;
-$padding-lg: 15px 20px;
+// CSS переменные для современного дизайна
+:root {
+  --primary-color: #3b82f6;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --info-color: #6366f1;
+  
+  --success-light: #ecfdf5;
+  --warning-light: #fffbeb;
+  --danger-light: #fef2f2;
+  --info-light: #eef2ff;
+  --neutral-light: #f8fafc;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --surface: #ffffff;
+  --surface-hover: #f8fafc;
+  
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
 
 .sales-table-container {
   width: 100%;
   min-height: 100vh;
   max-width: 2300px;
-  background: $background-white;
+  background: var(--neutral-light);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .loading-bar {
@@ -806,32 +998,34 @@ $padding-lg: 15px 20px;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: #e0e0e0;
+  height: 3px;
+  background: var(--border-light);
   z-index: 1000;
+  overflow: hidden;
 }
 
 .loading-progress {
   height: 100%;
-  background: #2196f3;
+  background: var(--primary-color);
+  border-radius: 0 2px 2px 0;
   animation: loading 1.5s ease-in-out infinite;
 }
 
 @keyframes loading {
-  0% { width: 0%; }
-  50% { width: 70%; }
-  100% { width: 100%; }
+  0% { width: 0%; transform: translateX(-100%); }
+  50% { width: 70%; transform: translateX(0%); }
+  100% { width: 100%; transform: translateX(100%); }
 }
 
 .content {
-  padding: 20px;
-  animation: fadeIn .5s ease-in;
+  padding: 24px;
+  animation: fadeIn 0.6s ease-out;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -843,53 +1037,66 @@ $padding-lg: 15px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: white;
-  padding: 15px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  background: var(--surface);
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
 }
 
 .sorting-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .sort-order-btn {
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  background: white;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .sort-order-btn:hover {
-  color: #409eff;
-  border-color: #409eff;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .sort-order-btn.active {
-  background: #409eff;
+  background: var(--primary-color);
   color: white;
-  border-color: #409eff;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
 }
 
 .refresh-btn {
-  padding: 8px 12px;
-  border: 1px solid #dcdfe6;
-  background: white;
-  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.3s;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .refresh-btn:hover:not(:disabled) {
-  color: #409eff;
-  border-color: #409eff;
+  border-color: var(--success-color);
+  color: var(--success-color);
+  background: var(--success-light);
 }
 
 .refresh-btn:disabled {
@@ -899,49 +1106,53 @@ $padding-lg: 15px 20px;
 
 .week-toggles {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .toggle-columns-btn {
-  padding: 4px 8px;
-  border: 1px solid #dcdfe6;
-  background: white;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 11px;
-  transition: all 0.3s;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
 }
 
 .toggle-columns-btn:hover {
-  color: #409eff;
-  border-color: #409eff;
+  border-color: var(--info-color);
+  color: var(--info-color);
+  background: var(--info-light);
 }
 
 .toggle-columns-btn.is-hidden {
-  opacity: 0.7;
-  background: #f5f5f5;
+  opacity: 0.6;
+  background: var(--border-light);
+  color: var(--text-muted);
 }
 
 .custom-table {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
   overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
 .table {
   width: 100%;
   min-width: 1400px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
 }
 
 .table-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: white;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .row {
@@ -950,9 +1161,9 @@ $padding-lg: 15px 20px;
 }
 
 .cell {
-  padding: 8px 4px;
-  border-right: 1px solid $border-week;
-  border-bottom: 1px solid $border-week;
+  height: 35px;
+  padding: 8px 0px;
+  border-right: 1px solid var(--border-color);
   box-sizing: border-box;
   text-align: center;
   overflow: hidden;
@@ -960,110 +1171,127 @@ $padding-lg: 15px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 13px;
+  border-right: 1px solid silver;
+  border-bottom: 1px solid silver;
+  // line-height: 1.4;
 }
 
 .cell.static {
-  width: 256px;
+  min-width: 300px;
   flex-shrink: 0;
-  background: #f9f9f9;
-  font-weight: bold;
+  background: var(--neutral-light);
+  font-weight: 600;
+  border-right: 2px solid var(--border-color);
 }
 
 .cell.dynamic {
-  font-size: 12px;
-  transition: all 0.3s ease-out;
+  display: flex;
+  justify-content: center;
+  // min-width: 60px;
+  // flex: 1;
+  transition: all 0.2s ease;
 }
 
 .header-cell {
   font-weight: 600;
-  color: #333;
-  background: #e3f2fd;
-  font-size: 13px;
-}
-
-.store-name-column {
-  grid-row: 1 / 4;
-  grid-column: 1;
+  color: var(--text-primary);
+  background: var(--neutral-light);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .week-group {
-  background: #e3f2fd;
-  color: $text-week;
-  font-size: 17px;
-  font-weight: 600;
+  background: var(--info-light);
+  color: var(--info-color);
+  font-size: 15px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--info-color);
 }
 
 .metric-header {
-  background: $background-week;
-  font-size: 12px;
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .sub-header {
-  background: $background-week;
-  font-size: 12px;
+  background: var(--border-light);
+  font-size: 11px;
   font-weight: 500;
+  color: var(--text-muted);
 }
 
 .table-body {
-  background: white;
+  background: var(--surface);
 }
 
 .data-row {
-  border-bottom: 1px solid #e0e0e0;
-  transition: all 0.3s ease;
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.2s ease;
 }
 
 .data-row:hover {
-  background: #fafafa;
-  transform: translateY(-1px);
-  box-shadow: 0 1px 8px rgba(2, 52, 122, 0.3);
-  z-index: 5;
-  position: relative;
+  background: var(--surface-hover);
+  box-shadow: 0 2px 8px rgb(59 130 246 / 0.08);
 }
 
 .region-row {
-  background: #f8f9fa;
+  background: var(--neutral-light);
   font-weight: 600;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .data-cell {
   font-size: 13px;
+  font-weight: 500;
 }
 
 .region-name,
 .store-name {
   justify-content: flex-start;
-  padding-left: 16px;
+  padding-left: 20px;
 }
 
 .region-info,
 .store-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .region-indicator {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .region-title {
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
+  font-size: 14px;
 }
 
 .store-rank-number,
 .region-rank-number {
-  font-weight: 600;
-  color: #666;
-  min-width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 11px;
+  min-width: 24px;
 }
 
 .store-title {
-  color: #333;
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .plan,
@@ -1071,9 +1299,9 @@ $padding-lg: 15px 20px;
 .losses,
 .shortages,
 .fop {
-  text-align: right;
   justify-content: flex-end;
-  font-family: monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
 }
 
 .percent {
@@ -1081,100 +1309,223 @@ $padding-lg: 15px 20px;
 }
 
 .points {
-  font-weight: 600;
-  color: #007bff;
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 .rank {
   font-weight: 600;
-  color: #6c757d;
+  color: var(--text-secondary);
 }
 
-// Условное форматирование по рангам
+// Современное условное форматирование
 .top-rank {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  background: var(--success-light);
+  border-left: 4px solid var(--success-color);
 }
 
 .mid-rank {
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  background: var(--warning-light);
+  border-left: 4px solid var(--warning-color);
 }
 
 .low-rank {
-  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  background: var(--danger-light);
+  border-left: 4px solid var(--danger-color);
 }
 
 .region-top-rank {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  background: var(--success-light);
+  border-left: 6px solid var(--success-color);
 }
 
 .region-mid-rank {
-  background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+  background: var(--warning-light);
+  border-left: 6px solid var(--warning-color);
 }
 
 .region-low-rank {
-  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  background: var(--danger-light);
+  border-left: 6px solid var(--danger-color);
 }
 
-.region-indicator.region-top-rank {
-  background: #4caf50;
+.region-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 1);
+  // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.region-indicator.region-mid-rank {
-  background: #ff9800;
+.store-region-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 1);
+  // box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.region-indicator.region-low-rank {
-  background: #f44336;
+.store-region-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 4px;
 }
 
-// Стрелки направления
+// Сортировка в заголовках
+.sortable-header {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sortable-header:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary-color);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.sort-arrow {
+  font-size: 10px;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.sort-arrow.sort-active {
+  opacity: 1;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+.sort-arrow.sort-desc {
+  color: var(--danger-color);
+}
+
+.sort-arrow.sort-asc {
+  color: var(--success-color);
+}
+
+.sort-arrow.sort-inactive {
+  opacity: 0.3;
+}
+
+.sortable-header:hover .sort-arrow {
+  opacity: 0.8;
+}
+
+// Современные стрелки направления
 .rank-arrow,
 .region-arrow {
-  font-size: 16px;
-  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .arrow-up {
-  color: #28a745;
+  background: var(--success-light);
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
 }
 
 .arrow-stable {
-  color: #ffc107;
+  background: var(--warning-light);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
 }
 
 .arrow-down {
-  color: #dc3545;
+  background: var(--danger-light);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
 }
 
-// Процентное форматирование
-.excellent {
-  color: #2e7d32;
-  font-weight: bold;
+// Условное форматирование по рангам в колонках
+.column-rank-top {
+  // background: var(--success-light);
+  color: var(--success-color);
+  font-weight: 600;
+  // border: 1px solid var(--success-color);
+  // border-radius: var(--radius-sm);
 }
 
-.good {
-  color: #388e3c;
+.column-rank-good {
+  // background: #f0f9ff;
+  color: #0369a1;
+  // border: 1px solid #0369a1;
+  // border-radius: var(--radius-sm);
 }
 
-.average {
-  color: #f57c00;
+.column-rank-average {
+  // background: var(--warning-light);
+  color: var(--warning-color);
+  // border: 1px solid var(--warning-color);
+  // border-radius: var(--radius-sm);
 }
 
-.poor {
-  color: #d32f2f;
-  font-weight: bold;
+.column-rank-below {
+  // background: #fdf2f8;
+  color: #be185d;
+  // border: 1px solid #be185d;
+  // border-radius: var(--radius-sm);
 }
 
-.points-cell {
-  font-weight: bold;
-  color: #007bff;
+.column-rank-poor {
+  // background: var(--danger-light);
+  color: var(--danger-color);
+  font-weight: 600;
+  // border: 1px solid var(--danger-color);
+  // border-radius: var(--radius-sm);
+}
+
+// Дополнительное форматирование для процентов
+.percent-excellent {
+  color: var(--success-color) !important;
+  font-weight: 700;
+}
+
+.percent-good {
+  color: #059669 !important;
+  font-weight: 600;
+}
+
+.percent-average {
+  color: var(--warning-color) !important;
+  font-weight: 500;
+}
+
+.percent-poor {
+  color: var(--danger-color) !important;
+  font-weight: 700;
+}
+
+// Форматирование для отрицательных показателей
+.negative-indicator {
+  // background: var(--danger-light);
+  color: var(--danger-color);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  // border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .table-separator {
-  height: 10px;
-  background: #e3f2fd;
-  border-top: 2px solid #91b6db;
-  border-bottom: 2px solid #91b6db;
+  height: 8px;
+  background: var(--border-light);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .data_cells {
@@ -1187,86 +1538,22 @@ $padding-lg: 15px 20px;
 .week {
   display: flex;
   width: 100%;
-  border-right: 1px solid #0a0915;
+  border-right: 1px solid var(--border-color);
 }
 
 .cols {
   width: 100%;
   display: flex;
   align-items: center;
-  font-size: 13px;
-}
-
-// Условное форматирование по рангам в колонках
-.column-rank-top {
-  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-  color: #2e7d32;
-  font-weight: 600;
-}
-
-.column-rank-good {
-  background: linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%);
-  color: #7b1fa2;
-}
-
-.column-rank-average {
-  background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
-  color: #e65100;
-}
-
-.column-rank-below {
-  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
-  color: #c2185b;
-}
-
-.column-rank-poor {
-  background: linear-gradient(135deg, #ffebee 0%, #ef9a9a 100%);
-  color: #d32f2f;
-  font-weight: 600;
-}
-
-// Дополнительное форматирование для процентов
-.percent-excellent {
-  color: #1b5e20 !important;
-  font-weight: bold;
-}
-
-.percent-good {
-  color: #2e7d32 !important;
-}
-
-.percent-average {
-  color: #ef6c00 !important;
-}
-
-.percent-poor {
-  color: #c62828 !important;
-  font-weight: bold;
-}
-
-// Форматирование для отрицательных показателей
-.negative-indicator {
-  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-  color: #c62828;
-  font-weight: 500;
 }
 
 .week_name {
   font-weight: 600;
-  color: $text-week;
-  padding: 8px;
+  color: var(--info-color);
+  padding: 12px;
   text-align: center;
   width: 100%;
-}
-
-// Размеры колонок будут приходить из API настроек
-.cell.static {
-  min-width: 256px; // Минимальная ширина для названий
-}
-
-.cell.dynamic {
-  min-width: 60px; // Минимальная ширина для данных
-  flex: 1; // Автоматическое распределение
+  font-size: 13px;
 }
 
 .error {
@@ -1276,53 +1563,178 @@ $padding-lg: 15px 20px;
   justify-content: center;
   min-height: 400px;
   padding: 40px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
 }
 
 .error-icon {
   font-size: 48px;
   margin-bottom: 16px;
+  color: var(--warning-color);
 }
 
 .retry-btn {
   margin-top: 16px;
-  padding: 8px 16px;
-  background: #409eff;
+  padding: 12px 20px;
+  background: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.3s;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .retry-btn:hover {
-  background: #66b1ff;
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 // Анимации для transition-group
 .table-row-enter-active,
 .table-row-leave-active {
-  transition: all 0.5s ease;
+  transition: all 0.4s ease;
 }
 
 .table-row-enter-from,
 .table-row-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateX(20px);
 }
 
 .table-row-move {
-  transition: transform 0.5s ease;
+  transition: transform 0.4s ease;
 }
 
+// Адаптивность
 @media (max-width: 768px) {
   .controls-panel {
     flex-direction: column;
-    gap: 15px;
+    gap: 16px;
+    padding: 16px;
   }
   
   .week-toggles {
     width: 100%;
     justify-content: center;
   }
+  
+  .content {
+    padding: 16px;
+  }
+  
+  .cell {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+  
+  .region-title,
+  .store-title {
+    font-size: 13px;
+  }
 }
+
+// Улучшения для печати
+@media print {
+  .controls-panel {
+    display: none;
+  }
+  
+  .loading-bar {
+    display: none;
+  }
+  
+  .table-body .data-row:hover {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+
+.table-separator {
+  background: var(--border-light);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 0;
+}
+
+.store-sort-controls {
+  display: flex;
+  flex-direction: column;
+  // gap: 8px;
+  // padding: 0 12px;
+}
+
+.sort-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-sort-info {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.sort-controls-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+.sort-static-cell {
+  min-width: 300px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.sort-weeks {
+  display: flex;
+  width: 100%;
+}
+
+.sort-week {
+  display: flex;
+  width: 100%;
+  border-right: 1px solid var(--border-color);
+}
+
+.sort-cols {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.sort-control {
+  // min-width: 60px;
+  // flex: 1;
+  padding: 6px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+
+
 </style>
