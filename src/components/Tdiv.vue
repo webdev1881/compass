@@ -84,9 +84,9 @@
                   <div class="cell static data-cell region-name">
                     <div class="region-info">
                       <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
-                      <span class="region-arrow" :class="getRegionArrowClass(region.regionRank)">
+                      <!-- <span class="region-arrow" :class="getRegionArrowClass(region.regionRank)">
                         {{ getRegionArrow(region.regionRank) }}
-                      </span>
+                      </span> -->
                       <span class="region-title">{{ region.name }}</span>
                     </div>
                   </div>
@@ -138,9 +138,9 @@
                 <div class="cell static data-cell store-name">
                   <div class="store-info">
                     <div class="store-region-indicator" :style="{ backgroundColor: store.regionColor }"></div>
-                    <span class="rank-arrow" :class="getRankArrowClass(store.overallRank)">
+                    <!-- <span class="rank-arrow" :class="getRankArrowClass(store.overallRank)">
                       {{ getRankArrow(store.overallRank) }}
-                    </span>
+                    </span> -->
                     <span class="store-title">{{ store.name }}</span>
                     <!-- <span class="store-region-label">({{ store.regionName }})</span> -->
                   </div>
@@ -198,7 +198,8 @@ const columns = [
 
 // Видимость колонок
 const visible = reactive(columns.reduce((acc, col) => {
-  if (['plan', 'fact', 'percent'].includes(col.key)) {
+  // if (['plan', 'fact', 'percent'].includes(col.key)) {
+  if ([].includes(col.key)) {
     acc[col.key] = false // По умолчанию скрыты
   } else {
     acc[col.key] = true
@@ -595,7 +596,7 @@ const getStoreSortValue = (store, weekId, columnKey) => {
     case 'unprocessed':
       return weekData.unprocessed || 0
     default:
-      return 0
+      return 5
   }
 }
 
@@ -988,9 +989,10 @@ onMounted(() => {
 .sales-table-container {
   width: 100%;
   min-height: 100vh;
-  max-width: 2300px;
+  // max-width: 2300px;
+  border-top: 1px solid silver;
   background: var(--neutral-light);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .loading-bar {
@@ -1178,11 +1180,11 @@ onMounted(() => {
 }
 
 .cell.static {
-  min-width: 300px;
+  min-width: 250px;
   flex-shrink: 0;
   background: var(--neutral-light);
   font-weight: 600;
-  border-right: 2px solid var(--border-color);
+  border-right: 2px solid silver;
 }
 
 .cell.dynamic {
@@ -1522,10 +1524,10 @@ onMounted(() => {
 }
 
 .table-separator {
-  height: 8px;
+  height: 23px;
   background: var(--border-light);
   border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid silver;
 }
 
 .data_cells {
@@ -1657,8 +1659,8 @@ onMounted(() => {
 .table-separator {
   background: var(--border-light);
   border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-  padding: 8px 0;
+  border-bottom: 1px solid silver;
+  // padding: 8px 0;
 }
 
 .store-sort-controls {
@@ -1695,7 +1697,7 @@ onMounted(() => {
 }
 
 .sort-static-cell {
-  min-width: 300px;
+  min-width: 250px;
   flex-shrink: 0;
   padding: 4px 8px;
   font-size: 12px;
@@ -1735,6 +1737,9 @@ onMounted(() => {
   position: relative;
 }
 
+.regions-summary-block {
+  border-top: 1px solid silver;
+}
 
 
 </style>
