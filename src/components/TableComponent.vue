@@ -11,19 +11,48 @@
       <div class="controls">
         <h3>Управление показателями:</h3>
         <div class="indicator-controls">
-          <label v-for="indicator in availableIndicators" :key="indicator.key" class="indicator-checkbox">
-            <input 
-              type="checkbox" 
-              v-model="visibleIndicators[indicator.key]"
-              @change="updateColumnVisibility"
-            >
-            {{ indicator.name }}
-          </label>
+          <!-- Базовые показатели -->
+          <div class="control-group">
+            <h4>Базовые показатели</h4>
+            <label class="indicator-checkbox">
+              <input type="checkbox" v-model="visibleColumns.plan" @change="updateColumnVisibility">
+              План
+            </label>
+            <label class="indicator-checkbox">
+              <input type="checkbox" v-model="visibleColumns.fact" @change="updateColumnVisibility">
+              Факт
+            </label>
+            <label class="indicator-checkbox">
+              <input type="checkbox" v-model="visibleColumns.percent" @change="updateColumnVisibility">
+              % оборота
+            </label>
+          </div>
+          {{ visibleColumns }}
+          <!-- Дополнительные показатели -->
+          <div class="control-group">
+            <h4>Дополнительные показатели</h4>
+            <div v-for="indicator in additionalIndicators" :key="indicator.key" class="indicator-group-controls">
+              <span class="indicator-title">{{ indicator.name }}:</span>
+              <label class="indicator-checkbox">
+                <input type="checkbox" v-model="visibleColumns[indicator.key + '_value']" @change="updateColumnVisibility">
+                Значение
+              </label>
+              <label class="indicator-checkbox">
+                <input type="checkbox" v-model="visibleColumns[indicator.key + '_percent']" @change="updateColumnVisibility">
+                %
+              </label>
+              <label class="indicator-checkbox">
+                <input type="checkbox" v-model="visibleColumns[indicator.key + '_score']" @change="updateColumnVisibility">
+                Балл
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- Таблица -->
       <div class="table-container">
+        <!-- Основная шапка -->
         <div class="table-header">
           <div class="header-region">
             <span>Регион / Магазин</span>
@@ -38,53 +67,65 @@
               <span class="week-date">{{ week.dateRange }}</span>
             </div>
             
-            <!-- Оборотные показатели -->
-            <div class="indicators-group">
-              <div class="indicator-header basic-indicators">
-                <div class="indicator-column">
-                  <span>План</span>
-                  <button @click="toggleSort(`plan_${week.id}`)" class="sort-btn">
-                    {{ getSortIcon(`plan_${week.id}`) }}
-                  </button>
-                </div>
-                <div class="indicator-column">
-                  <span>Факт</span>
-                  <button @click="toggleSort(`fact_${week.id}`)" class="sort-btn">
-                    {{ getSortIcon(`fact_${week.id}`) }}
-                  </button>
-                </div>
-                <div class="indicator-column">
-                  <span>%</span>
-                  <button @click="toggleSort(`percent_${week.id}`)" class="sort-btn">
-                    {{ getSortIcon(`percent_${week.id}`) }}
-                  </button>
+            <div class="week-columns">
+              <!-- Общий балл - первая колонка -->
+              <div class="column-header total-score-column">
+                <span>Общий балл</span>
+                <button @click="toggleSort(`totalScore_${week.id}`)" class="sort-btn">
+                  {{ getSortIcon(`totalScore_${week.id}`) }}
+                </button>
+              </div>
+              
+              <!-- Группа базовых показателей -->
+              <div class="indicators-group basic-group">
+                <div class="group-title">Оборот</div>
+                <div class="group-columns">
+                  <div class="column-header" :class="{ 'column-hidden': !visibleColumns.plan }">
+                    <span>План</span>
+                    <button @click="toggleSort(`plan_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`plan_${week.id}`) }}
+                    </button>
+                  </div>
+                  
+                  <div class="column-header" :class="{ 'column-hidden': !visibleColumns.fact }">
+                    <span>Факт</span>
+                    <button @click="toggleSort(`fact_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`fact_${week.id}`) }}
+                    </button>
+                  </div>
+                  
+                  <div class="column-header" :class="{ 'column-hidden': !visibleColumns.percent }">
+                    <span>%</span>
+                    <button @click="toggleSort(`percent_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`percent_${week.id}`) }}
+                    </button>
+                  </div>
                 </div>
               </div>
               
-              <!-- Дополнительные показатели -->
+              <!-- Группы дополнительных показателей -->
               <div 
                 v-for="indicator in additionalIndicators" 
                 :key="indicator.key"
-                class="indicator-group additional-indicator"
-                :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                class="indicators-group additional-group"
               >
-                <div class="indicator-header-group">
-                  <span class="indicator-name">{{ indicator.name }}</span>
-                </div>
-                <div class="indicator-subheaders">
-                  <div class="indicator-subheader">
+                <div v-if="visibleColumns" class="group-title">{{ indicator.name }}</div>
+                <div class="group-columns">
+                  <div class="column-header" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_value'] }">
                     <span>Знач.</span>
                     <button @click="toggleSort(`${indicator.key}_${week.id}`)" class="sort-btn">
                       {{ getSortIcon(`${indicator.key}_${week.id}`) }}
                     </button>
                   </div>
-                  <div class="indicator-subheader">
+                  
+                  <div class="column-header" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_percent'] }">
                     <span>%</span>
                     <button @click="toggleSort(`${indicator.key}_percent_${week.id}`)" class="sort-btn">
                       {{ getSortIcon(`${indicator.key}_percent_${week.id}`) }}
                     </button>
                   </div>
-                  <div class="indicator-subheader">
+                  
+                  <div class="column-header" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_score'] }">
                     <span>Балл</span>
                     <button @click="toggleSort(`${indicator.key}_score_${week.id}`)" class="sort-btn">
                       {{ getSortIcon(`${indicator.key}_score_${week.id}`) }}
@@ -92,14 +133,6 @@
                   </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- Общий балл -->
-            <div class="total-score-header">
-              <span>Общий балл</span>
-              <button @click="toggleSort(`totalScore_${week.id}`)" class="sort-btn">
-                {{ getSortIcon(`totalScore_${week.id}`) }}
-              </button>
             </div>
           </div>
         </div>
@@ -110,42 +143,56 @@
             <h3>Итоги по регионам</h3>
           </div>
           
-          <div v-for="region in sortedRegions" :key="region.id" class="region-row">
+          <div v-for="region in sortedRegions" :key="region.id" class="region-row" :class="{ 'sorting': isSorting }">
             <div class="region-name">
               <span class="region-indicator" :style="{ backgroundColor: region.color }"></span>
               {{ region.name }}
             </div>
             
             <div v-for="week in sortedWeeks" :key="week.id" class="region-data">
-              <div class="indicators-group">
-                <div class="basic-indicators">
-                  <div class="indicator-value">{{ formatNumber(getRegionSummary(region, week.id).plan) }}</div>
-                  <div class="indicator-value">{{ formatNumber(getRegionSummary(region, week.id).fact) }}</div>
-                  <div class="indicator-value">{{ formatPercent(getRegionSummary(region, week.id).percent) }}</div>
+              <div class="week-columns">
+                <!-- Общий балл -->
+                <div class="column-value total-score">
+                  {{ formatNumber(getRegionSummary(region, week.id).totalScore) }}
                 </div>
                 
+                <!-- Группа базовых показателей -->
+                <div class="indicators-group basic-group">
+                  <div class="group-columns">
+                    <div class="column-value" :class="{ 'column-hidden': !visibleColumns.plan }">
+                      {{ formatNumber(getRegionSummary(region, week.id).plan) }}
+                    </div>
+                    
+                    <div class="column-value" :class="{ 'column-hidden': !visibleColumns.fact }">
+                      {{ formatNumber(getRegionSummary(region, week.id).fact) }}
+                    </div>
+                    
+                    <div class="column-value" :class="{ 'column-hidden': !visibleColumns.percent }">
+                      {{ formatPercent(getRegionSummary(region, week.id).percent) }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Группы дополнительных показателей -->
                 <div 
                   v-for="indicator in additionalIndicators" 
                   :key="indicator.key"
-                  class="indicator-group additional-indicator"
-                  :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                  class="indicators-group additional-group"
                 >
-                  <div class="indicator-subvalues">
-                    <div class="indicator-value">
+                  <div class="group-columns">
+                    <div class="column-value" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_value'] }">
                       {{ formatNumber(getRegionSummary(region, week.id)[indicator.key]) }}
                     </div>
-                    <div class="indicator-value">
+                    
+                    <div class="column-value" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_percent'] }">
                       {{ formatPercent(getRegionSummary(region, week.id)[indicator.key + '_percent']) }}
                     </div>
-                    <div class="indicator-value">
+                    
+                    <div class="column-value" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_score'] }">
                       {{ formatNumber(getRegionSummary(region, week.id)[indicator.key + '_score']) }}
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <div class="total-score">
-                {{ formatNumber(getRegionSummary(region, week.id).totalScore) }}
               </div>
             </div>
           </div>
@@ -167,50 +214,63 @@
             </div>
             
             <div v-for="week in sortedWeeks" :key="week.id" class="header-week">
-              <!-- Оборотные показатели -->
-              <div class="indicators-group">
-                <div class="indicator-header basic-indicators">
-                  <div class="indicator-column">
-                    <span>План</span>
-                    <button @click="toggleSort(`plan_${week.id}`)" class="sort-btn">
-                      {{ getSortIcon(`plan_${week.id}`) }}
-                    </button>
-                  </div>
-                  <div class="indicator-column">
-                    <span>Факт</span>
-                    <button @click="toggleSort(`fact_${week.id}`)" class="sort-btn">
-                      {{ getSortIcon(`fact_${week.id}`) }}
-                    </button>
-                  </div>
-                  <div class="indicator-column">
-                    <span>%</span>
-                    <button @click="toggleSort(`percent_${week.id}`)" class="sort-btn">
-                      {{ getSortIcon(`percent_${week.id}`) }}
-                    </button>
+              <div class="week-columns">
+                <!-- Общий балл -->
+                <div class="column-header total-score-column">
+                  <span>Общий балл</span>
+                  <button @click="toggleSort(`totalScore_${week.id}`)" class="sort-btn">
+                    {{ getSortIcon(`totalScore_${week.id}`) }}
+                  </button>
+                </div>
+                
+                <!-- Группа базовых показателей -->
+                <div class="indicators-group basic-group">
+                  <div class="group-columns">
+                    <div class="column-header" :class="{ 'column-hidden': !visibleColumns.plan }">
+                      <span>План</span>
+                      <button @click="toggleSort(`plan_${week.id}`)" class="sort-btn">
+                        {{ getSortIcon(`plan_${week.id}`) }}
+                      </button>
+                    </div>
+                    
+                    <div class="column-header" :class="{ 'column-hidden': !visibleColumns.fact }">
+                      <span>Факт</span>
+                      <button @click="toggleSort(`fact_${week.id}`)" class="sort-btn">
+                        {{ getSortIcon(`fact_${week.id}`) }}
+                      </button>
+                    </div>
+                    
+                    <div class="column-header" :class="{ 'column-hidden': !visibleColumns.percent }">
+                      <span>%</span>
+                      <button @click="toggleSort(`percent_${week.id}`)" class="sort-btn">
+                        {{ getSortIcon(`percent_${week.id}`) }}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
-                <!-- Дополнительные показатели -->
+                <!-- Группы дополнительных показателей -->
                 <div 
                   v-for="indicator in additionalIndicators" 
                   :key="indicator.key"
-                  class="indicator-group additional-indicator"
-                  :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                  class="indicators-group additional-group"
                 >
-                  <div class="indicator-subheaders">
-                    <div class="indicator-subheader">
+                  <div class="group-columns">
+                    <div class="column-header" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_value'] }">
                       <span>Знач.</span>
                       <button @click="toggleSort(`${indicator.key}_${week.id}`)" class="sort-btn">
                         {{ getSortIcon(`${indicator.key}_${week.id}`) }}
                       </button>
                     </div>
-                    <div class="indicator-subheader">
+                    
+                    <div class="column-header" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_percent'] }">
                       <span>%</span>
                       <button @click="toggleSort(`${indicator.key}_percent_${week.id}`)" class="sort-btn">
                         {{ getSortIcon(`${indicator.key}_percent_${week.id}`) }}
                       </button>
                     </div>
-                    <div class="indicator-subheader">
+                    
+                    <div class="column-header" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_score'] }">
                       <span>Балл</span>
                       <button @click="toggleSort(`${indicator.key}_score_${week.id}`)" class="sort-btn">
                         {{ getSortIcon(`${indicator.key}_score_${week.id}`) }}
@@ -219,55 +279,61 @@
                   </div>
                 </div>
               </div>
-              
-              <!-- Общий балл -->
-              <div class="total-score-header">
-                <span>Общий балл</span>
-                <button @click="toggleSort(`totalScore_${week.id}`)" class="sort-btn">
-                  {{ getSortIcon(`totalScore_${week.id}`) }}
-                </button>
-              </div>
             </div>
           </div>
           
           <!-- Данные магазинов -->
           <div class="table-body">
-            <div v-for="store in sortedStores" :key="store.id" class="store-row">
+            <div v-for="store in sortedStores" :key="store.id" class="store-row" :class="{ 'sorting': isSorting }">
               <div class="store-name">
                 <span class="store-region" :style="{ backgroundColor: getStoreRegionColor(store) }"></span>
                 {{ store.name }}
               </div>
               
               <div v-for="week in sortedWeeks" :key="week.id" class="store-data">
-                <div class="indicators-group">
-                  <div class="basic-indicators">
-                    <div class="indicator-value">{{ formatNumber(getStoreValue(store, week.id, 'plan')) }}</div>
-                    <div class="indicator-value">{{ formatNumber(getStoreValue(store, week.id, 'fact')) }}</div>
-                    <div class="indicator-value">{{ formatPercent(getStorePercent(store, week.id)) }}</div>
+                <div class="week-columns">
+                  <!-- Общий балл -->
+                  <div class="column-value total-score">
+                    {{ formatNumber(getStoreTotalScore(store, week.id)) }}
                   </div>
                   
+                  <!-- Группа базовых показателей -->
+                  <div class="indicators-group basic-group">
+                    <div class="group-columns">
+                      <div class="column-value" :class="{ 'column-hidden': !visibleColumns.plan }">
+                        {{ formatNumber(getStoreValue(store, week.id, 'plan')) }}
+                      </div>
+                      
+                      <div class="column-value" :class="{ 'column-hidden': !visibleColumns.fact }">
+                        {{ formatNumber(getStoreValue(store, week.id, 'fact')) }}
+                      </div>
+                      
+                      <div class="column-value" :class="{ 'column-hidden': !visibleColumns.percent }">
+                        {{ formatPercent(getStorePercent(store, week.id)) }}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Группы дополнительных показателей -->
                   <div 
                     v-for="indicator in additionalIndicators" 
                     :key="indicator.key"
-                    class="indicator-group additional-indicator"
-                    :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                    class="indicators-group additional-group"
                   >
-                    <div class="indicator-subvalues">
-                      <div class="indicator-value">
+                    <div class="group-columns">
+                      <div class="column-value" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_value'] }">
                         {{ formatNumber(getStoreValue(store, week.id, indicator.key)) }}
                       </div>
-                      <div class="indicator-value">
+                      
+                      <div class="column-value" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_percent'] }">
                         {{ formatPercent(getStoreIndicatorPercent(store, week.id, indicator.key)) }}
                       </div>
-                      <div class="indicator-value">
+                      
+                      <div class="column-value" :class="{ 'column-hidden': !visibleColumns[indicator.key + '_score'] }">
                         {{ formatNumber(getStoreIndicatorScore(store, week.id, indicator.key)) }}
                       </div>
                     </div>
                   </div>
-                </div>
-                
-                <div class="total-score">
-                  {{ formatNumber(getStoreTotalScore(store, week.id)) }}
                 </div>
               </div>
             </div>
@@ -295,13 +361,26 @@ export default {
     // Кеш для итогов по регионам
     const regionSummaryCache = ref({})
     
-    // Управление показателями
-    const visibleIndicators = reactive({
-      losses: true,
-      shortages: true,
-      fop: true,
-      shiftRemainder: true,
-      unprocessed: true
+    // Управление видимостью колонок
+    const visibleColumns = reactive({
+      plan: true,
+      fact: true,
+      percent: true,
+      losses_value: true,
+      losses_percent: true,
+      losses_score: true,
+      shortages_value: false,
+      shortages_percent: false,
+      shortages_score: false,
+      fop_value: false,
+      fop_percent: false,
+      fop_score: false,
+      shiftRemainder_value: false,
+      shiftRemainder_percent: false,
+      shiftRemainder_score: false,
+      unprocessed_value: false,
+      unprocessed_percent: false,
+      unprocessed_score: false,
     })
     
     // Сортировка
@@ -466,7 +545,6 @@ export default {
         summary[indicatorKey] = indicatorSum
         
         // Рассчитываем средневзвешенный процент для региона
-        // Используем средневзвешенный по обороту расчет
         let weightedPercentSum = 0
         let totalFact = 0
         
@@ -594,13 +672,23 @@ export default {
       return store.regionColor || '#6c757d'
     }
     
+    // Состояние анимации сортировки
+    const isSorting = ref(false)
+    
     const toggleSort = (field) => {
+      isSorting.value = true
+      
       if (sortBy.value === field) {
         sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
       } else {
         sortBy.value = field
         sortOrder.value = 'asc'
       }
+      
+      // Убираем анимацию через короткое время
+      setTimeout(() => {
+        isSorting.value = false
+      }, 300)
     }
     
     const getSortIcon = (field) => {
@@ -630,10 +718,11 @@ export default {
     
     return {
       isLoading,
+      isSorting,
       weeksData,
       regionsData,
       targetsData,
-      visibleIndicators,
+      visibleColumns,
       sortBy,
       sortOrder,
       availableIndicators,
@@ -660,518 +749,814 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .analytics-container {
   width: 100%;
   min-height: 100vh;
   background: #f8f9fa;
+  
+  .loader-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: #e9ecef;
+    z-index: 1000;
+    
+    .loader-progress {
+      height: 100%;
+      background: linear-gradient(90deg, #3498db, #2ecc71);
+      width: 0%;
+      animation: loading 2s ease-in-out infinite;
+    }
+  }
+  
+  @keyframes loading {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 100%; }
+  }
 }
 
-/* Лоадер */
-.loader-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: #e9ecef;
-  z-index: 1000;
-}
-
-.loader-progress {
-  height: 100%;
-  background: linear-gradient(90deg, #3498db, #2ecc71);
-  width: 0%;
-  animation: loading 2s ease-in-out infinite;
-}
-
-@keyframes loading {
-  0% { width: 0%; }
-  50% { width: 70%; }
-  100% { width: 100%; }
-}
-
-/* Контент */
 .analytics-content {
-  padding: 20px;
+  padding: 1rem;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in-out forwards;
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+  }
+  
+  @media (min-width: 1200px) {
+    padding: 2rem;
+  }
 }
 
-/* Управление показателями */
 .controls {
-  margin-bottom: 20px;
-  padding: 20px;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  h3 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+  }
+  
+  .indicator-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    
+    @media (min-width: 1200px) {
+      flex-direction: row;
+      gap: 2rem;
+    }
+  }
+  
+  .control-group {
+    flex: 1;
+    
+    h4 {
+      margin: 0 0 0.75rem 0;
+      color: #34495e;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    
+    .indicator-group-controls {
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+      
+      .indicator-title {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+      }
+      
+      .indicator-checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        
+        input {
+          margin: 0;
+        }
+      }
+    }
+  }
+  
+  .indicator-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: #34495e;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0.5rem;
+    transform: scale(1);
+    
+    &:hover {
+      background: #f8f9fa;
+      border-color: #3498db;
+      transform: scale(1.02);
+      box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+    }
+    
+    &:active {
+      transform: scale(0.98);
+    }
+    
+    input {
+      margin: 0;
+      transition: all 0.2s ease;
+      
+      &:checked {
+        accent-color: #3498db;
+      }
+    }
+  }
 }
 
-.controls h3 {
-  margin: 0 0 15px 0;
-  color: #2c3e50;
-}
-
-.indicator-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-}
-
-.indicator-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #34495e;
-  padding: 8px 12px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.indicator-checkbox:hover {
-  background: #f8f9fa;
-  border-color: #3498db;
-}
-
-.indicator-checkbox input {
-  margin: 0;
-}
-
-/* Таблица */
 .table-container {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
+  
+  .table-header {
+    display: flex;
+    background: #34495e;
+    color: white;
+    font-weight: 600;
+    border-bottom: 2px solid #2c3e50;
+    
+    .header-region {
+      flex: 0 0 200px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-right: 1px solid #2c3e50;
+      font-size: 0.9rem;
+      
+      @media (min-width: 768px) {
+        flex: 0 0 250px;
+        font-size: 1rem;
+      }
+    }
+    
+    .header-week {
+      flex: 1;
+      border-right: 1px solid #2c3e50;
+      
+      &:last-child {
+        border-right: none;
+      }
+      
+      .week-title {
+        padding: 0.75rem;
+        border-bottom: 1px solid #2c3e50;
+        text-align: center;
+        
+        h4 {
+          margin: 0 0 0.25rem 0;
+          font-size: 1rem;
+          
+          @media (min-width: 768px) {
+            font-size: 1.1rem;
+          }
+        }
+        
+        .week-date {
+          font-size: 0.75rem;
+          opacity: 0.8;
+        }
+      }
+      
+      .week-columns {
+        display: flex;
+        
+        .column-header {
+          flex: 1;
+          min-width: 60px;
+          padding: 0.5rem 0.25rem;
+          text-align: center;
+          border-right: 1px solid #2c3e50;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.75rem;
+          transition: all 0.3s ease;
+          
+          @media (min-width: 768px) {
+            min-width: 80px;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+          }
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          &.total-score-column {
+            background: #2c3e50;
+            font-weight: 700;
+            flex: 0 0 80px;
+            
+            @media (min-width: 768px) {
+              flex: 0 0 100px;
+            }
+          }
+          
+          span {
+            line-height: 1.2;
+            text-align: center;
+          }
+        }
+        
+        .indicators-group {
+          display: flex;
+          flex-direction: column;
+          border-right: 1px solid #2c3e50;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          opacity: 1;
+          transform: scaleX(1);
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          // Проверяем, если все колонки внутри группы скрыты
+          &:has(.column-header.column-hidden:nth-child(n)) {
+            .group-title {
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+          }
+          
+          .group-title {
+            padding: 0.5rem;
+            background: #2c3e50;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-bottom: 1px solid #34495e;
+            transition: all 0.3s ease;
+            
+            @media (min-width: 768px) {
+              font-size: 0.9rem;
+            }
+          }
+          
+          .group-columns {
+            display: flex;
+            
+            .column-header {
+              border-right: 1px solid #2c3e50;
+              
+              &:last-child {
+                border-right: none;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .sort-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.125rem;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+    transform: scale(1);
+    
+    &:hover {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+    
+    &:active {
+      transform: scale(0.9);
+    }
+  }
 }
 
-.table-header {
-  display: flex;
-  background: #34495e;
-  color: white;
-  font-weight: 600;
-  border-bottom: 2px solid #2c3e50;
-}
-
-.header-region {
-  flex: 0 0 200px;
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-right: 1px solid #2c3e50;
-}
-
-.header-week {
-  flex: 1;
-  border-right: 1px solid #2c3e50;
-}
-
-.header-week:last-child {
-  border-right: none;
-}
-
-.week-title {
-  padding: 10px 15px;
-  border-bottom: 1px solid #2c3e50;
-  text-align: center;
-}
-
-.week-title h4 {
-  margin: 0 0 5px 0;
-  font-size: 16px;
-}
-
-.week-date {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.indicators-group {
-  display: flex;
-}
-
-.basic-indicators {
-  display: flex;
-  flex: 0 0 180px;
-  border-right: 1px solid #2c3e50;
-}
-
-.indicator-column {
-  flex: 1;
-  padding: 10px 8px;
-  text-align: center;
-  border-right: 1px solid #2c3e50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  font-size: 12px;
-}
-
-.indicator-column:last-child {
-  border-right: none;
-}
-
-/* Дополнительные показатели - группировка */
-.indicator-group {
-  border-right: 1px solid #2c3e50;
-  transition: all 0.3s ease;
-}
-
-.indicator-group.additional-indicator {
-  flex: 0 0 180px;
+// Анимация для скрытых колонок
+.column-header, .column-value {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
-  width: 180px;
-  max-width: 180px;
   transform: scaleX(1);
+  width: auto;
+  
+  &.column-hidden {
+    opacity: 0;
+    transform: scaleX(0);
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+    border-right: none !important;
+    border-left: none !important;
+    overflow: hidden;
+  }
 }
 
-.indicator-group.additional-indicator.hidden {
-  opacity: 0;
-  width: 0;
-  max-width: 0;
-  transform: scaleX(0);
-  overflow: hidden;
+// Анимация для сортировки строк
+.region-row, .store-row {
+  transition: all 0.3s ease;
+  
+  &.sorting {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
 }
 
-.indicator-header-group {
-  padding: 8px 5px;
-  text-align: center;
-  border-bottom: 1px solid #2c3e50;
-  background: #2c3e50;
-}
-
-.indicator-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: white;
-}
-
-.indicator-subheaders {
-  display: flex;
-}
-
-.indicator-subheader {
-  flex: 1;
-  padding: 6px 3px;
-  text-align: center;
-  border-right: 1px solid #2c3e50;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  font-size: 10px;
-  background: #34495e;
-}
-
-.indicator-subheader:last-child {
-  border-right: none;
-}
-
-.indicator-subvalues {
-  display: flex;
-}
-
-.indicator-subvalues .indicator-value {
-  flex: 1;
-  text-align: center;
-  padding: 12px 4px;
-  border-right: 1px solid #dee2e6;
-  font-size: 13px;
-}
-
-.indicator-subvalues .indicator-value:last-child {
-  border-right: none;
-}
-
-.total-score-header {
-  flex: 0 0 80px;
-  padding: 10px 8px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  font-size: 12px;
-}
-
-.sort-btn {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.sort-btn:hover {
-  opacity: 1;
-}
-
-/* Блок итогов по регионам */
 .regions-summary {
   background: white;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
+  
+  .summary-header {
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #34495e;
+    
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+  }
+  
+  .region-row {
+    display: flex;
+    border-bottom: 1px solid #ecf0f1;
+    background: #f8f9fa;
+    font-weight: 600;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    &:hover {
+      background: #e9ecef;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .region-name {
+      flex: 0 0 200px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-right: 1px solid #dee2e6;
+      
+      @media (min-width: 768px) {
+        flex: 0 0 250px;
+        padding: 1rem 1.5rem;
+      }
+      
+      .region-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+    }
+    
+    .region-data {
+      flex: 1;
+      display: flex;
+      border-right: 1px solid #dee2e6;
+      
+      &:last-child {
+        border-right: none;
+      }
+      
+      .week-columns {
+        display: flex;
+        width: 100%;
+        
+        .column-value {
+          flex: 1;
+          min-width: 60px;
+          text-align: center;
+          padding: 0.75rem 0.25rem;
+          border-right: 1px solid #dee2e6;
+          font-size: 0.85rem;
+          transition: all 0.3s ease;
+          
+          @media (min-width: 768px) {
+            min-width: 80px;
+            padding: 1rem 0.5rem;
+            font-size: 0.9rem;
+          }
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          &.total-score {
+            background: #e8f5e8;
+            font-weight: 700;
+            color: #27ae60;
+            flex: 0 0 80px;
+            
+            @media (min-width: 768px) {
+              flex: 0 0 100px;
+            }
+          }
+        }
+        
+        .indicators-group {
+          display: flex;
+          border-right: 1px solid #dee2e6;
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          .group-columns {
+            display: flex;
+            
+            .column-value {
+              border-right: 1px solid #dee2e6;
+              
+              &:last-child {
+                border-right: none;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-.summary-header {
-  background: #2c3e50;
-  color: white;
-  padding: 15px 20px;
-  border-bottom: 2px solid #34495e;
-}
-
-.summary-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.region-row {
-  display: flex;
-  border-bottom: 1px solid #ecf0f1;
-  background: #f8f9fa;
-  font-weight: 600;
-}
-
-.region-row:last-child {
-  border-bottom: none;
-}
-
-.region-row:hover {
-  background: #e9ecef;
-}
-
-.region-name {
-  flex: 0 0 200px;
-  padding: 12px 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-right: 1px solid #dee2e6;
-}
-
-.region-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.region-data {
-  flex: 1;
-  display: flex;
-  border-right: 1px solid #dee2e6;
-}
-
-.region-data:last-child {
-  border-right: none;
-}
-
-.basic-indicators {
-  display: flex;
-  flex: 0 0 180px;
-  border-right: 1px solid #dee2e6;
-}
-
-.basic-indicators .indicator-value {
-  flex: 1;
-  text-align: center;
-  padding: 12px 8px;
-  border-right: 1px solid #dee2e6;
-}
-
-.basic-indicators .indicator-value:last-child {
-  border-right: none;
-}
-
-/* Блок магазинов */
 .stores-section {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
-}
-
-.section-header {
-  background: #34495e;
-  color: white;
-  padding: 15px 20px;
-  border-bottom: 2px solid #2c3e50;
-}
-
-.section-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.stores-header {
-  display: flex;
-  background: #34495e;
-  color: white;
-  font-weight: 600;
-  border-bottom: 2px solid #2c3e50;
+  
+  .section-header {
+    background: #34495e;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #2c3e50;
+    
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+  }
+  
+  .stores-header {
+    display: flex;
+    background: #34495e;
+    color: white;
+    font-weight: 600;
+    border-bottom: 2px solid #2c3e50;
+    
+    .header-region {
+      flex: 0 0 200px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-right: 1px solid #2c3e50;
+      font-size: 0.9rem;
+      
+      @media (min-width: 768px) {
+        flex: 0 0 250px;
+        font-size: 1rem;
+      }
+    }
+    
+    .header-week {
+      flex: 1;
+      border-right: 1px solid #2c3e50;
+      
+      &:last-child {
+        border-right: none;
+      }
+      
+      .week-columns {
+        display: flex;
+        
+        .column-header {
+          flex: 1;
+          min-width: 60px;
+          padding: 0.5rem 0.25rem;
+          text-align: center;
+          border-right: 1px solid #2c3e50;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+          font-size: 0.75rem;
+          transition: all 0.3s ease;
+          
+          @media (min-width: 768px) {
+            min-width: 80px;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.85rem;
+          }
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          &.total-score-column {
+            background: #2c3e50;
+            font-weight: 700;
+            flex: 0 0 80px;
+            
+            @media (min-width: 768px) {
+              flex: 0 0 100px;
+            }
+          }
+          
+          span {
+            line-height: 1.2;
+            text-align: center;
+          }
+        }
+        
+        .indicators-group {
+          display: flex;
+          border-right: 1px solid #2c3e50;
+          
+          &:last-child {
+            border-right: none;
+          }
+          
+          .group-columns {
+            display: flex;
+            
+            .column-header {
+              border-right: 1px solid #2c3e50;
+              
+              &:last-child {
+                border-right: none;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .table-body {
+    max-height: 70vh;
+    overflow-y: auto;
+    
+    .store-row {
+      display: flex;
+      border-bottom: 1px solid #ecf0f1;
+      transition: background-color 0.2s;
+      
+      &:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+      
+      .store-name {
+        flex: 0 0 200px;
+        padding: 0.75rem 1rem;
+        border-right: 1px solid #dee2e6;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        
+        @media (min-width: 768px) {
+          flex: 0 0 250px;
+          padding: 1rem 1.5rem;
+          font-size: 1rem;
+        }
+        
+        .store-region {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-right: 0.5rem;
+          flex-shrink: 0;
+        }
+      }
+      
+      .store-data {
+        flex: 1;
+        display: flex;
+        border-right: 1px solid #dee2e6;
+        
+        &:last-child {
+          border-right: none;
+        }
+        
+        .week-columns {
+          display: flex;
+          width: 100%;
+          
+          .column-value {
+            flex: 1;
+            min-width: 60px;
+            text-align: center;
+            padding: 0.75rem 0.25rem;
+            border-right: 1px solid #dee2e6;
+            color: #2c3e50;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            
+            @media (min-width: 768px) {
+              min-width: 80px;
+              padding: 1rem 0.5rem;
+              font-size: 0.9rem;
+            }
+            
+            &:last-child {
+              border-right: none;
+            }
+            
+            &.total-score {
+              background: #e8f5e8;
+              font-weight: 700;
+              color: #27ae60;
+              flex: 0 0 80px;
+              
+              @media (min-width: 768px) {
+                flex: 0 0 100px;
+              }
+            }
+          }
+          
+          .indicators-group {
+            display: flex;
+            border-right: 1px solid #dee2e6;
+            
+            &:last-child {
+              border-right: none;
+            }
+            
+            .group-columns {
+              display: flex;
+              
+              .column-value {
+                border-right: 1px solid #dee2e6;
+                
+                &:last-child {
+                  border-right: none;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 .store-region {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-right: 8px;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
-/* Тело таблицы */
-.table-body {
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.store-row {
-  display: flex;
-  border-bottom: 1px solid #ecf0f1;
-  transition: background-color 0.2s;
-}
-
-.store-row:hover {
-  background-color: #f8f9fa;
-}
-
-.store-name {
-  flex: 0 0 200px;
-  padding: 12px 15px;
-  border-right: 1px solid #dee2e6;
-  color: #2c3e50;
-  display: flex;
-  align-items: center;
-}
-
-.store-data {
-  flex: 1;
-  display: flex;
-  border-right: 1px solid #dee2e6;
-}
-
-.store-data:last-child {
-  border-right: none;
-}
-
-.indicator-value {
-  text-align: center;
-  padding: 12px 8px;
-  color: #2c3e50;
-  font-size: 14px;
-}
-
-.total-score {
-  flex: 0 0 80px;
-  padding: 12px 8px;
-  text-align: center;
-  font-weight: 600;
-  color: #27ae60;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-  .header-region,
-  .region-name,
-  .store-name {
-    flex: 0 0 150px;
-  }
-  
-  .basic-indicators {
-    flex: 0 0 120px;
-  }
-  
-  .basic-indicators .indicator-value {
-    font-size: 12px;
-    padding: 8px 4px;
-  }
-  
-  .indicator-group.additional-indicator {
-    flex: 0 0 120px;
-    width: 120px;
-    max-width: 120px;
-  }
-  
-  .indicator-name {
-    font-size: 10px;
-  }
-  
-  .indicator-subheader {
-    font-size: 9px;
-    padding: 4px 2px;
-  }
-  
-  .indicator-subvalues .indicator-value {
-    font-size: 11px;
-    padding: 8px 2px;
-  }
-  
-  .indicator-value {
-    font-size: 12px;
-    padding: 8px 4px;
-  }
-  
-  .summary-header,
-  .section-header {
-    padding: 10px 15px;
-  }
-  
-  .summary-header h3,
-  .section-header h3 {
-    font-size: 16px;
-  }
-}
-
+// Адаптивность для мобильных устройств
 @media (max-width: 480px) {
   .analytics-content {
-    padding: 10px;
-  }
-  
-  .indicator-controls {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .table-container,
-  .regions-summary,
-  .stores-section {
-    font-size: 12px;
+    padding: 0.5rem;
   }
   
   .controls {
-    padding: 15px;
+    padding: 1rem;
+    
+    .indicator-controls {
+      gap: 1rem;
+    }
   }
   
-  .controls h3 {
-    font-size: 16px;
+  .table-container {
+    .table-header,
+    .stores-header {
+      .header-region {
+        flex: 0 0 150px;
+        padding: 0.75rem;
+        font-size: 0.8rem;
+      }
+      
+      .header-week {
+        .week-columns {
+          .column-header {
+            min-width: 50px;
+            padding: 0.5rem 0.25rem;
+            font-size: 0.7rem;
+            
+            &.total-score-column {
+              flex: 0 0 60px;
+            }
+          }
+          
+          .indicators-group {
+            .group-title {
+              font-size: 0.7rem;
+            }
+          }
+        }
+      }
+    }
   }
   
-  .indicator-group.additional-indicator {
-    flex: 0 0 90px;
-    width: 90px;
-    max-width: 90px;
+  .regions-summary {
+    .region-row {
+      .region-name {
+        flex: 0 0 150px;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+      }
+      
+      .region-data {
+        .week-columns {
+          .column-value {
+            min-width: 50px;
+            padding: 0.75rem 0.25rem;
+            font-size: 0.8rem;
+            
+            &.total-score {
+              flex: 0 0 60px;
+            }
+          }
+        }
+      }
+    }
   }
   
-  .indicator-name {
-    font-size: 9px;
+  .stores-section {
+    .table-body {
+      .store-row {
+        .store-name {
+          flex: 0 0 150px;
+          padding: 0.75rem;
+          font-size: 0.85rem;
+        }
+        
+        .store-data {
+          .week-columns {
+            .column-value {
+              min-width: 50px;
+              padding: 0.75rem 0.25rem;
+              font-size: 0.8rem;
+              
+              &.total-score {
+                flex: 0 0 60px;
+              }
+            }
+          }
+        }
+      }
+    }
   }
-  
-  .indicator-subheader {
-    font-size: 8px;
-    padding: 3px 1px;
-  }
-  
-  .indicator-subvalues .indicator-value {
-    font-size: 10px;
-    padding: 6px 1px;
-  }
+}
+
+.indicators-group {
+  flex: 1;
+}
+.column-value {
+  flex: 1;
 }
 </style>
