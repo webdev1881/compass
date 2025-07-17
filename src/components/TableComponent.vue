@@ -1,1273 +1,1177 @@
 <template>
-  <div class="sales-table-container table-container">
+  <div class="analytics-container">
+    <!-- Лоадер -->
+    <div v-if="isLoading" class="loader-bar">
+      <div class="loader-progress"></div>
+    </div>
 
-    <div class="controls-panel">
-      <div class="sorting-controls">
-        <label>Сортировка:</label>
-        <select v-model="sortBy" @change="handleSort" :disabled="isAnimating">
-          <option value="regionRank">По рангу регионов</option>
-          <option value="regionTotalPercent">Регионы по % выполнения</option>
-          <option value="storePercent">Магазины по % выполнения</option>
-        </select>
-
-        <button @click="toggleSortOrder" class="sort-order-btn" :class="{ 'animating': isAnimating }">
-          {{ sortOrder === 'asc' ? '↑' : '↓' }}
-        </button>
-
-        <button @click="refreshData" class="refresh-btn" :disabled="loading || isAnimating">
-          🔄 Обновить
-        </button>
+    <!-- Контент -->
+    <div v-else class="analytics-content">
+      <!-- Управление показателями -->
+      <div class="controls">
+        <h3>Управление показателями:</h3>
+        <div class="indicator-controls">
+          <label v-for="indicator in availableIndicators" :key="indicator.key" class="indicator-checkbox">
+            <input 
+              type="checkbox" 
+              v-model="visibleIndicators[indicator.key]"
+              @change="updateColumnVisibility"
+            >
+            {{ indicator.name }}
+          </label>
+        </div>
       </div>
-    
-    </div>
 
-    <div class="" v-if="!loading && !error">
-
-      <table class="custom-table">
-        <thead>
-          <tr>
-            <th style="width: 230px;" rowspan="3" class="store-name-column">Регион / Магазин</th>
-            <th v-for="week in weeks" :key="week.id" :colspan="11" class="week-group">
-              <tr>
-
-                {{ week.name }}  ({{ week.dateRange }})
-              </tr>
-            </th>
-          </tr>
-          <tr>
-            <template v-for="week in weeks" :key="week.id">
-              <th colspan="2" class="metric-header">Загальний бал</th>
-              <th colspan="4" class="metric-header">Виторг</th>
-              <th rowspan="2" class="metric-header">Втрати<br>Списання</th>
-              <th rowspan="2" class="metric-header">Недостачі</th>
-              <th rowspan="2" class="metric-header">ФОП</th>
-              <th rowspan="2" class="metric-header">Від'єміні<br>залишки</th>
-              <th rowspan="2" class="metric-header">Не проведені<br>списання</th>
-            </template>
-          </tr>
-          <tr>
-            <template v-for="week in weeks" :key="week.id">
-              <th rowspan="3" class="store-rank-column">РАНГ</th>
-              <th rowspan="3" class="score-max">900</th>
-              <th rowspan="3" class="score-current">100</th>
-              <th class="plan-column">План</th>
-              <th class="fact-column">Факт</th>
-              <th class="percent-column">%</th>
-            </template>
-          </tr>
-        </thead>
-
-        <tbody name="table-row" is="transition-group" tag="tbody" class="total_tbody">
-          <transition-group appear>
-            <tr v-for="region in sortedRegions" :key="`region-${region.id}`" class="region-row">
-              <td class="region-name">
-                <div class="region-info">
-                  <span class="region-indicator" :style="{ backgroundColor: colors[region.name] }"></span>
-                  <span class="region-title">{{ region.name }}</span>
+      <!-- Таблица -->
+      <div class="table-container">
+        <div class="table-header">
+          <div class="header-region">
+            <span>Регион / Магазин</span>
+            <button @click="toggleSort('name')" class="sort-btn">
+              {{ getSortIcon('name') }}
+            </button>
+          </div>
+          
+          <div v-for="week in sortedWeeks" :key="week.id" class="header-week">
+            <div class="week-title">
+              <h4>{{ week.name }}</h4>
+              <span class="week-date">{{ week.dateRange }}</span>
+            </div>
+            
+            <!-- Оборотные показатели -->
+            <div class="indicators-group">
+              <div class="indicator-header basic-indicators">
+                <div class="indicator-column">
+                  <span>План</span>
+                  <button @click="toggleSort(`plan_${week.id}`)" class="sort-btn">
+                    {{ getSortIcon(`plan_${week.id}`) }}
+                  </button>
                 </div>
-              </td>
-              <template v-for="week in weeks" :key="week.id">
-                <td class="region-rank">{{ region.rank }}</td>
-                <td class="score-max">{{ region.totalScore.max }}</td>
-                <td class="score-current" :class="getScoreClass(region.totalScore.current)">{{ region.totalScore.current}}</td>
-                <td class="plan">{{ formatNumber(getRegionWeekData(region, week.id).plan) }}</td>
-                <td class="fact">{{ formatNumber(getRegionWeekData(region, week.id).fact) }}</td>
-                <td class="percent" :class="getPercentClass(getRegionWeekData(region, week.id).percent)">{{ getRegionWeekData(region, week.id).percent }}%</td>
-                <td class="losses">{{ formatNumber(getRegionWeekData(region, week.id).losses) }}</td>
-                <td class="shortages">{{ formatNumber(getRegionWeekData(region, week.id).shortages) }}</td>
-                <td class="fop">{{ formatNumber(getRegionWeekData(region, week.id).fop) }}</td>
-
-                <td class="shift">
-                  <span v-if="getRegionWeekData(region, week.id).shiftRemainder" class="status-value negative">
-                    {{ getRegionWeekData(region, week.id).shiftRemainder }}
-                  </span><span v-else class="status-value">-</span>
-                </td>
-
-                <td class="unprocessed">
-                  <span v-if="getRegionWeekData(region, week.id).unprocessed" class="status-value negative">
-                    {{ getRegionWeekData(region, week.id).unprocessed }}
-                  </span><span v-else class="status-value">-</span>
-                </td>
-
-
-              </template>
-            </tr>
-          </transition-group>
-        </tbody>
-        <br>
-        <tbody name="table-row" is="transition-group" tag="tbody" class="total_tbody">
-
-          <transition-group appear>
-          <tr v-for="store in getAllSortedStores()" :key="`store-${store.id}`" class="store-row">
-            <td class="store-name">
-              <div class="store-info">
-                <span class="region-indicator" :style="{ backgroundColor: colors[store.regionName] }"></span>
-                <span class="store-rank-number">{{ store.rank }}</span>
-                <span class="store-title">{{ store.name }}</span>
+                <div class="indicator-column">
+                  <span>Факт</span>
+                  <button @click="toggleSort(`fact_${week.id}`)" class="sort-btn">
+                    {{ getSortIcon(`fact_${week.id}`) }}
+                  </button>
+                </div>
+                <div class="indicator-column">
+                  <span>%</span>
+                  <button @click="toggleSort(`percent_${week.id}`)" class="sort-btn">
+                    {{ getSortIcon(`percent_${week.id}`) }}
+                  </button>
+                </div>
               </div>
-            </td>
-            <template v-for="week in weeks" :key="week.id">
-              <td class="store-rank">{{ store.rank }}</td>
-              <td class="score-max">{{ store.regionScore.max }}</td>
-              <td class="score-current" :class="getScoreClass(store.regionScore.current)">{{ store.regionScore.current}}</td>
-              <td class="plan">{{ formatNumber(getStoreWeekData(store, week.id).plan) }}</td>
-              <td class="fact">{{ formatNumber(getStoreWeekData(store, week.id).fact) }}</td>
-              <td class="percent" :class="getPercentClass(getStoreWeekData(store, week.id).percent)">{{ getStoreWeekData(store, week.id).percent }}%</td>
-              <td class="losses">{{ formatNumber(getStoreWeekData(store, week.id).losses) }}</td>
-              <td class="shortages">{{ formatNumber(getStoreWeekData(store, week.id).shortages) }}</td>
-              <td class="fop">{{ formatNumber(getStoreWeekData(store, week.id).fop) }}</td>
+              
+              <!-- Дополнительные показатели -->
+              <div 
+                v-for="indicator in additionalIndicators" 
+                :key="indicator.key"
+                class="indicator-group additional-indicator"
+                :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+              >
+                <div class="indicator-header-group">
+                  <span class="indicator-name">{{ indicator.name }}</span>
+                </div>
+                <div class="indicator-subheaders">
+                  <div class="indicator-subheader">
+                    <span>Знач.</span>
+                    <button @click="toggleSort(`${indicator.key}_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`${indicator.key}_${week.id}`) }}
+                    </button>
+                  </div>
+                  <div class="indicator-subheader">
+                    <span>%</span>
+                    <button @click="toggleSort(`${indicator.key}_percent_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`${indicator.key}_percent_${week.id}`) }}
+                    </button>
+                  </div>
+                  <div class="indicator-subheader">
+                    <span>Балл</span>
+                    <button @click="toggleSort(`${indicator.key}_score_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`${indicator.key}_score_${week.id}`) }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Общий балл -->
+            <div class="total-score-header">
+              <span>Общий балл</span>
+              <button @click="toggleSort(`totalScore_${week.id}`)" class="sort-btn">
+                {{ getSortIcon(`totalScore_${week.id}`) }}
+              </button>
+            </div>
+          </div>
+        </div>
 
-              <td class="shift">
-                <span v-if="getStoreWeekData(store, week.id).shiftRemainder" class="status-value negative">
-                    {{ getStoreWeekData(store, week.id).shiftRemainder }}
-                  </span><span v-else class="status-value">-</span>
-              </td>
+        <!-- Блок итогов по регионам -->
+        <div class="regions-summary">
+          <div class="summary-header">
+            <h3>Итоги по регионам</h3>
+          </div>
+          
+          <div v-for="region in sortedRegions" :key="region.id" class="region-row">
+            <div class="region-name">
+              <span class="region-indicator" :style="{ backgroundColor: region.color }"></span>
+              {{ region.name }}
+            </div>
+            
+            <div v-for="week in sortedWeeks" :key="week.id" class="region-data">
+              <div class="indicators-group">
+                <div class="basic-indicators">
+                  <div class="indicator-value">{{ formatNumber(getRegionSummary(region, week.id).plan) }}</div>
+                  <div class="indicator-value">{{ formatNumber(getRegionSummary(region, week.id).fact) }}</div>
+                  <div class="indicator-value">{{ formatPercent(getRegionSummary(region, week.id).percent) }}</div>
+                </div>
+                
+                <div 
+                  v-for="indicator in additionalIndicators" 
+                  :key="indicator.key"
+                  class="indicator-group additional-indicator"
+                  :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                >
+                  <div class="indicator-subvalues">
+                    <div class="indicator-value">
+                      {{ formatNumber(getRegionSummary(region, week.id)[indicator.key]) }}
+                    </div>
+                    <div class="indicator-value">
+                      {{ formatPercent(getRegionSummary(region, week.id)[indicator.key + '_percent']) }}
+                    </div>
+                    <div class="indicator-value">
+                      {{ formatNumber(getRegionSummary(region, week.id)[indicator.key + '_score']) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="total-score">
+                {{ formatNumber(getRegionSummary(region, week.id).totalScore) }}
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <td class="unprocessed">
-                <span v-if="getStoreWeekData(store, week.id).unprocessed" class="status-value negative">
-                {{ getStoreWeekData(store, week.id).unprocessed }}
-                </span><span v-else class="status-value">-</span>
-              </td>
-
-
-            </template>
-          </tr>
-          </transition-group>
-        </tbody>
-      </table>
-
-      <br>
-
-    </div>
-
-    <!-- Состояние загрузки -->
-    <div v-else-if="loading" class="loading">
-      <div class="loading-spinner"></div>
-      <p>Загрузка данных...</p>
-    </div>
-
-    <!-- Состояние ошибки -->
-    <div v-else-if="error" class="error">
-      <div class="error-icon">⚠️</div>
-      <h3>Ошибка загрузки данных</h3>
-      <p>{{ error }}</p>
-      <button @click="loadData" class="retry-btn">Попробовать снова</button>
+        <!-- Блок магазинов -->
+        <div class="stores-section">
+          <div class="section-header">
+            <h3>Магазины</h3>
+          </div>
+          
+          <!-- Заголовки для магазинов -->
+          <div class="stores-header">
+            <div class="header-region">
+              <span>Магазин</span>
+              <button @click="toggleSort('name')" class="sort-btn">
+                {{ getSortIcon('name') }}
+              </button>
+            </div>
+            
+            <div v-for="week in sortedWeeks" :key="week.id" class="header-week">
+              <!-- Оборотные показатели -->
+              <div class="indicators-group">
+                <div class="indicator-header basic-indicators">
+                  <div class="indicator-column">
+                    <span>План</span>
+                    <button @click="toggleSort(`plan_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`plan_${week.id}`) }}
+                    </button>
+                  </div>
+                  <div class="indicator-column">
+                    <span>Факт</span>
+                    <button @click="toggleSort(`fact_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`fact_${week.id}`) }}
+                    </button>
+                  </div>
+                  <div class="indicator-column">
+                    <span>%</span>
+                    <button @click="toggleSort(`percent_${week.id}`)" class="sort-btn">
+                      {{ getSortIcon(`percent_${week.id}`) }}
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Дополнительные показатели -->
+                <div 
+                  v-for="indicator in additionalIndicators" 
+                  :key="indicator.key"
+                  class="indicator-group additional-indicator"
+                  :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                >
+                  <div class="indicator-subheaders">
+                    <div class="indicator-subheader">
+                      <span>Знач.</span>
+                      <button @click="toggleSort(`${indicator.key}_${week.id}`)" class="sort-btn">
+                        {{ getSortIcon(`${indicator.key}_${week.id}`) }}
+                      </button>
+                    </div>
+                    <div class="indicator-subheader">
+                      <span>%</span>
+                      <button @click="toggleSort(`${indicator.key}_percent_${week.id}`)" class="sort-btn">
+                        {{ getSortIcon(`${indicator.key}_percent_${week.id}`) }}
+                      </button>
+                    </div>
+                    <div class="indicator-subheader">
+                      <span>Балл</span>
+                      <button @click="toggleSort(`${indicator.key}_score_${week.id}`)" class="sort-btn">
+                        {{ getSortIcon(`${indicator.key}_score_${week.id}`) }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Общий балл -->
+              <div class="total-score-header">
+                <span>Общий балл</span>
+                <button @click="toggleSort(`totalScore_${week.id}`)" class="sort-btn">
+                  {{ getSortIcon(`totalScore_${week.id}`) }}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Данные магазинов -->
+          <div class="table-body">
+            <div v-for="store in sortedStores" :key="store.id" class="store-row">
+              <div class="store-name">
+                <span class="store-region" :style="{ backgroundColor: getStoreRegionColor(store) }"></span>
+                {{ store.name }}
+              </div>
+              
+              <div v-for="week in sortedWeeks" :key="week.id" class="store-data">
+                <div class="indicators-group">
+                  <div class="basic-indicators">
+                    <div class="indicator-value">{{ formatNumber(getStoreValue(store, week.id, 'plan')) }}</div>
+                    <div class="indicator-value">{{ formatNumber(getStoreValue(store, week.id, 'fact')) }}</div>
+                    <div class="indicator-value">{{ formatPercent(getStorePercent(store, week.id)) }}</div>
+                  </div>
+                  
+                  <div 
+                    v-for="indicator in additionalIndicators" 
+                    :key="indicator.key"
+                    class="indicator-group additional-indicator"
+                    :class="{ 'hidden': !visibleIndicators[indicator.key] }"
+                  >
+                    <div class="indicator-subvalues">
+                      <div class="indicator-value">
+                        {{ formatNumber(getStoreValue(store, week.id, indicator.key)) }}
+                      </div>
+                      <div class="indicator-value">
+                        {{ formatPercent(getStoreIndicatorPercent(store, week.id, indicator.key)) }}
+                      </div>
+                      <div class="indicator-value">
+                        {{ formatNumber(getStoreIndicatorScore(store, week.id, indicator.key)) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="total-score">
+                  {{ formatNumber(getStoreTotalScore(store, week.id)) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 
 export default {
-  name: 'SalesTable',
+  name: 'AnalyticsTable',
   setup() {
-    const loading = ref(true)
-    const error = ref(null)
-    const salesData = ref(null)
-    const sortBy = ref('regionRank')
-    const sortOrder = ref('asc')
-    const colors = ref({
-      'Белая Церковь': '#6f4b4f',
-      'Днепр': '#ffc107',
-      'Киев': '#28a745',
-      'Харьков': '#007bff',
+    // Состояние загрузки
+    const isLoading = ref(true)
+    
+    // Данные
+    const weeksData = ref([])
+    const regionsData = ref({})
+    const targetsData = ref({})
+    
+    // Кеш для итогов по регионам
+    const regionSummaryCache = ref({})
+    
+    // Управление показателями
+    const visibleIndicators = reactive({
+      losses: true,
+      shortages: true,
+      fop: true,
+      shiftRemainder: true,
+      unprocessed: true
     })
-
-
+    
+    // Сортировка
+    const sortBy = ref('totalScore_2')
+    const sortOrder = ref('desc')
+    
+    // Доступные показатели
+    const availableIndicators = computed(() => [
+      { key: 'losses', name: 'Потери' },
+      { key: 'shortages', name: 'Недостачи' },
+      { key: 'fop', name: 'ФОП' },
+      { key: 'shiftRemainder', name: 'Остатки смены' },
+      { key: 'unprocessed', name: 'Необработанное' }
+    ])
+    
+    const additionalIndicators = computed(() => 
+      availableIndicators.value.filter(ind => targetsData.value.targetTree?.[ind.key])
+    )
+    
+    // Отсортированные недели (новые сначала)
+    const sortedWeeks = computed(() => 
+      [...weeksData.value].sort((a, b) => b.id - a.id)
+    )
+    
     // Загрузка данных
     const loadData = async () => {
       try {
-        loading.value = true
-        error.value = null
-        const response = await fetch('/sales-data.json')
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        isLoading.value = true
+        
+        const [dataResponse, targetsResponse] = await Promise.all([
+          fetch('/sales-data.json'),
+          fetch('/targets.json')
+        ])
+        
+        if (!dataResponse.ok || !targetsResponse.ok) {
+          throw new Error('Ошибка при загрузке данных')
         }
-
-        const data = await response.json()
-        console.log('Загруженные данные:', data);
-
-
-        // Валидация данных
-        if (!data.weeks || !data.regions) {
-          throw new Error('Неверная структура данных')
-        } else {
-          data.weeks.reverse()
-          data.regions.reverse()
-        }
-
-        salesData.value = data
-      } catch (err) {
-        console.error('Ошибка загрузки данных:', err)
-        error.value = err.message || 'Ошибка загрузки данных'
+        
+        const salesData = await dataResponse.json()
+        const targets = await targetsResponse.json()
+        
+        weeksData.value = salesData.weeks
+        regionsData.value = salesData.regions
+        targetsData.value = targets
+        
+        // Очистка кеша при новых данных
+        regionSummaryCache.value = {}
+        
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error)
       } finally {
-        loading.value = false
+        isLoading.value = false
       }
     }
-
-    // Вычисляемые свойства
-    const weeks = computed(() => salesData.value?.weeks || [])
-    const regions = computed(() => salesData.value?.regions || [])
-
+    
+    // Расчёты для магазинов
+    const calculatePercent = (fact, plan) => {
+      if (!plan || plan === 0) return 0
+      return (fact / plan) * 100
+    }
+    
+    const getStoreValue = (store, weekId, indicator) => {
+      const weekData = store.weeklyData?.find(w => w.weekId === weekId)
+      return weekData?.[indicator] || 0
+    }
+    
+    const getStorePercent = (store, weekId) => {
+      const weekData = store.weeklyData?.find(w => w.weekId === weekId)
+      if (!weekData) return 0
+      return calculatePercent(weekData.fact, weekData.plan)
+    }
+    
+    const getStoreIndicatorPercent = (store, weekId, indicator) => {
+      const weekData = store.weeklyData?.find(w => w.weekId === weekId)
+      const targets = targetsData.value.storeTargets?.[store.id.toString()]
+      const targetTree = targetsData.value.targetTree?.[indicator]
+      
+      if (!weekData || !targets || !targetTree) return 0
+      
+      const factValue = weekData[indicator] || 0
+      const targetValue = targets[indicator] * weekData.fact
+      
+      if (targetValue === 0) return 0
+      
+      if (targetTree.type === 'negative') {
+        return (targetValue / factValue) * 100
+      } else {
+        return (factValue / targetValue) * 100
+      }
+    }
+    
+    const getStoreIndicatorScore = (store, weekId, indicator) => {
+      const weekData = store.weeklyData?.find(w => w.weekId === weekId)
+      const targets = targetsData.value.storeTargets?.[store.id.toString()]
+      const targetTree = targetsData.value.targetTree?.[indicator]
+      
+      if (!weekData || !targets || !targetTree) return 0
+      
+      const factValue = weekData[indicator] || 0
+      const targetValue = targets[indicator] * weekData.fact
+      
+      if (targetValue === 0) return 0
+      
+      let percent = 0
+      if (targetTree.type === 'negative') {
+        percent = (targetValue / factValue) * 100
+      } else {
+        percent = (factValue / targetValue) * 100
+      }
+      
+      const scoreRatio = Math.min(percent / 100, 1)
+      return scoreRatio * targetTree.maxScore
+    }
+    
+    const getStoreTotalScore = (store, weekId) => {
+      const targets = targetsData.value.storeTargets?.[store.id.toString()]
+      if (!targets) return 0
+      
+      let totalScore = 0
+      Object.keys(targets).forEach(indicator => {
+        totalScore += getStoreIndicatorScore(store, weekId, indicator)
+      })
+      
+      return totalScore
+    }
+    
+    // Расчёты для регионов с кешированием
+    const getRegionSummary = (region, weekId) => {
+      const cacheKey = `${region.id}_${weekId}`
+      
+      if (regionSummaryCache.value[cacheKey]) {
+        return regionSummaryCache.value[cacheKey]
+      }
+      
+      const stores = region.stores || []
+      let summary = {
+        plan: 0,
+        fact: 0,
+        percent: 0,
+        totalScore: 0
+      }
+      
+      // Суммируем базовые показатели
+      stores.forEach(store => {
+        summary.plan += getStoreValue(store, weekId, 'plan')
+        summary.fact += getStoreValue(store, weekId, 'fact')
+        summary.totalScore += getStoreTotalScore(store, weekId)
+      })
+      
+      // Рассчитываем процент оборота
+      summary.percent = calculatePercent(summary.fact, summary.plan)
+      
+      // Суммируем дополнительные показатели
+      additionalIndicators.value.forEach(indicator => {
+        const indicatorKey = indicator.key
+        let indicatorSum = 0
+        
+        stores.forEach(store => {
+          indicatorSum += getStoreValue(store, weekId, indicatorKey)
+        })
+        
+        summary[indicatorKey] = indicatorSum
+        
+        // Рассчитываем средневзвешенный процент для региона
+        // Используем средневзвешенный по обороту расчет
+        let weightedPercentSum = 0
+        let totalFact = 0
+        
+        stores.forEach(store => {
+          const storeFact = getStoreValue(store, weekId, 'fact')
+          const storePercent = getStoreIndicatorPercent(store, weekId, indicatorKey)
+          
+          if (storeFact > 0 && storePercent > 0) {
+            weightedPercentSum += storePercent * storeFact
+            totalFact += storeFact
+          }
+        })
+        
+        summary[indicatorKey + '_percent'] = totalFact > 0 ? weightedPercentSum / totalFact : 0
+        
+        // Суммируем баллы
+        let scoreSum = 0
+        stores.forEach(store => {
+          scoreSum += getStoreIndicatorScore(store, weekId, indicatorKey)
+        })
+        
+        summary[indicatorKey + '_score'] = scoreSum
+      })
+      
+      regionSummaryCache.value[cacheKey] = summary
+      return summary
+    }
+    
     // Сортировка регионов
     const sortedRegions = computed(() => {
-      if (!regions.value) return []
-
-      const sorted = [...regions.value]
-
-      sorted.sort((a, b) => {
+      const regions = Object.values(regionsData.value)
+      
+      return regions.sort((a, b) => {
         let aValue, bValue
-
-        switch (sortBy.value) {
-          case 'regionRank':
-            aValue = a.rank
-            bValue = b.rank
-            break
-          case 'regionName':
-            aValue = a.name || ''
-            bValue = b.name || ''
-            break
-          case 'regionTotalPlan':
-            aValue = getTotalPlanForRegion(a)
-            bValue = getTotalPlanForRegion(b)
-            break
-          case 'regionTotalFact':
-            aValue = getTotalFactForRegion(a)
-            bValue = getTotalFactForRegion(b)
-            break
-          case 'regionTotalPercent':
-            aValue = getTotalPercentForRegion(a)
-            bValue = getTotalPercentForRegion(b)
-            break
-          default:
-            return 0
-        }
-
-        if (typeof aValue === 'string') {
-          return sortOrder.value === 'asc'
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue)
+        
+        if (sortBy.value === 'name') {
+          aValue = a.name
+          bValue = b.name
+        } else if (sortBy.value.startsWith('totalScore_')) {
+          const weekId = parseInt(sortBy.value.split('_')[1])
+          aValue = getRegionSummary(a, weekId).totalScore
+          bValue = getRegionSummary(b, weekId).totalScore
+        } else if (sortBy.value.includes('_percent_')) {
+          const [indicator, , weekId] = sortBy.value.split('_')
+          aValue = getRegionSummary(a, parseInt(weekId))[indicator + '_percent']
+          bValue = getRegionSummary(b, parseInt(weekId))[indicator + '_percent']
+        } else if (sortBy.value.includes('_score_')) {
+          const [indicator, , weekId] = sortBy.value.split('_')
+          aValue = getRegionSummary(a, parseInt(weekId))[indicator + '_score']
+          bValue = getRegionSummary(b, parseInt(weekId))[indicator + '_score']
         } else {
-          return sortOrder.value === 'asc'
-            ? aValue - bValue
-            : bValue - aValue
+          const [indicator, weekId] = sortBy.value.split('_')
+          if (indicator === 'percent') {
+            aValue = getRegionSummary(a, parseInt(weekId)).percent
+            bValue = getRegionSummary(b, parseInt(weekId)).percent
+          } else {
+            aValue = getRegionSummary(a, parseInt(weekId))[indicator]
+            bValue = getRegionSummary(b, parseInt(weekId))[indicator]
+          }
+        }
+        
+        if (sortOrder.value === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
         }
       })
-
-      return sorted
     })
-
-    // Получение данных региона за конкретную неделю
-    const getRegionWeekData = (region, weekId) => {
-      if (!region || !region.weeklyData) {
-        return { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
-      }
-
-      const weekData = region.weeklyData.find(w => w.weekId === weekId)
-      return weekData || { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
-    }
-
-    // Получение данных магазина за конкретную неделю
-    const getStoreWeekData = (store, weekId) => {
-      if (!store || !store.weeklyData) {
-        return { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
-      }
-
-      const weekData = store.weeklyData.find(w => w.weekId === weekId)
-      return weekData || { plan: 0, fact: 0, percent: 0, losses: 0, shortages: 0, fop: 0, shiftRemainder: 0, unprocessed: 0 }
-    }
-
-    // Получение общего плана для региона (сумма по всем неделям)
-    const getTotalPlanForRegion = (region) => {
-      if (!region || !region.weeklyData) return 0
-      return region.weeklyData.reduce((sum, week) => sum + (week.plan || 0), 0)
-    }
-
-    // Получение общего факта для региона (сумма по всем неделям)
-    const getTotalFactForRegion = (region) => {
-      if (!region || !region.weeklyData) return 0
-      return region.weeklyData.reduce((sum, week) => sum + (week.fact || 0), 0)
-    }
-
-    // Получение общего процента для региона
-    const getTotalPercentForRegion = (region) => {
-      const totalPlan = getTotalPlanForRegion(region)
-      const totalFact = getTotalFactForRegion(region)
-      return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
-    }
-
-    // Получение всех магазинов без группировки по регионам
-    const getAllSortedStores = () => {
-      const allStores = []
-
-      regions.value.forEach(region => {
-        const stores = region.stores || []
-        stores.forEach(store => {
-          allStores.push({
+    
+    // Сортировка магазинов
+    const sortedStores = computed(() => {
+      const stores = []
+      
+      // Собираем все магазины со всех регионов
+      Object.values(regionsData.value).forEach(region => {
+        region.stores.forEach(store => {
+          stores.push({
             ...store,
-            regionColor: region.color,
-            regionScore: region.totalScore,
-            regionName: region.name
+            regionId: region.id,
+            regionName: region.name,
+            regionColor: region.color
           })
         })
       })
-
-      // Сортировка всех магазинов
-      if (sortBy.value.startsWith('store')) {
-        allStores.sort((a, b) => {
-          let aValue, bValue
-
-          switch (sortBy.value) {
-            case 'storeName':
-              aValue = a.name || ''
-              bValue = b.name || ''
-              break
-            case 'storePlan':
-              aValue = getTotalPlanForStore(a)
-              bValue = getTotalPlanForStore(b)
-              break
-            case 'storeFact':
-              aValue = getTotalFactForStore(a)
-              bValue = getTotalFactForStore(b)
-              break
-            case 'storePercent':
-              aValue = getTotalPercentForStore(a)
-              bValue = getTotalPercentForStore(b)
-              break
-            default:
-              return 0
-          }
-
-          if (typeof aValue === 'string') {
-            return sortOrder.value === 'asc'
-              ? aValue.localeCompare(bValue)
-              : bValue.localeCompare(aValue)
+      
+      return stores.sort((a, b) => {
+        let aValue, bValue
+        
+        if (sortBy.value === 'name') {
+          aValue = a.name
+          bValue = b.name
+        } else if (sortBy.value.startsWith('totalScore_')) {
+          const weekId = parseInt(sortBy.value.split('_')[1])
+          aValue = getStoreTotalScore(a, weekId)
+          bValue = getStoreTotalScore(b, weekId)
+        } else if (sortBy.value.includes('_percent_')) {
+          const [indicator, , weekId] = sortBy.value.split('_')
+          aValue = getStoreIndicatorPercent(a, parseInt(weekId), indicator)
+          bValue = getStoreIndicatorPercent(b, parseInt(weekId), indicator)
+        } else if (sortBy.value.includes('_score_')) {
+          const [indicator, , weekId] = sortBy.value.split('_')
+          aValue = getStoreIndicatorScore(a, parseInt(weekId), indicator)
+          bValue = getStoreIndicatorScore(b, parseInt(weekId), indicator)
+        } else {
+          const [indicator, weekId] = sortBy.value.split('_')
+          if (indicator === 'percent') {
+            aValue = getStorePercent(a, parseInt(weekId))
+            bValue = getStorePercent(b, parseInt(weekId))
           } else {
-            return sortOrder.value === 'asc'
-              ? aValue - bValue
-              : bValue - aValue
+            aValue = getStoreValue(a, parseInt(weekId), indicator)
+            bValue = getStoreValue(b, parseInt(weekId), indicator)
           }
-        })
+        }
+        
+        if (sortOrder.value === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
+        }
+      })
+    })
+    
+    // Получить цвет региона для магазина
+    const getStoreRegionColor = (store) => {
+      return store.regionColor || '#6c757d'
+    }
+    
+    const toggleSort = (field) => {
+      if (sortBy.value === field) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
       } else {
-        // Сортировка по умолчанию по рангу
-        allStores.sort((a, b) => (a.rank || 0) - (b.rank || 0))
+        sortBy.value = field
+        sortOrder.value = 'asc'
       }
-
-      return allStores
     }
-
-    // Получение общего плана для магазина
-    const getTotalPlanForStore = (store) => {
-      if (!store || !store.weeklyData) return 0
-      return store.weeklyData.reduce((sum, week) => sum + (week.plan || 0), 0)
+    
+    const getSortIcon = (field) => {
+      if (sortBy.value !== field) return '↕'
+      return sortOrder.value === 'asc' ? '↑' : '↓'
     }
-
-    // Получение общего факта для магазина
-    const getTotalFactForStore = (store) => {
-      if (!store || !store.weeklyData) return 0
-      return store.weeklyData.reduce((sum, week) => sum + (week.fact || 0), 0)
+    
+    // Управление видимостью столбцов
+    const updateColumnVisibility = () => {
+      // Очищаем кеш при изменении видимости
+      regionSummaryCache.value = {}
     }
-
-    // Получение общего процента для магазина
-    const getTotalPercentForStore = (store) => {
-      const totalPlan = getTotalPlanForStore(store)
-      const totalFact = getTotalFactForStore(store)
-      return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
+    
+    // Форматирование
+    const formatNumber = (value) => {
+      return Math.round(value).toLocaleString()
     }
-
-    // Утилитарные функции
-    const formatNumber = (number) => {
-      if (number === null || number === undefined || isNaN(number)) {
-        return '0'
-      }
-      return new Intl.NumberFormat('ru-RU').format(number)
+    
+    const formatPercent = (value) => {
+      return Math.round(value) + '%'
     }
-
-    const getPercentClass = (percent) => {
-      if (percent === null || percent === undefined || isNaN(percent)) {
-        return 'danger'
-      }
-      if (percent >= 70) return 'success'
-      if (percent >= 50) return 'warning'
-      return 'danger'
-    }
-
-    const getScoreClass = (score) => {
-      if (score === null || score === undefined || isNaN(score)) {
-        return 'danger'
-      }
-      if (score >= 90) return 'success'
-      if (score >= 70) return 'warning'
-      return 'danger'
-    }
-
-    // Состояние анимации
-    const isAnimating = ref(false)
-
-    // Обработчики событий
-    const handleSort = () => {
-      // Добавляем индикацию анимации
-      isAnimating.value = true
-      setTimeout(() => {
-        isAnimating.value = false
-      }, 600) // Длительность анимации
-    }
-
-    const toggleSortOrder = () => {
-      isAnimating.value = true
-      sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-      setTimeout(() => {
-        isAnimating.value = false
-      }, 600)
-    }
-
-    const refreshData = async () => {
-      await loadData()
-    }
-
+    
+    // Инициализация
     onMounted(() => {
       loadData()
     })
-
+    
     return {
-      loading,
-      error,
-      weeks,
-      regions,
-      sortedRegions,
+      isLoading,
+      weeksData,
+      regionsData,
+      targetsData,
+      visibleIndicators,
       sortBy,
       sortOrder,
-      isAnimating,
-      colors,
-      getRegionWeekData,
-      getStoreWeekData,
-      getAllSortedStores,
+      availableIndicators,
+      additionalIndicators,
+      sortedWeeks,
+      sortedRegions,
+      sortedStores,
+      
+      // Методы
+      toggleSort,
+      getSortIcon,
+      updateColumnVisibility,
+      getStoreValue,
+      getStorePercent,
+      getStoreTotalScore,
+      getStoreIndicatorPercent,
+      getStoreIndicatorScore,
+      getRegionSummary,
+      getStoreRegionColor,
       formatNumber,
-      getPercentClass,
-      getScoreClass,
-      handleSort,
-      toggleSortOrder,
-      refreshData,
-      loadData
+      formatPercent
     }
   }
 }
 </script>
 
 <style scoped>
-
-
-.total_tbody {
-  text-align: center;
-}
-
-
-.sales-table-container {
-  padding: 20px;
-  max-width: 1900px;
-  margin: 0 auto;
-}
-
-.controls-panel {
-  display: flex;
-  align-items: center;
-  background: white;
-  padding: 15px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.sorting-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sorting-controls label {
-  font-weight: 600;
-  color: #555;
-}
-
-.sorting-controls select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  /* font-size: 14px; */
-}
-
-.sort-order-btn,
-.refresh-btn {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  /* font-size: 14px; */
-  font-weight: 600;
-  transition: background-color 0.3s;
-}
-
-.sort-order-btn {
-  background: #007bff;
-  color: white;
-}
-
-.sort-order-btn:hover {
-  background: #0056b3;
-}
-
-.refresh-btn {
-  background: #28a745;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #218838;
-}
-
-.refresh-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.table-wrapper {
-  /* background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow: hidden; */
-}
-
-.region-table,
-.stores-table {
-  /* width: 100%; */
-  border-collapse: collapse;
-  font-size: 11px;
-  /* min-width: 1600px; */
-}
-
-.sales-table th,
-.stores-table th {
-  background: #495057;
-  color: white;
-  padding: 8px 4px;
-  text-align: center;
-  font-weight: 600;
-  border: 1px solid #343a40;
-  /* font-size: 11px; */
-}
-
-.sales-table td,
-.stores-table td {
-  padding: 6px 4px;
-  text-align: center;
-  border: 1px solid #ddd;
-  /* font-size: 11px; */
-}
-
-.name-column,
-.store-name-column {
-  min-width: 180px;
-  text-align: left;
-}
-
-.rank-column,
-.store-rank-column {
-  width: 50px;
-}
-
-.score-max-column,
-.score-current-column {
-  width: 40px;
-}
-
-.week-group {
-    /* background: #6c757d !important; */
-    color: rgb(50, 128, 201)!important;
-    font-weight: 700;
-    font-size: 20px;
-  }
-
-.revenue-group {
-  background: #17a2b8 !important;
-}
-
-.plan-column,
-.fact-column {
-  width: 80px;
-}
-
-.percent-column {
-  width: 50px;
-}
-
-.losses-column,
-.shortages-column,
-.fop-column {
-  width: 60px;
-}
-
-.shift-column,
-.unprocessed-column {
-  width: 50px;
-}
-
-.region-row {
+.analytics-container {
+  width: 100%;
+  min-height: 100vh;
   background: #f8f9fa;
-  font-weight: 600;
 }
 
-.region-info,
-.store-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.region-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.region-rank-number,
-.store-rank-number {
-  font-weight: 700;
-  color: #495057;
-  /* font-size: 11px; */
-}
-
-.region-title {
-  font-size: 13px;
-}
-
-.store-title {
-  flex: 1;
-  text-align: left;
-  font-size: 12px;
-}
-
-.stores-section {
-  margin-top: 20px;
-}
-
-.store-row {
-  background: #fafafa;
-}
-
-.store-row:nth-child(even) {
-  /* background: #f5f5f5; */
-}
-
-.store-row:hover {
-  background: #e9ecef;
-}
-
-.store-name {
-  text-align: left;
-  padding-left: 15px;
-}
-
-.percent.success,
-.score-current.success {
-  background: #d4edda;
-  color: #155724;
-  font-weight: 600;
-}
-
-.percent.warning,
-.score-current.warning {
-  background: #fff3cd;
-  color: #856404;
-  font-weight: 600;
-}
-
-.percent.danger,
-.score-current.danger {
-  background: #f8d7da;
-  color: #721c24;
-  font-weight: 600;
-}
-
-.loading,
-.error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  text-align: center;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #007bff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 20px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.error {
-  color: #dc3545;
-}
-
-.error-icon {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
-.retry-btn {
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  /* font-size: 14px; */
-  font-weight: 600;
-  transition: background-color 0.3s;
-}
-
-.retry-btn:hover {
-  background: #0056b3;
-}
-
-
-
-
-.table-container {
-  /* width: 100%; */
-  /* min-height: 100vh; */
-  background: #d7e4f0;
-}
-
-.loading-bar {
+/* Лоадер */
+.loader-bar {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   height: 4px;
-  background: #e0e0e0;
+  background: #e9ecef;
   z-index: 1000;
 }
 
-.loading-progress {
+.loader-progress {
   height: 100%;
-  background: #2196f3;
-  animation: loading 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  width: 0%;
+  animation: loading 2s ease-in-out infinite;
 }
 
 @keyframes loading {
-  0% {
-    width: 0%;
-  }
-
-  50% {
-    width: 70%;
-  }
-
-  100% {
-    width: 100%;
-  }
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
 }
 
-.content {
+/* Контент */
+.analytics-content {
   padding: 20px;
-  animation: fadeIn 0.5s ease-in;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+/* Управление показателями */
+.controls {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.controls h3 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+}
+
+.indicator-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.indicator-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #34495e;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.indicator-checkbox:hover {
+  background: #f8f9fa;
+  border-color: #3498db;
+}
+
+.indicator-checkbox input {
+  margin: 0;
+}
+
+/* Таблица */
+.table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  background: #34495e;
+  color: white;
+  font-weight: 600;
+  border-bottom: 2px solid #2c3e50;
+}
+
+.header-region {
+  flex: 0 0 200px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-right: 1px solid #2c3e50;
+}
+
+.header-week {
+  flex: 1;
+  border-right: 1px solid #2c3e50;
+}
+
+.header-week:last-child {
+  border-right: none;
 }
 
 .week-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1976d2;
+  padding: 10px 15px;
+  border-bottom: 1px solid #2c3e50;
   text-align: center;
-  margin-bottom: 20px;
 }
 
-.table-wrapper {
-  /* background: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
-  margin-bottom: 20px; */
+.week-title h4 {
+  margin: 0 0 5px 0;
+  font-size: 16px;
 }
 
-.custom-table {
-  width: 100%;
-  border-collapse: collapse;
+.week-date {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.indicators-group {
+  display: flex;
+}
+
+.basic-indicators {
+  display: flex;
+  flex: 0 0 180px;
+  border-right: 1px solid #2c3e50;
+}
+
+.indicator-column {
+  flex: 1;
+  padding: 10px 8px;
+  text-align: center;
+  border-right: 1px solid #2c3e50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.indicator-column:last-child {
+  border-right: none;
+}
+
+/* Дополнительные показатели - группировка */
+.indicator-group {
+  border-right: 1px solid #2c3e50;
+  transition: all 0.3s ease;
+}
+
+.indicator-group.additional-indicator {
+  flex: 0 0 180px;
+  opacity: 1;
+  width: 180px;
+  max-width: 180px;
+  transform: scaleX(1);
+}
+
+.indicator-group.additional-indicator.hidden {
+  opacity: 0;
+  width: 0;
+  max-width: 0;
+  transform: scaleX(0);
+  overflow: hidden;
+}
+
+.indicator-header-group {
+  padding: 8px 5px;
+  text-align: center;
+  border-bottom: 1px solid #2c3e50;
+  background: #2c3e50;
+}
+
+.indicator-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+}
+
+.indicator-subheaders {
+  display: flex;
+}
+
+.indicator-subheader {
+  flex: 1;
+  padding: 6px 3px;
+  text-align: center;
+  border-right: 1px solid #2c3e50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  background: #34495e;
+}
+
+.indicator-subheader:last-child {
+  border-right: none;
+}
+
+.indicator-subvalues {
+  display: flex;
+}
+
+.indicator-subvalues .indicator-value {
+  flex: 1;
+  text-align: center;
+  padding: 12px 4px;
+  border-right: 1px solid #dee2e6;
   font-size: 13px;
 }
 
-.custom-table th {
-  background: #f8f9fa;
-  padding: 8px;
+.indicator-subvalues .indicator-value:last-child {
+  border-right: none;
+}
+
+.total-score-header {
+  flex: 0 0 80px;
+  padding: 10px 8px;
   text-align: center;
-  font-weight: 600;
-  color: #333;
-  border: 1px solid #dee2e6;
-}
-
-.section-header {
-  background: #f5f5f5;
-  font-size: 14px;
-}
-
-.metric-header {
-  background: #fafafa;
-  font-size: 12px;
-  font-weight: 500;
-  vertical-align: middle;
-  min-width: 80px;
-}
-
-.sub-header {
-  font-size: 12px;
-  font-weight: 500;
-  background: #fafafa;
-}
-
-.score-header {
-  background: #e8f5e9;
-  color: #2e7d32;
-  font-weight: 600;
-}
-
-.custom-table td {
-  padding: 6px 8px;
-  border: 1px solid #e0e0e0;
-  vertical-align: middle;
-}
-
-.network-summary-row {
-  background: #f8f9fa;
-  font-weight: 600;
-}
-
-.network-separator-row td {
-  background: #607d8b;
-  color: white;
-  font-weight: 600;
-  padding: 8px 12px;
-  /* text-align: left; */
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.store-row:hover {
-  background: #fafafa;
-}
-
-.network-name,
-.store-name {
-  /* display: flex; */
+  display: flex;
   align-items: center;
-  gap: 8px;
-  width: 20px;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
 }
 
-.network-title {
-  font-weight: 600;
-  color: #333;
+.sort-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
 }
 
-.store-title {
-  color: #333;
+.sort-btn:hover {
+  opacity: 1;
 }
 
-.indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.indicator-red {
-  background: #f44336;
-}
-
-.indicator-yellow {
-  background: #ffc107;
-}
-
-.indicator-green {
-  background: #4caf50;
-}
-
-.indicator-blue {
-  background: #2196f3;
-}
-
-.store-number {
-  font-weight: 600;
-  color: #666;
-  min-width: 20px;
-}
-
-.rank-cell {
-  text-align: center;
-  font-weight: 600;
-  color: #666;
-}
-
-.score-cell {
-  padding: 4px !important;
-  width: 80px;
-}
-
-.score-bar-container {
-  position: relative;
-  height: 24px;
-  background: #f5f5f5;
-  border-radius: 2px;
+/* Блок итогов по регионам */
+.regions-summary {
+  background: white;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
-.score-value {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-weight: 600;
-  color: #333;
-  z-index: 2;
-  /* font-size: 12px; */
+.summary-header {
+  background: #2c3e50;
+  color: white;
+  padding: 15px 20px;
+  border-bottom: 2px solid #34495e;
 }
 
-.score-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
-  transition: width 0.3s ease;
-}
-
-.revenue-bar {
-  background: linear-gradient(90deg, #8bc34a 0%, #cddc39 100%);
-}
-
-.number-cell {
-  /* text-align: right;
-  font-family: monospace;
-  font-size: 12px; */
-  color: #333;
-}
-
-.percent-cell {
-  text-align: center;
-  font-weight: 600;
-  /* font-size: 12px; */
-}
-
-.percent-high {
-  color: #2e7d32;
-}
-
-.percent-medium {
-  color: #f57c00;
-}
-
-.percent-low {
-  color: #d32f2f;
-}
-
-.status-cell {
-  text-align: center;
-}
-
-.status-value {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: 2px;
-  /* font-size: 11px; */
+.summary-header h3 {
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
 }
 
-.status-value.negative {
-  background: #ffebee;
-  color: #c62828;
-}
-
-@media (max-width: 1400px) {
-  .table-wrapper {
-    overflow-x: auto;
-  }
-
-  .custom-table {
-    min-width: 1200px;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Анимации для сортировки строк */
-.table-row-move,
-.table-row-enter-active,
-.table-row-leave-active {
-  transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.table-row-enter-from {
-  opacity: 0;
-  transform: translateX(-30px) scale(0.95);
-}
-
-.table-row-leave-to {
-  opacity: 0;
-  transform: translateX(30px) scale(0.95);
-}
-
-.table-row-leave-active {
-  position: absolute;
-  width: 100%;
-}
-
-/* Улучшенные hover эффекты для строк */
-.region-row,
-.store-row {
-  transition: all 0.11s ease;
-  transform-origin: center;
-}
-
-.region-row:hover,
-.store-row:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 10;
-  position: relative;
-}
-
-/* Анимация для изменения сортировки */
-.sorting-controls select {
-  transition: all 0.3s ease;
-}
-
-.sorting-controls select:focus {
-  transform: scale(1.02);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-}
-
-.sorting-controls select:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.region-row {
+  display: flex;
+  border-bottom: 1px solid #ecf0f1;
   background: #f8f9fa;
+  font-weight: 600;
 }
 
-.sort-order-btn {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+.region-row:last-child {
+  border-bottom: none;
 }
 
-.sort-order-btn:active {
-  transform: scale(0.95);
+.region-row:hover {
+  background: #e9ecef;
 }
 
-.sort-order-btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease;
-}
-
-.sort-order-btn:active::before {
-  width: 100px;
-  height: 100px;
-}
-
-/* Пульсация при загрузке */
-/* .loading-spinner {
-    animation: spin 1s linear infinite, pulse 2s ease-in-out infinite alternate;
-  }
-
-  @keyframes pulse {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    100% {
-      transform: scale(1.1);
-      opacity: 0.8;
-    }
-  } */
-
-/* Анимация появления таблиц */
-/* .table-wrapper {
-    animation: slideInUp 0.6s ease-out;
-  }
-
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  } */
-
-/* Плавная анимация цветовых изменений */
-/* .percent,
-.score-current {
-  transition: all 0.4s ease;
+.region-name {
+  flex: 0 0 200px;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-right: 1px solid #dee2e6;
 }
 
 .region-indicator {
-  transition: all 0.3s ease;
-  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
 }
 
-.region-row:hover .region-indicator,
-.store-row:hover .region-indicator {
-  transform: scale(1.2);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.7);
-} */
-
-/* Анимация для кнопки обновления */
-/* .refresh-btn {
-  transition: all 0.3s ease;
-  position: relative;
+.region-data {
+  flex: 1;
+  display: flex;
+  border-right: 1px solid #dee2e6;
 }
 
-.refresh-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+.region-data:last-child {
+  border-right: none;
 }
 
-.refresh-btn:active:not(:disabled) {
-  transform: translateY(0);
+.basic-indicators {
+  display: flex;
+  flex: 0 0 180px;
+  border-right: 1px solid #dee2e6;
 }
 
-.refresh-btn:disabled {
-  animation: shake 0.5s ease-in-out;
+.basic-indicators .indicator-value {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  border-right: 1px solid #dee2e6;
 }
 
-@keyframes shake {
-
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  25% {
-    transform: translateX(-2px);
-  }
-
-  75% {
-    transform: translateX(2px);
-  }
+.basic-indicators .indicator-value:last-child {
+  border-right: none;
 }
 
+/* Блок магазинов */
+.stores-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.section-header {
+  background: #34495e;
+  color: white;
+  padding: 15px 20px;
+  border-bottom: 2px solid #2c3e50;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.stores-header {
+  display: flex;
+  background: #34495e;
+  color: white;
+  font-weight: 600;
+  border-bottom: 2px solid #2c3e50;
+}
+
+.store-region {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* Тело таблицы */
+.table-body {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.store-row {
+  display: flex;
+  border-bottom: 1px solid #ecf0f1;
+  transition: background-color 0.2s;
+}
+
+.store-row:hover {
+  background-color: #f8f9fa;
+}
+
+.store-name {
+  flex: 0 0 200px;
+  padding: 12px 15px;
+  border-right: 1px solid #dee2e6;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+}
+
+.store-data {
+  flex: 1;
+  display: flex;
+  border-right: 1px solid #dee2e6;
+}
+
+.store-data:last-child {
+  border-right: none;
+}
+
+.indicator-value {
+  text-align: center;
+  padding: 12px 8px;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.total-score {
+  flex: 0 0 80px;
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #27ae60;
+}
+
+/* Адаптивность */
 @media (max-width: 768px) {
-  .controls-panel {
-    flex-direction: column;
-    gap: 15px;
+  .header-region,
+  .region-name,
+  .store-name {
+    flex: 0 0 150px;
   }
-
-  .sorting-controls {
-    justify-content: center;
-    flex-wrap: wrap;
+  
+  .basic-indicators {
+    flex: 0 0 120px;
   }
-
-  .sales-table,
-  .stores-table {
+  
+  .basic-indicators .indicator-value {
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+  
+  .indicator-group.additional-indicator {
+    flex: 0 0 120px;
+    width: 120px;
+    max-width: 120px;
+  }
+  
+  .indicator-name {
     font-size: 10px;
   }
-
-  .name-column,
-  .store-name-column {
-    min-width: 120px;
+  
+  .indicator-subheader {
+    font-size: 9px;
+    padding: 4px 2px;
   }
-
-  .plan-column,
-  .fact-column {
-    width: 60px;
+  
+  .indicator-subvalues .indicator-value {
+    font-size: 11px;
+    padding: 8px 2px;
   }
-
-  .table-row-move {
-    transition: all .5s;
+  
+  .indicator-value {
+    font-size: 12px;
+    padding: 8px 4px;
   }
-
-  .table-row-item {
-    backface-visibility: hidden;
+  
+  .summary-header,
+  .section-header {
+    padding: 10px 15px;
   }
-} */
+  
+  .summary-header h3,
+  .section-header h3 {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-content {
+    padding: 10px;
+  }
+  
+  .indicator-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .table-container,
+  .regions-summary,
+  .stores-section {
+    font-size: 12px;
+  }
+  
+  .controls {
+    padding: 15px;
+  }
+  
+  .controls h3 {
+    font-size: 16px;
+  }
+  
+  .indicator-group.additional-indicator {
+    flex: 0 0 90px;
+    width: 90px;
+    max-width: 90px;
+  }
+  
+  .indicator-name {
+    font-size: 9px;
+  }
+  
+  .indicator-subheader {
+    font-size: 8px;
+    padding: 3px 1px;
+  }
+  
+  .indicator-subvalues .indicator-value {
+    font-size: 10px;
+    padding: 6px 1px;
+  }
+}
 </style>
