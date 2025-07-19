@@ -3,7 +3,7 @@
     <div v-if="loading" class="loading-bar">
       <div class="loading-progress"></div>
     </div>
-    
+
     <div v-if="error" class="error">
       <div class="error-icon">⚠️</div>
       <div>{{ error }}</div>
@@ -14,25 +14,21 @@
       <!-- Элементы управления -->
       <div class="controls-panel">
         <div class="sorting-controls">
-          <button class="sort-order-btn" 
-                  :class="{ active: sortByRank }"
-                  :title="sortByRank ? 'Отключить сортировку по общему рангу' : 'Включить сортировку по общему рангу'"
-                  @click="toggleSortByRank">
+          <button class="sort-order-btn" :class="{ active: sortByRank }"
+            :title="sortByRank ? 'Отключить сортировку по общему рангу' : 'Включить сортировку по общему рангу'"
+            @click="toggleSortByRank">
             {{ sortByRank ? '🏆 Сортировка по рангу' : 'Сортировка по рангу' }}
           </button>
-          
-          <button class="refresh-btn" 
-                  @click="refreshData" 
-                  :disabled="loading">
+
+          <button class="refresh-btn" @click="refreshData" :disabled="loading">
             🔄 Обновить
           </button>
         </div>
-        
+
         <div class="week-toggles">
           <div class="week-toggle-group" v-for="col in columns" :key="col.key">
-            <button class="toggle-columns-btn" 
-                    :class="{ 'is-hidden': !visible[col.key] }"
-                    @click="visible[col.key] = !visible[col.key]">
+            <button class="toggle-columns-btn" :class="{ 'is-hidden': !visible[col.key] }"
+              @click="visible[col.key] = !visible[col.key]">
               <span v-html="col.label"></span>
             </button>
           </div>
@@ -44,6 +40,7 @@
         <div class="table">
           <!-- Шапка: уровень 1 -->
           <div class="table-header">
+
             <div class="row header top">
               <div class="cell static header-cell store-name-column">Регион / Магазин</div>
               <div class="cell group week-group" :style="{ width: dynamicRowWidth }">
@@ -58,10 +55,9 @@
               <div class="cell static header-cell">Общий рейтинг</div>
               <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                 <div class="cols">
-                  <div v-for="col in columns" :key="col.key + weekIndex" 
-                       class="cell dynamic header-cell metric-header sortable-header"
-                       :style="getStyle(col.key, weekIndex)"
-                       @click="handleRegionSort(week.id, col.key)">
+                  <div v-for="col in columns" :key="col.key + weekIndex"
+                    class="cell dynamic header-cell metric-header sortable-header" :style="getStyle(col.key, weekIndex)"
+                    @click="handleRegionSort(week.id, col.key)">
                     <div class="header-content">
                       <span v-html="col.label"></span>
                       <span class="sort-arrow" :class="getSortArrowClass(week.id, col.key)">
@@ -72,15 +68,18 @@
                 </div>
               </div>
             </div>
+
+
+
+
           </div>
 
           <div class="table-body">
             <!-- Блок итогов по регионам -->
             <div class="regions-summary-block">
               <transition-group name="table-row" tag="div">
-                <div v-for="region in sortedRegions" :key="`region-summary-${region.id}`" 
-                     class="row region-row region-summary data-row"
-                     :class="getRegionRowClass(region.regionRank)">
+                <div v-for="region in sortedRegions" :key="`region-summary-${region.id}`"
+                  class="row region-row region-summary data-row" :class="getRegionRowClass(region.regionRank)">
                   <div class="cell static data-cell region-name">
                     <div class="region-info">
                       <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
@@ -93,10 +92,9 @@
                   <div class="data_cells">
                     <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                       <div class="cols">
-                        <div v-for="col in columns" :key="`region-summary-${region.id}-${week.id}-${col.key}`" 
-                             class="cell dynamic data-cell region-total" 
-                             :class="getRegionCellClass(col.key, region, week.id)"
-                             :style="getStyle(col.key, weekIndex)">
+                        <div v-for="col in columns" :key="`region-summary-${region.id}-${week.id}-${col.key}`"
+                          class="cell dynamic data-cell region-total"
+                          :class="getRegionCellClass(col.key, region, week.id)" :style="getStyle(col.key, weekIndex)">
                           {{ getRegionData(region, week.id, col.key) }}
                         </div>
                       </div>
@@ -113,12 +111,11 @@
                   <div class="sort-weeks">
                     <div v-for="(week, weekIndex) in weeks" :key="week.id" class="sort-week">
                       <div class="sort-cols">
-                        <div v-for="col in columns" :key="`store-sort-${week.id}-${col.key}`" 
-                             class="sort-control sortable-control"
-                             :class="getStoreSortArrowClass(week.id, col.key)"
-                             :style="getStyle(col.key, weekIndex)"
-                             :title="`Сортировать магазины по ${col.label.replace(/<br>/g, ' ')} (${week.name})`"
-                             @click="handleStoreSort(week.id, col.key)">
+                        <div v-for="col in columns" :key="`store-sort-${week.id}-${col.key}`"
+                          class="sort-control sortable-control" :class="getStoreSortArrowClass(week.id, col.key)"
+                          :style="getStyle(col.key, weekIndex)"
+                          :title="`Сортировать магазины по ${col.label.replace(/<br>/g, ' ')} (${week.name})`"
+                          @click="handleStoreSort(week.id, col.key)">
                           <span class="sort-arrow">
                             {{ getStoreSortIcon(week.id, col.key) }}
                           </span>
@@ -132,9 +129,8 @@
 
             <!-- Все магазины без группировки -->
             <transition-group name="table-row" tag="div">
-              <div v-for="store in allStores" :key="`store-${store.id}`" 
-                   class="row store-row data-row"
-                   :class="getStoreRowClass(store.overallRank)">
+              <div v-for="store in allStores" :key="`store-${store.id}`" class="row store-row data-row"
+                :class="getStoreRowClass(store.overallRank)">
                 <div class="cell static data-cell store-name">
                   <div class="store-info">
                     <div class="store-region-indicator" :style="{ backgroundColor: store.regionColor }"></div>
@@ -148,10 +144,10 @@
                 <div class="data_cells">
                   <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                     <div class="cols">
-                      <div v-for="col in columns" :key="`store-${store.id}-${week.id}-${col.key}`" 
-                           class="cell dynamic data-cell" 
-                           :class="[getCellClass(col.key, getStoreWeekData(store, week.id)), col.key]"
-                           :style="getStyle(col.key, weekIndex)">
+                      <div v-for="col in columns" :key="`store-${store.id}-${week.id}-${col.key}`"
+                        class="cell dynamic data-cell"
+                        :class="[getCellClass(col.key, getStoreWeekData(store, week.id)), col.key]"
+                        :style="getStyle(col.key, weekIndex)">
                         {{ getStoreData(store, week.id, col.key) }}
                       </div>
                     </div>
@@ -181,6 +177,12 @@ const regionSortBy = ref({ weekId: 'week35', columnKey: 'percent', direction: 'd
 // Состояние для сортировки магазинов
 const storeSortBy = ref({ weekId: 'week35', columnKey: 'percent', direction: 'desc' })
 
+const heads = [
+
+  { key: 'ob', label: 'ОБОРОТ' },
+
+]
+
 // Определение колонок
 const columns = [
   { key: 'rank', label: 'РАНГ' },
@@ -189,11 +191,23 @@ const columns = [
   { key: 'fact', label: 'Факт' },
   { key: 'percent', label: '%' },
   { key: 'losses', label: 'Втрати /<br>Списання' },
+  { key: 'losses_score', label: 'Балл' },
+  { key: 'losses_pers', label: '%' },
   { key: 'shortages', label: 'Недостачі' },
+  { key: 'shortages_score', label: 'Недостачі' },
+  { key: 'shortages_pers', label: 'Недостачі' },
   { key: 'fop', label: 'ФОП' },
+  { key: 'fop_score', label: 'ФОП' },
+  { key: 'fop_pers', label: 'ФОП' },
   { key: 'fillers', label: 'Заливщики' },
+  { key: 'fillers_score', label: 'Заливщики' },
+  { key: 'fillers_pers', label: 'Заливщики' },
   { key: 'shift', label: 'Відємні<br>залишки' },
-  { key: 'unprocessed', label: 'Не проведені<br>списання' }
+  { key: 'shift_score', label: 'Відємні<br>залишки' },
+  { key: 'shift_pers', label: 'Відємні<br>залишки' },
+  { key: 'unprocessed', label: 'Не проведені<br>списання' },
+  { key: 'unprocessed_score', label: 'Не проведені<br>списання' },
+  { key: 'unprocessed_pers', label: 'Не проведені<br>списання' },
 ]
 
 // Видимость колонок
@@ -207,7 +221,7 @@ const visible = reactive(columns.reduce((acc, col) => {
   return acc
 }, {}))
 
-const visibleKeys = computed(() => 
+const visibleKeys = computed(() =>
   columns.filter(col => visible[col.key]).map(col => col.key)
 )
 
@@ -233,7 +247,7 @@ const loadData = async () => {
   try {
     loading.value = true
     error.value = null
-    
+
     const response = await fetch('/sales-data.json')
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -246,10 +260,10 @@ const loadData = async () => {
 
     salesData.value = data
     regions.value = Object.values(data.regions)
-    
+
     // Обработка данных после загрузки
     processData()
-    
+
   } catch (err) {
     console.error('Ошибка загрузки данных:', err)
     error.value = err.message || 'Ошибка загрузки данных'
@@ -327,7 +341,7 @@ const processData = () => {
   allStores.sort((a, b) => b.totalPoints - a.totalPoints)
   allStores.forEach((store, index) => {
     store.overallRank = index + 1
-    
+
     // Присваиваем ранг каждой неделе
     salesData.value.weeks.forEach(week => {
       const weekData = getStoreWeekData(store, week.id)
@@ -344,13 +358,13 @@ const weeks = computed(() => salesData.value?.weeks || [])
 // Расчет рангов по колонкам для магазинов
 const calculateColumnRanks = (weekId, allStores) => {
   const columnKeys = ['points', 'percent', 'plan', 'fact', 'losses', 'shortages', 'fop', 'fillers', 'shift', 'unprocessed']
-  
+
   columnKeys.forEach(columnKey => {
     // Создаем массив магазинов с их значениями для данной колонки
     const storesWithValues = allStores.map(store => {
       const weekData = getStoreWeekData(store, weekId)
       let value = 0
-      
+
       switch (columnKey) {
         case 'points':
           value = weekData.points || 0
@@ -383,15 +397,15 @@ const calculateColumnRanks = (weekId, allStores) => {
           value = weekData.unprocessed || 0
           break
       }
-      
+
       return { store, value, weekData }
     })
-    
+
     // Сортируем по убыванию (для большинства показателей выше = лучше)
     // Для losses, shortages, unprocessed - по возрастанию (меньше = лучше)
     const shouldSortAsc = ['losses', 'shortages', 'unprocessed'].includes(columnKey)
-    storesWithValues.sort((a, b) => shouldSortAsc ? a.value - b.value : b.value - a.value)
-    
+    // storesWithValues.sort((a, b) => shouldSortAsc ? a.value - b.value : b.value - a.value)
+
     // Присваиваем ранги
     storesWithValues.forEach((item, index) => {
       if (!item.weekData.columnRanks) {
@@ -405,10 +419,10 @@ const calculateColumnRanks = (weekId, allStores) => {
 // Расчет рангов по колонкам для регионов
 const calculateRegionColumnRanks = () => {
   if (!regions.value || !salesData.value) return
-  
+
   salesData.value.weeks.forEach(week => {
     const columnKeys = ['points', 'percent', 'plan', 'fact', 'losses', 'shortages', 'fop', 'fillers', 'shift', 'unprocessed']
-    
+
     columnKeys.forEach(columnKey => {
       // Создаем массив регионов с их значениями для данной колонки
       const regionsWithValues = regions.value.map(region => {
@@ -416,11 +430,11 @@ const calculateRegionColumnRanks = () => {
         let totalPlan = 0
         let totalFact = 0
         let totalPoints = 0
-        
+
         if (region.stores) {
           region.stores.forEach(store => {
             const weekData = getStoreWeekData(store, week.id)
-            
+
             switch (columnKey) {
               case 'plan':
                 value += weekData.plan || 0
@@ -450,26 +464,28 @@ const calculateRegionColumnRanks = () => {
                 totalPoints += weekData.points || 0
                 break
             }
-            
+
             totalPlan += weekData.plan || 0
             totalFact += weekData.fact || 0
           })
         }
-        
+
         if (columnKey === 'percent') {
           value = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
         } else if (columnKey === 'points') {
           value = totalPoints
         }
-        
+        console.log(`Region: ${region.name}, Week: ${week.id}, Column: ${columnKey}, Value: ${value}`);
+
+
         return { region, value }
       })
-      
+
       // Сортируем по убыванию (для большинства показателей выше = лучше)
       // Для losses, shortages, unprocessed - по возрастанию (меньше = лучше)
       const shouldSortAsc = ['losses', 'shortages', 'unprocessed'].includes(columnKey)
-      regionsWithValues.sort((a, b) => shouldSortAsc ? a.value - b.value : b.value - a.value)
-      
+      // regionsWithValues.sort((a, b) => shouldSortAsc ? a.value - b.value : b.value - a.value)
+
       // Присваиваем ранги
       regionsWithValues.forEach((item, index) => {
         if (!item.region.columnRanks) {
@@ -486,14 +502,14 @@ const calculateRegionColumnRanks = () => {
 
 const sortedRegions = computed(() => {
   if (!regions.value) return []
-  
+
   let sorted = [...regions.value]
-  
+
   // Рассчитываем рейтинг регионов
   sorted.forEach(region => {
     let totalPlan = 0
     let totalFact = 0
-    
+
     if (region.stores) {
       region.stores.forEach(store => {
         salesData.value.weeks.forEach(week => {
@@ -503,38 +519,41 @@ const sortedRegions = computed(() => {
         })
       })
     }
-    
+
     region.totalPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
   })
-  
+
   // Сортировка регионов по выбранному критерию
   sorted.sort((a, b) => {
     let aValue = 0
     let bValue = 0
-    
-    if (regionSortBy.value.columnKey === 'percent') {
+
+    if (regionSortBy.value.columnKey === 'rank') {
       aValue = a.totalPercent
       bValue = b.totalPercent
     } else {
       aValue = getRegionSortValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
       bValue = getRegionSortValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
     }
-    
+
     return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
   })
-  
+
   // Присваиваем ранги регионам
   sorted.forEach((region, index) => {
     region.regionRank = index + 1
   })
-  
+
   return sorted
 })
+
+
+
 
 // Все магазины без группировки по регионам
 const allStores = computed(() => {
   const stores = []
-  
+
   regions.value.forEach(region => {
     if (region.stores) {
       region.stores.forEach(store => {
@@ -547,31 +566,31 @@ const allStores = computed(() => {
       })
     }
   })
-  
+
   // Приоритет сортировки: сначала по колонкам, потом по рангу
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
     stores.sort((a, b) => {
       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-      
+
       // Для негативных показателей инвертируем сортировку
       const isNegativeMetric = ['losses', 'shortages', 'unprocessed'].includes(storeSortBy.value.columnKey)
       if (isNegativeMetric) {
         return storeSortBy.value.direction === 'desc' ? aValue - bValue : bValue - aValue
       }
-      
+
       return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
     })
   } else if (sortByRank.value) {
     stores.sort((a, b) => (a.overallRank || 0) - (b.overallRank || 0))
   }
-  
+
   return stores
 })
 
 const getStoreSortValue = (store, weekId, columnKey) => {
   const weekData = getStoreWeekData(store, weekId)
-  
+
   switch (columnKey) {
     case 'rank':
       return weekData.rank || store.overallRank || 0
@@ -628,15 +647,15 @@ const getStoreSortArrowClass = (weekId, columnKey) => {
 
 const getRegionSortValue = (region, weekId, columnKey) => {
   if (!region.stores) return 0
-  
+
   let total = 0
   let totalPlan = 0
   let totalFact = 0
   let totalPoints = 0
-  
+
   region.stores.forEach(store => {
     const weekData = getStoreWeekData(store, weekId)
-    
+
     switch (columnKey) {
       case 'plan':
         total += weekData.plan || 0
@@ -666,11 +685,11 @@ const getRegionSortValue = (region, weekId, columnKey) => {
         totalPoints += weekData.points || 0
         break
     }
-    
+
     totalPlan += weekData.plan || 0
     totalFact += weekData.fact || 0
   })
-  
+
   switch (columnKey) {
     case 'points':
       return totalPoints
@@ -702,24 +721,24 @@ const getSortIcon = (weekId, columnKey) => {
 
 const getStoreWeekData = (store, weekId) => {
   if (!store || !store.weeklyData) {
-    return { 
+    return {
       plan: 0, fact: 0, percent: 0, points: 0, rank: 0,
-      losses: 0, shortages: 0, fop: 0, fillers: 0, 
-      shift: 0, unprocessed: 0 
+      losses: 0, shortages: 0, fop: 0, fillers: 0,
+      shift: 0, unprocessed: 0
     }
   }
 
   const weekData = store.weeklyData.find(w => w.weekId === weekId)
-  return weekData || { 
+  return weekData || {
     plan: 0, fact: 0, percent: 0, points: 0, rank: 0,
     losses: 0, shortages: 0, fop: 0, fillers: 0,
-    shift: 0, unprocessed: 0 
+    shift: 0, unprocessed: 0
   }
 }
 
 const getStoreData = (store, weekId, columnKey) => {
   const weekData = getStoreWeekData(store, weekId)
-  
+
   switch (columnKey) {
     case 'rank':
       return weekData.rank || store.overallRank || 0
@@ -750,15 +769,15 @@ const getStoreData = (store, weekId, columnKey) => {
 
 const getRegionData = (region, weekId, columnKey) => {
   if (!region.stores) return ''
-  
+
   let total = 0
   let totalPlan = 0
   let totalFact = 0
   let totalPoints = 0
-  
+
   region.stores.forEach(store => {
     const weekData = getStoreWeekData(store, weekId)
-    
+
     switch (columnKey) {
       case 'plan':
         total += weekData.plan || 0
@@ -788,11 +807,11 @@ const getRegionData = (region, weekId, columnKey) => {
         totalPoints += weekData.points || 0
         break
     }
-    
+
     totalPlan += weekData.plan || 0
     totalFact += weekData.fact || 0
   })
-  
+
   switch (columnKey) {
     case 'rank':
       return region.regionRank || ''
@@ -865,20 +884,20 @@ const getRankArrow = (rank) => {
 
 const getCellClass = (columnKey, weekData, isRegion = false, weekId = null, region = null) => {
   const classes = []
-  
+
   // Базовые классы для типов колонок
   if (columnKey === 'points') {
     classes.push('points-cell')
   }
-  
+
   if (columnKey === 'rank') {
     classes.push('rank-cell')
   }
-  
+
   // Условное форматирование по рангам в колонках
   let rank = 0
   let totalItems = 0
-  
+
   if (isRegion && region && weekId) {
     // Для регионов
     rank = region.columnRanks?.[weekId]?.[columnKey] || 0
@@ -891,10 +910,10 @@ const getCellClass = (columnKey, weekData, isRegion = false, weekId = null, regi
       return total + (region.stores?.length || 0)
     }, 0) || 0
   }
-  
+
   if (rank > 0 && totalItems > 0) {
     const percentile = (rank / totalItems) * 100
-    
+
     // Форматирование по процентилям
     if (percentile <= 20) {
       classes.push('column-rank-top') // Топ 20%
@@ -908,7 +927,7 @@ const getCellClass = (columnKey, weekData, isRegion = false, weekId = null, regi
       classes.push('column-rank-poor') // Нижние 20%
     }
   }
-  
+
   // Специальное форматирование для процентов (дополнительно к рангам)
   if (columnKey === 'percent') {
     const percent = weekData.percent || 0
@@ -917,7 +936,7 @@ const getCellClass = (columnKey, weekData, isRegion = false, weekId = null, regi
     else if (percent >= 60) classes.push('percent-average')
     else classes.push('percent-poor')
   }
-  
+
   // Форматирование для отрицательных показателей
   if (['losses', 'shortages', 'unprocessed'].includes(columnKey)) {
     const value = weekData[columnKey] || 0
@@ -925,7 +944,7 @@ const getCellClass = (columnKey, weekData, isRegion = false, weekId = null, regi
       classes.push('negative-indicator')
     }
   }
-  
+
   return classes.join(' ')
 }
 
@@ -961,26 +980,26 @@ onMounted(() => {
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
   --info-color: #6366f1;
-  
+
   --success-light: #ecfdf5;
   --warning-light: #fffbeb;
   --danger-light: #fef2f2;
   --info-light: #eef2ff;
   --neutral-light: #f8fafc;
-  
+
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
-  
+
   --border-color: #e2e8f0;
   --border-light: #f1f5f9;
   --surface: #ffffff;
   --surface-hover: #f8fafc;
-  
+
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  
+
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -1014,9 +1033,20 @@ onMounted(() => {
 }
 
 @keyframes loading {
-  0% { width: 0%; transform: translateX(-100%); }
-  50% { width: 70%; transform: translateX(0%); }
-  100% { width: 100%; transform: translateX(100%); }
+  0% {
+    width: 0%;
+    transform: translateX(-100%);
+  }
+
+  50% {
+    width: 70%;
+    transform: translateX(0%);
+  }
+
+  100% {
+    width: 100%;
+    transform: translateX(100%);
+  }
 }
 
 .content {
@@ -1029,6 +1059,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1618,21 +1649,21 @@ onMounted(() => {
     gap: 16px;
     padding: 16px;
   }
-  
+
   .week-toggles {
     width: 100%;
     justify-content: center;
   }
-  
+
   .content {
     padding: 16px;
   }
-  
+
   .cell {
     padding: 8px 4px;
     font-size: 12px;
   }
-  
+
   .region-title,
   .store-title {
     font-size: 13px;
@@ -1644,11 +1675,11 @@ onMounted(() => {
   .controls-panel {
     display: none;
   }
-  
+
   .loading-bar {
     display: none;
   }
-  
+
   .table-body .data-row:hover {
     background: transparent;
     box-shadow: none;
@@ -1740,6 +1771,4 @@ onMounted(() => {
 .regions-summary-block {
   border-top: 1px solid silver;
 }
-
-
 </style>
