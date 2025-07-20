@@ -1,0 +1,2 @@
+fetch('/real-data.json'),
+fetch('/targets.json')

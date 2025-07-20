@@ -3,19 +3,19 @@
     {
       "id": "week_1",
       "name": "29 неделя",
-      "dateRange": "29 неделя"
+      "dateRange": "14.07.25 - 20.07.25"
     },
     {
       "id": "week_2",
       "name": "28 неделя",
-      "dateRange": "28 неделя"
+      "dateRange": "07.07.25 - 13.07.25"
     }
   ],
   "regions": {
     "region_1": {
       "id": "region_1",
       "name": "Киев",
-      "color": "#FF6B6B",
+      "color": "#cbb86d",
       "stores": [
         {
           "id": "1",
@@ -50,7 +50,7 @@
     "region_2": {
       "id": "region_2",
       "name": "Днепр",
-      "color": "#4ECDC4",
+      "color": "#82cda2",
       "stores": [
         {
           "id": "2",
@@ -85,7 +85,7 @@
     "region_3": {
       "id": "region_3",
       "name": "Белая Церковь",
-      "color": "#45B7D1",
+      "color": "#3498db",
       "stores": [
         {
           "id": "store_3_1",
@@ -176,7 +176,7 @@
     "region_4": {
       "id": "region_4",
       "name": "Харьков",
-      "color": "#96CEB4",
+      "color": "#b77",
       "stores": [
         {
           "id": "5",

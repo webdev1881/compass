@@ -1,5 +1,52 @@
 <template>
   <div class="sales-table-container table-container">
+
+    <!-- КПИ панель -->
+    <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
+
+    <!-- <div class="color-palette">
+      <h3>Палитра темных цветов:</h3>
+      <div 
+        v-for="color in darkColors" 
+        :key="color"
+        class="color-option"
+        :class="{ selected: selectedColor === color }"
+        :style="{ backgroundColor: color }"
+        @click="changeColor(color)"
+        :title="color"
+      />
+    </div>
+    <div class="current-color-info" v-if="selectedColor">
+      <strong>Текущий цвет:</strong> {{ selectedColor }}<br>
+      <strong>Цвет бордеров:</strong> {{ darkerColor }}
+    </div> -->
+
+    <!-- Тоггл кнопка -->
+    <!-- <button class="toggle-button" @click="togglePalette" :class="{ active: isPaletteOpen }">
+    </button> -->
+
+    <img :class="{ active: isPaletteOpen }" class="toggle-button" @click="togglePalette"
+      src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
+      alt="">
+
+
+    <!-- Выезжающая палитра -->
+    <div class="color-palette-sidebar" :class="{ open: isPaletteOpen }">
+      <div class="palette-content">
+        <h3>Палитра темных цветов:</h3>
+        <div class="color-grid">
+          <div v-for="color in darkColors" :key="color" class="color-option"
+            :class="{ selected: selectedColor === color }" :style="{ backgroundColor: color }"
+            @click="changeColor(color)" :title="color" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Оверлей для закрытия палитры -->
+    <div v-if="isPaletteOpen" class="overlay" @click="closePalette"></div>
+
+
+
     <div v-if="loading" class="loading-bar">
       <div class="loading-progress"></div>
     </div>
@@ -13,82 +60,77 @@
     <div v-if="!loading && !error" class="content">
       <!-- Элементы управления показателями -->
       <div class="controls-panel">
-        <div class="sorting-controls">
-          <button class="sort-order-btn" :class="{ active: sortByTotalScore }"
-            :title="sortByTotalScore ? 'Отключить сортировку по общему баллу' : 'Включить сортировку по общему баллу'"
-            @click="toggleSortByTotalScore">
-            {{ sortByTotalScore ? '🏆 Сортировка по баллу' : 'Сортировка по баллу' }}
-          </button>
 
-          <button class="refresh-btn" @click="refreshData" :disabled="loading">
-            🔄 Обновить
-          </button>
-        </div>
+        <button :style="headerStyle" class="refresh-btn" @click="refreshData" :disabled="loading">
+          Обновить
+        </button>
 
-        <div class="indicator-toggles">
+        <!-- <div class="indicator-toggles">
           <div class="toggle-group">
             <h4>Показатели:</h4>
             <div class="toggles-row">
               <div class="indicator-toggle" v-for="indicator in availableIndicators" :key="indicator.key">
                 <label class="toggle-checkbox">
-                  <input 
-                    type="checkbox" 
-                    v-model="visible[indicator.key]"
-                    @change="onIndicatorToggle"
-                  />
+                  <input type="checkbox" v-model="visible[indicator.key]" @change="onIndicatorToggle" />
                   <span class="checkmark"></span>
-                  <span class="label-text" v-html="indicator.groupLabel "></span>
-                  {{ indicator.label }}
+                  <span class="label-text" v-html="indicator.groupLabel"></span>
+                  {{ indicator }}
                 </label>
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
 
       <!-- Таблица -->
       <div class="custom-table">
         <div class="table">
           <!-- Шапка: уровень 1 -->
-          <div class="table-header">
+          <div class="table-header" :style="headerStyle">
             <div class="row header top">
               <div class="cell static header-cell store-name-column">Регион / Магазин</div>
               <div class="cell group week-group" :style="{ width: dynamicRowWidth }">
                 <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
-                  <div class="week_name">{{ week.name }} ({{ week.dateRange }})</div>
+                  <h3 class="week_name">{{ week.name }} ({{ week.dateRange }})</h3>
                 </div>
               </div>
             </div>
 
             <!-- Шапка: уровень 1/2 - группы показателей -->
             <div class="row header middle">
-              <div class="cell static header-cell">Общий балл</div>
+              <div class="cell static header-cell"></div>
               <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                 <div class="group-cols">
+
                   <div v-for="group in visibleGroups" :key="group.key + weekIndex"
-                    class="cell dynamic header-cell group-header" 
-                    :style="getGroupStyle(group.key, weekIndex)">
-                    <div class="group-content">
+                    class="cell dynamic header-cell group-header" :style="getGroupStyle(group.key, weekIndex)">
+                    <div @click="toggleGroupVisibility(group.key)" class="group-content">
                       <span>{{ group.label }}</span>
+                      <!-- <button v-if="group.key !== 'score'" @click="toggleGroupVisibility(group.key)"
+                        class="group-toggle-btn" :class="{ 'is-collapsed': !groupVisibility[group.key] }"
+                        :title="groupVisibility[group.key] ? 'Скрыть показатели' : 'Показать показатели'">
+                        {{ groupVisibility[group.key] ? '−' : '+' }}
+                      </button> -->
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
 
             <!-- Шапка: уровень 2 -->
             <div class="row header bottom">
-              <div class="cell static header-cell">Общий балл</div>
+              <div class="cell static header-cell"></div>
               <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                 <div class="cols">
                   <div v-for="indicator in availableIndicators" :key="indicator.key + weekIndex"
-                    class="cell dynamic header-cell metric-header sortable-header" 
-                    :style="getStyle(indicator.key, weekIndex)"
-                    @click="handleRegionSort(week.id, indicator.key)">
+                    class="cell dynamic header-cell metric-header sortable-header"
+                    :style="getStyle(indicator.key, weekIndex)" @click="handleRegionSort(week.id, indicator.key)">
                     <div class="header-content">
                       <span v-html="indicator.label"></span>
-                      <span class="sort-arrow" :class="getSortArrowClass(week.id, indicator.key)">
+                      <span class="sort-arrow" :class="getStoreSortArrowClass(week.id, indicator.key)">
                         {{ getSortIcon(week.id, indicator.key) }}
+                        <!-- {{ indicator.key }} -->
                       </span>
                     </div>
                   </div>
@@ -112,9 +154,10 @@
                   <div class="data_cells">
                     <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                       <div class="cols">
-                        <div v-for="indicator in availableIndicators" :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
+                        <div v-for="indicator in availableIndicators"
+                          :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
                           class="cell dynamic data-cell region-total"
-                          :class="getRegionCellClass(indicator.key, region, week.id)" 
+                          :class="getRegionCellClass(indicator.key, region, week.id)"
                           :style="getStyle(indicator.key, weekIndex)">
                           {{ getRegionData(region, week.id, indicator.key) }}
                         </div>
@@ -128,7 +171,8 @@
             <div class="table-separator">
               <div class="store-sort-controls">
                 <div class="sort-controls-row">
-                  <div class="sort-static-cell">Сортировка магазинов:</div>
+                  <div class="sort-static-cell"></div>
+                  <!-- <div class="sort-static-cell">Сортировка магазинов:</div> -->
                   <div class="sort-weeks">
                     <div v-for="(week, weekIndex) in weeks" :key="week.id" class="sort-week">
                       <div class="sort-cols">
@@ -161,8 +205,8 @@
                 <div class="data_cells">
                   <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                     <div class="cols">
-                      <div v-for="indicator in availableIndicators" :key="`store-${store.id}-${week.id}-${indicator.key}`"
-                        class="cell dynamic data-cell"
+                      <div v-for="indicator in availableIndicators"
+                        :key="`store-${store.id}-${week.id}-${indicator.key}`" class="cell dynamic data-cell"
                         :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id)), indicator.key]"
                         :style="getStyle(indicator.key, weekIndex)">
                         {{ getStoreData(store, week.id, indicator.key) }}
@@ -176,11 +220,14 @@
         </div>
       </div>
     </div>
+    <!-- КПИ панель -->
+    <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, reactive } from 'vue'
+import KPISidebar from './KPISidebar.vue'
 
 const loading = ref(true)
 const error = ref(null)
@@ -189,11 +236,90 @@ const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
 
+const darkColors = ref([
+  '#2c3e50', // Темно-синий
+  '#34495e', // Графитовый
+  '#1abc9c', // Темный бирюзовый
+  '#16a085', // Зеленый морской волны
+  '#27ae60', // Изумрудный
+  '#2ecc71', // Темно-зеленый
+  '#8e44ad', // Фиолетовый
+  '#9b59b6', // Аметистовый
+  '#2980b9', // Синий
+  '#3498db', // Светло-синий
+  '#e74c3c', // Красный
+  '#c0392b', // Темно-красный
+  '#d35400', // Оранжевый
+  '#e67e22', // Темно-оранжевый
+  '#f39c12', // Желто-оранжевый
+  '#f1c40f', // Желтый
+  '#7f8c8d', // Серый
+  '#95a5a6'  // Светло-серый
+])
+// Выбранный цвет
+const selectedColor = ref('#1c699b')
+// const selectedColor = ref('#2c3e50')
+
+const isPaletteOpen = ref(false)
+
+
+// Функция для затемнения цвета
+const darkenColor = (color, percent = 20) => {
+  const num = parseInt(color.replace("#", ""), 16)
+  const amt = Math.round(2.55 * percent)
+  const R = (num >> 16) - amt
+  const G = (num >> 8 & 0x00FF) - amt
+  const B = (num & 0x0000FF) - amt
+  return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+    (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1)
+}
+
+// Вычисляемый более темный цвет
+const darkerColor = computed(() => {
+  return darkenColor(selectedColor.value)
+})
+
+// Стиль для шапки таблицы
+const headerStyle = computed(() => {
+  return {
+    backgroundColor: selectedColor.value,
+    // border: `1px solid ${darkerColor.value}`,
+    color: '#fff',
+    borderCollapse: 'separate',
+    borderSpacing: 0
+  }
+})
+
+// Функция изменения цвета
+const changeColor = (color) => {
+  selectedColor.value = color
+}
+
+// Функции управления палитрой
+const togglePalette = () => {
+  isPaletteOpen.value = !isPaletteOpen.value
+}
+
+const closePalette = () => {
+  isPaletteOpen.value = false
+}
+
+
+
+
+
+
+
+
+
+
+
 // Состояние для сортировки по колонкам регионов
 const regionSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
 
 // Состояние для сортировки магазинов
-const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'asc' })
 
 // Определение групп показателей
 const indicatorGroups = computed(() => {
@@ -204,8 +330,39 @@ const indicatorGroups = computed(() => {
       indicators: [
         { key: 'totalScore', label: 'Балл' }
       ]
-    },
-    {
+    }
+  ]
+
+  // Добавляем группы из targetsData
+  if (targetsData.value?.targetTree) {
+    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+      if (key === 'turnover') {
+        // Специальная группа для оборота
+        groups.push({
+          key: 'turnover',
+          label: 'Оборот',
+          indicators: [
+            { key: 'plan', label: 'План' },
+            { key: 'fact', label: 'Факт' },
+            { key: 'percent', label: '%' },
+            { key: 'turnover_score', label: 'Балл' }
+          ]
+        })
+      } else {
+        groups.push({
+          key: key,
+          label: target.name,
+          indicators: [
+            { key: key, label: 'Значение' },
+            { key: `${key}_percent`, label: '%' },
+            { key: `${key}_score`, label: 'Балл' }
+          ]
+        })
+      }
+    })
+  } else {
+    // Если нет targetsData, добавляем базовую группу оборота
+    groups.push({
       key: 'turnover',
       label: 'Оборот',
       indicators: [
@@ -213,21 +370,6 @@ const indicatorGroups = computed(() => {
         { key: 'fact', label: 'Факт' },
         { key: 'percent', label: '%' }
       ]
-    }
-  ]
-
-  // Добавляем группы из targetsData
-  if (targetsData.value?.targetTree) {
-    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-      groups.push({
-        key: key,
-        label: target.name,
-        indicators: [
-          { key: key, label: 'факт' },
-          { key: `${key}_percent`, label: '%' },
-          { key: `${key}_score`, label: 'Балл' }
-        ]
-      })
     })
   }
 
@@ -251,17 +393,90 @@ const availableIndicators = computed(() => {
 
 // Видимость показателей
 const visible = reactive({})
+const groupVisibility = reactive({})
 
-// Инициализация видимости показателей
-const initializeVisibility = () => {
-  availableIndicators.value.forEach(indicator => {
-    if (['totalScore', 'plan', 'fact', 'percent'].includes(indicator.key)) {
-      visible[indicator.key] = true
+// Инициализация видимости групп
+const initializeGroupVisibility = () => {
+  indicatorGroups.value.forEach(group => {
+    if (group.key === 'score') {
+      groupVisibility[group.key] = true // Общий балл всегда открыт
     } else {
-      visible[indicator.key] = true
+      groupVisibility[group.key] = false // Остальные группы закрыты
     }
   })
 }
+
+
+
+
+// Инициализация видимости показателей
+// const initializeVisibility = () => {
+//   indicatorGroups.value.forEach(group => {
+//     group.indicators.forEach(indicator => {
+//       if (['totalScore', 'turnover_score', 'losses_score', 'shortages_score', 'fop_score', 'shiftRemainder_score', 'unprocessed_score',].includes(indicator.key)) {
+//         visible[indicator.key] = true
+//       } else {
+//         visible[indicator.key] = false
+//       }
+//     })
+//   })
+// }
+// Инициализация видимости показателей  
+// Инициализация видимости показателей
+const initializeVisibility = () => {
+  // Сначала инициализируем groupVisibility
+  indicatorGroups.value.forEach(group => {
+    if (group.key === 'score') {
+      groupVisibility[group.key] = true // Общий балл всегда открыт
+    } else {
+      groupVisibility[group.key] = false // Остальные группы закрыты по умолчанию
+    }
+  })
+
+  // Затем инициализируем visible на основе groupVisibility
+  indicatorGroups.value.forEach(group => {
+    group.indicators.forEach(indicator => {
+      if (indicator.key === 'totalScore') {
+        visible[indicator.key] = true // БАЛЛ всегда видим
+      } else if (indicator.key.includes('_score')) {
+        visible[indicator.key] = true // Все баллы всегда видимы
+      } else if (group.key === 'score') {
+        visible[indicator.key] = true // Группа "Общий балл" видима
+      } else {
+        visible[indicator.key] = groupVisibility[group.key] || false
+      }
+    })
+  })
+}
+
+// Тоггл видимости группы
+const toggleGroupVisibility = (groupKey) => {
+  if (groupKey === 'score') return // Общий балл нельзя скрывать
+
+  groupVisibility[groupKey] = !groupVisibility[groupKey]
+
+  // Обновляем видимость показателей группы
+  const group = indicatorGroups.value.find(g => g.key === groupKey)
+  if (group) {
+    group.indicators.forEach(indicator => {
+      if (indicator.key.includes('_score') || indicator.key === 'totalScore') {
+        visible[indicator.key] = true // БАЛЛ всегда видим
+      } else {
+        visible[indicator.key] = groupVisibility[groupKey]
+      }
+    })
+  }
+}
+
+
+
+
+
+
+// Видимые показатели (плоский список)
+const visibleIndicators = computed(() =>
+  availableIndicators.value.filter(indicator => visible[indicator.key])
+)
 
 // Видимые группы показателей
 const visibleGroups = computed(() => {
@@ -286,16 +501,17 @@ function getStyle(key, weekIndex) {
     opacity: isVisible ? 1 : 0,
     transition: 'width 0.3s ease, opacity 0.3s ease',
     overflow: 'hidden',
+    borderRight: isVisible ? '1px solid #ddd' : 'none',
   }
 }
 
 function getGroupStyle(groupKey, weekIndex) {
   const group = visibleGroups.value.find(g => g.key === groupKey)
   if (!group) return { width: '0%', opacity: 0 }
-  
+
   const total = visibleIndicators.value.length
   const groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
-  
+
   return {
     width: groupWidth,
     opacity: group.visibleCount > 0 ? 1 : 0,
@@ -344,6 +560,8 @@ const loadData = async () => {
     // Инициализируем видимость после загрузки данных
     initializeVisibility()
 
+    // initializeGroupVisibility() 
+
     // Обработка данных после загрузки
     processData()
 
@@ -353,12 +571,9 @@ const loadData = async () => {
   } finally {
     setTimeout(() => {
       loading.value = false
-    }, 1000)
+    }, 400)
   }
 }
-const visibleIndicators = computed(() =>
-  availableIndicators.value.filter(indicator => visible[indicator.key])
-)
 
 // Обработка данных
 const processData = () => {
@@ -393,6 +608,9 @@ const processData = () => {
   // Расчет общего балла и рангов
   calculateOverallScores(allStores)
 
+  // Расчет показателей для регионов
+  calculateRegionMetrics()
+
   // Расчет рангов по колонкам для регионов
   calculateRegionColumnRanks()
 }
@@ -412,6 +630,11 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
     let weeklyScore = 0
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
+      if (key === 'turnover') {
+        // Пропускаем, обработаем отдельно
+        return
+      }
+
       const targetPercent = storeTargetConfig[key] || 0
       const actualValue = weekData[key] || 0
       const target = targetPercent * weekData.fact
@@ -434,8 +657,13 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 
     // 3. Расчет баллов после получения всех процентов
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
+      if (key === 'turnover') {
+        // Пропускаем, обработаем отдельно
+        return
+      }
+
       const achievementPercent = weekData[`${key}_percent`] || 0
-      
+
       // Находим максимальный процент среди всех магазинов для этого показателя
       const maxPercent = Math.max(...allStores.map(s => {
         const sWeekData = getStoreWeekData(s, weekId)
@@ -452,15 +680,173 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       weeklyScore += score
     })
 
-    // Балл за оборот (можем добавить отдельную логику если нужно)
-    const turnoverScore = Math.round(weekData.percent)
-    weeklyScore += turnoverScore
-
     weekData.totalScore = weeklyScore
   })
 
+  // 4. Расчет балла для оборота (отдельно, после расчета всех процентов)
+  if (targetTree.turnover) {
+    const maxTurnoverPercent = Math.max(...allStores.map(store => {
+      const weekData = getStoreWeekData(store, weekId)
+      return weekData.percent || 0
+    }))
+
+    allStores.forEach(store => {
+      const weekData = getStoreWeekData(store, weekId)
+      const turnoverPercent = weekData.percent || 0
+
+      // Расчет балла для оборота
+      let turnoverScore = 0
+      if (maxTurnoverPercent > 0) {
+        turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+      }
+
+      weekData.turnover_score = turnoverScore
+      weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
+    })
+  } else {
+    // Если нет настройки turnover в targetTree, используем старую логику
+    allStores.forEach(store => {
+      const weekData = getStoreWeekData(store, weekId)
+      const turnoverScore = Math.round(weekData.percent || 0)
+      weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
+    })
+  }
+
   // Расчет рангов по колонкам для недели
   calculateColumnRanks(weekId, allStores)
+}
+
+// Расчет показателей для регионов (новая логика)
+const calculateRegionMetrics = () => {
+  if (!regions.value || !salesData.value || !targetsData.value) return
+
+  const { targetTree, storeTargets } = targetsData.value
+
+  salesData.value.weeks.forEach(week => {
+    // Сначала рассчитываем проценты для регионов
+    regions.value.forEach(region => {
+      if (!region.stores) return
+
+      // Инициализируем weeklyData для региона если нет
+      if (!region.weeklyData) {
+        region.weeklyData = []
+      }
+
+      let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
+      if (!regionWeekData) {
+        regionWeekData = { weekId: week.id }
+        region.weeklyData.push(regionWeekData)
+      }
+
+      // 1. Расчет оборота региона
+      let totalPlan = 0
+      let totalFact = 0
+
+      region.stores.forEach(store => {
+        const storeWeekData = getStoreWeekData(store, week.id)
+        totalPlan += storeWeekData.plan || 0
+        totalFact += storeWeekData.fact || 0
+      })
+
+      regionWeekData.plan = totalPlan
+      regionWeekData.fact = totalFact
+      regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
+
+      // 2. Расчет других показателей региона
+      Object.entries(targetTree).forEach(([key, targetConfig]) => {
+        if (key === 'turnover') return
+
+        let totalValue = 0
+        let totalTarget = 0
+
+        region.stores.forEach(store => {
+          const storeWeekData = getStoreWeekData(store, week.id)
+          const storeTargetConfig = storeTargets[store.id] || {}
+          const targetPercent = storeTargetConfig[key] || 0
+
+          totalValue += storeWeekData[key] || 0
+          totalTarget += targetPercent * (storeWeekData.fact || 0)
+        })
+
+        regionWeekData[key] = totalValue
+
+        // Расчет процента выполнения для региона
+        let achievementPercent = 0
+        if (totalTarget > 0) {
+          if (targetConfig.type === 'negative') {
+            achievementPercent = Math.min((totalTarget / totalValue) * 100, 200)
+          } else {
+            achievementPercent = (totalValue / totalTarget) * 100
+          }
+        }
+
+        regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
+        regionWeekData[`${key}_target`] = totalTarget
+      })
+    })
+
+    // Теперь рассчитываем баллы для регионов по той же логике что и для магазинов
+    Object.entries(targetTree).forEach(([key, targetConfig]) => {
+      if (key === 'turnover') return
+
+      // Находим максимальный процент среди всех регионов
+      const maxPercent = Math.max(...regions.value.map(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        return regionWeekData?.[`${key}_percent`] || 0
+      }))
+
+      // Рассчитываем баллы для каждого региона
+      regions.value.forEach(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        if (!regionWeekData) return
+
+        const achievementPercent = regionWeekData[`${key}_percent`] || 0
+        let score = 0
+        if (maxPercent > 0) {
+          score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
+        }
+        regionWeekData[`${key}_score`] = score
+      })
+    })
+
+    // Расчет балла для оборота регионов
+    if (targetTree.turnover) {
+      const maxTurnoverPercent = Math.max(...regions.value.map(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        return regionWeekData?.percent || 0
+      }))
+
+      regions.value.forEach(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        if (!regionWeekData) return
+
+        const turnoverPercent = regionWeekData.percent || 0
+        let turnoverScore = 0
+        if (maxTurnoverPercent > 0) {
+          turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+        }
+        regionWeekData.turnover_score = turnoverScore
+      })
+    }
+
+    // Расчет общего балла для регионов
+    regions.value.forEach(region => {
+      const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+      if (!regionWeekData) return
+
+      let totalScore = 0
+
+      Object.entries(targetTree).forEach(([key, targetConfig]) => {
+        if (key === 'turnover') {
+          totalScore += regionWeekData.turnover_score || 0
+        } else {
+          totalScore += regionWeekData[`${key}_score`] || 0
+        }
+      })
+
+      regionWeekData.totalScore = totalScore
+    })
+  })
 }
 
 // Расчет общих баллов и рангов
@@ -564,53 +950,10 @@ const calculateRegionColumnRanks = () => {
 }
 
 const getRegionIndicatorValue = (region, weekId, indicator) => {
-  if (!region.stores) return 0
+  const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId)
+  if (!regionWeekData) return 0
 
-  let total = 0
-  let totalPlan = 0
-  let totalFact = 0
-  let totalScore = 0
-
-  region.stores.forEach(store => {
-    const weekData = getStoreWeekData(store, weekId)
-
-    switch (indicator) {
-      case 'plan':
-        total += weekData.plan || 0
-        break
-      case 'fact':
-        total += weekData.fact || 0
-        break
-      case 'totalScore':
-        totalScore += weekData.totalScore || 0
-        break
-      default:
-        if (indicator.endsWith('_score')) {
-          total += weekData[indicator] || 0
-        } else if (indicator.endsWith('_percent')) {
-          // Для процентов берем среднее
-          total += weekData[indicator] || 0
-        } else {
-          total += weekData[indicator] || 0
-        }
-        break
-    }
-
-    totalPlan += weekData.plan || 0
-    totalFact += weekData.fact || 0
-  })
-
-  switch (indicator) {
-    case 'percent':
-      return totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
-    case 'totalScore':
-      return totalScore
-    default:
-      if (indicator.endsWith('_percent') && region.stores.length > 0) {
-        return Math.round(total / region.stores.length) // Среднее значение
-      }
-      return total
-  }
+  return regionWeekData[indicator] || 0
 }
 
 const sortedRegions = computed(() => {
@@ -622,12 +965,9 @@ const sortedRegions = computed(() => {
   sorted.forEach(region => {
     let totalScore = 0
 
-    if (region.stores) {
-      region.stores.forEach(store => {
-        salesData.value.weeks.forEach(week => {
-          const weekData = getStoreWeekData(store, week.id)
-          totalScore += weekData.totalScore || 0
-        })
+    if (region.weeklyData) {
+      region.weeklyData.forEach(weekData => {
+        totalScore += weekData.totalScore || 0
       })
     }
 
@@ -779,6 +1119,8 @@ const getStoreData = (store, weekId, indicator) => {
       return formatNumber(weekData.fact)
     case 'percent':
       return weekData.percent ? `${weekData.percent}%` : '0%'
+    case 'turnover_score':
+      return weekData.turnover_score || 0
     default:
       if (indicator.endsWith('_percent')) {
         return weekData[indicator] ? `${weekData[indicator]}%` : '0%'
@@ -801,6 +1143,8 @@ const getRegionData = (region, weekId, indicator) => {
     case 'plan':
     case 'fact':
       return formatNumber(value)
+    case 'turnover_score':
+      return value
     default:
       if (indicator.endsWith('_percent')) {
         return `${value}%`
@@ -895,6 +1239,54 @@ onMounted(() => {
 <style lang="scss" scoped>
 // CSS переменные для современного дизайна
 :root {
+
+  /* Определяем цветовые схемы */
+  :root {
+    /* Синяя схема (по умолчанию) */
+    --header-primary: #00a3e6;
+    --header-primary-dark: #2563eb;
+    --header-secondary: #6366f1;
+    --header-secondary-dark: #4f46e5;
+    --header-accent: #f59e0b;
+    --header-accent-dark: #d97706;
+  }
+
+  /* Зеленая схема */
+  .theme-green {
+    --header-primary: #10b981;
+    --header-primary-dark: #059669;
+    --header-secondary: #34d399;
+    --header-secondary-dark: #10b981;
+    --header-accent: #fbbf24;
+    --header-accent-dark: #f59e0b;
+  }
+
+  /* Фиолетовая схема */
+  .theme-purple {
+    --header-primary: #8b5cf6;
+    --header-primary-dark: #7c3aed;
+    --header-secondary: #a78bfa;
+    --header-secondary-dark: #8b5cf6;
+    --header-accent: #f472b6;
+    --header-accent-dark: #ec4899;
+  }
+
+  /* Красная схема */
+  .theme-red {
+    --header-primary: #ef4444;
+    --header-primary-dark: #dc2626;
+    --header-secondary: #f87171;
+    --header-secondary-dark: #ef4444;
+    --header-accent: #fbbf24;
+    --header-accent-dark: #f59e0b;
+  }
+
+
+
+
+
+
+
   --primary-color: #3b82f6;
   --success-color: #10b981;
   --warning-color: #f59e0b;
@@ -994,7 +1386,7 @@ onMounted(() => {
   padding: 20px 24px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -1036,10 +1428,10 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 6px 14px;
   border: 1px solid var(--border-color);
   background: var(--surface);
-  border-radius: var(--radius-md);
+  border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
   color: var(--text-secondary);
@@ -1097,7 +1489,8 @@ onMounted(() => {
 
 .table {
   width: 100%;
-  min-width: 1400px;
+  // min-width: 1675px;
+  // min-width: 1400px;
 }
 
 .table-header {
@@ -1106,17 +1499,19 @@ onMounted(() => {
   z-index: 10;
   background: var(--surface);
   border-bottom: 2px solid var(--border-color);
+  border-top: 1px solid silver;
 }
 
 .row {
   display: flex;
   width: 100%;
+
 }
 
 .cell {
-  height: 35px;
-  padding: 8px 0px;
-  border-right: 1px solid var(--border-color);
+  height: 30px;
+  padding: 6px 0px;
+  // border-right: 1px solid var(--border-color);
   box-sizing: border-box;
   text-align: center;
   overflow: hidden;
@@ -1126,12 +1521,12 @@ onMounted(() => {
   justify-content: center;
   font-size: 13px;
   border-right: 1px solid silver;
-  border-bottom: 1px solid silver;
+  // border-bottom: 1px solid silver;
   // line-height: 1.4;
 }
 
 .cell.static {
-  min-width: 250px;
+  min-width: 230px;
   flex-shrink: 0;
   background: var(--neutral-light);
   font-weight: 600;
@@ -1147,8 +1542,8 @@ onMounted(() => {
 }
 
 .header-cell {
-  font-weight: 600;
-  color: var(--text-primary);
+  // font-weight: 600;
+  // color: var(--text-primary);
   background: var(--neutral-light);
   font-size: 12px;
   border-bottom: 1px solid var(--border-color);
@@ -1164,8 +1559,8 @@ onMounted(() => {
 
 .metric-header {
   background: var(--surface);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  // font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -1475,7 +1870,7 @@ onMounted(() => {
 }
 
 .table-separator {
-  height: 23px;
+  height: 16px;
   background: var(--border-light);
   border-top: 1px solid var(--border-color);
   border-bottom: 1px solid silver;
@@ -1491,7 +1886,8 @@ onMounted(() => {
 .week {
   display: flex;
   width: 100%;
-  border-right: 1px solid silver;
+  border-top: 1px solid silver;
+  border-right: 2px solid silver;
 }
 
 .cols {
@@ -1506,7 +1902,7 @@ onMounted(() => {
   padding: 12px;
   text-align: center;
   width: 100%;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .error {
@@ -1562,49 +1958,7 @@ onMounted(() => {
   transition: transform 0.4s ease;
 }
 
-// Адаптивность
-@media (max-width: 768px) {
-  .controls-panel {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-  }
 
-  .week-toggles {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .content {
-    padding: 16px;
-  }
-
-  .cell {
-    padding: 8px 4px;
-    font-size: 12px;
-  }
-
-  .region-title,
-  .store-title {
-    font-size: 13px;
-  }
-}
-
-// Улучшения для печати
-@media print {
-  .controls-panel {
-    display: none;
-  }
-
-  .loading-bar {
-    display: none;
-  }
-
-  .table-body .data-row:hover {
-    background: transparent;
-    box-shadow: none;
-  }
-}
 
 
 .table-separator {
@@ -1648,7 +2002,7 @@ onMounted(() => {
 }
 
 .sort-static-cell {
-  min-width: 250px;
+  min-width: 230px;
   flex-shrink: 0;
   padding: 4px 8px;
   font-size: 12px;
@@ -1677,7 +2031,7 @@ onMounted(() => {
 .sort-control {
   // min-width: 60px;
   // flex: 1;
-  padding: 6px 0px;
+  padding: 0px 0px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1690,13 +2044,247 @@ onMounted(() => {
 
 .regions-summary-block {
   border-top: 1px solid silver;
+  border-bottom: 2px solid silver;
 }
+
 .bottom {
-  border-top: 1px solid silver;
+  // border-top: 1px solid silver;
 }
+
 .group-cols {
   width: 100%;
   display: flex;
   align-items: center;
+}
+
+
+
+
+.region-total {
+  // min-width: 13%;
+  // font-size: 0.55em;
+}
+
+* {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  // font-size: clamp(4px, 1vw, 12px) !important;
+}
+
+.region-row,
+.store-row {
+  transition: all .2s ease;
+  transform-origin: center;
+}
+
+.region-row:hover,
+.store-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 8px rgba(2, 52, 122, 0.5);
+  z-index: 10;
+  position: relative;
+}
+
+
+
+
+// // Переопределяем цвета
+// .week-group {
+//   background: var(--header-primary, #00a3e6) !important;
+//   color: white !important;
+//   border-bottom: 2px solid var(--header-primary-dark, #4f46e5) !important;
+// }
+
+// .group-header {
+//   background: var(--header-secondary, #a78bfa) !important;
+//   color: white !important;
+//   border-bottom: 1px solid var(--header-secondary-dark, #8b5cf6) !important;
+//   border-right: 1px solid var(--header-secondary-dark, #8b5cf6) !important;
+// }
+
+// .metric-header {
+//   background: var(--header-accent, #f59e0b) !important;
+//   color: white !important;
+//   border-bottom: 1px solid var(--header-accent-dark, #d97706) !important;
+//   border-right: 1px solid var(--header-accent-dark, #d97706) !important;
+// }
+
+// // Дополнительные бордеры шапки
+// .table-header {
+//   border-bottom: 3px solid var(--header-primary-dark, #4f46e5) !important;
+// }
+
+// .row.header.top {
+//   border-bottom: 2px solid var(--header-primary-dark, #4f46e5) !important;
+// }
+
+// .row.header.middle {
+//   border-bottom: 1px solid var(--header-secondary-dark, #8b5cf6) !important;
+// }
+
+// .row.header.bottom {
+//   border-bottom: 1px solid var(--header-accent-dark, #d97706) !important;
+// }
+.color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 30px;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.color-palette h3 {
+  width: 100%;
+  margin: 0 0 15px 0;
+  color: #555;
+  font-family: Arial, sans-serif;
+}
+
+.color-option {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.color-option.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px #333;
+}
+
+.table-color-changer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+  position: relative;
+}
+
+.toggle-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  // z-index: 1001;
+  // // background: #007bff;
+  // color: white;
+  // border: none;
+  // padding: 12px 20px;
+  // border-radius: 25px;
+  // cursor: pointer;
+  // font-size: 14px;
+  // font-weight: bold;
+  // transition: all 0.3s ease;
+  // box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+  // display: flex;
+  // align-items: center;
+  // gap: 8px;
+  width: 20px;
+  height: 20px;
+  background: red;
+}
+
+.toggle-button:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+}
+
+.toggle-button.active {
+  background: #28a745;
+}
+
+.toggle-icon {
+  font-size: 16px;
+}
+
+.color-palette-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: 100vh;
+  background: white;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.color-palette-sidebar.open {
+  transform: translateX(0);
+}
+
+.palette-content {
+  padding: 80px 20px 20px 20px;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+  padding: 3px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  // background: rgba(0,0,0,0.5);
+  z-index: 999;
+  transition: opacity 0.3s ease;
+}
+
+.group-toggle-btn {
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.group-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.group-toggle-btn.is-collapsed {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.group-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 4px 2px;
+  gap: 4px;
+  cursor: pointer;
+  /* ← ДОБАВИТЬ */
 }
 </style>
