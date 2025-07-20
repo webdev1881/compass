@@ -154,13 +154,15 @@
                   <div class="data_cells">
                     <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                       <div class="cols">
-                        <div v-for="indicator in availableIndicators"
-                          :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
-                          class="cell dynamic data-cell region-total"
-                          :class="getRegionCellClass(indicator.key, region, week.id)"
-                          :style="getStyle(indicator.key, weekIndex)">
-                          {{ getRegionData(region, week.id, indicator.key) }}
-                        </div>
+                        <div v-for="indicator in availableIndicators" :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
+  class="cell dynamic data-cell region-total tooltip-trigger"
+  :class="getRegionCellClass(indicator.key, region, week.id)" 
+  :style="getStyle(indicator.key, weekIndex)"
+  @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
+  @mouseleave="hideTooltip"
+  @mousemove="updateTooltipPosition">
+  {{ getRegionData(region, week.id, indicator.key) }}
+</div>
                       </div>
                     </div>
                   </div>
@@ -205,12 +207,15 @@
                 <div class="data_cells">
                   <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                     <div class="cols">
-                      <div v-for="indicator in availableIndicators"
-                        :key="`store-${store.id}-${week.id}-${indicator.key}`" class="cell dynamic data-cell"
-                        :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id)), indicator.key]"
-                        :style="getStyle(indicator.key, weekIndex)">
-                        {{ getStoreData(store, week.id, indicator.key) }}
-                      </div>
+                     <div v-for="indicator in availableIndicators" :key="`store-${store.id}-${week.id}-${indicator.key}`"
+  class="cell dynamic data-cell tooltip-trigger"
+  :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id)), indicator.key]"
+  :style="getStyle(indicator.key, weekIndex)"
+  @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
+  @mouseleave="hideTooltip"
+  @mousemove="updateTooltipPosition">
+  {{ getStoreData(store, week.id, indicator.key) }}
+</div>
                     </div>
                   </div>
                 </div>
@@ -222,6 +227,35 @@
     </div>
     <!-- КПИ панель -->
     <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
+    <!-- Тултип -->
+<div 
+  v-if="tooltip.visible && tooltip.data"
+  class="custom-tooltip"
+  :style="{ 
+    left: tooltip.x + 'px', 
+    top: tooltip.y + 'px' 
+  }"
+>
+  <div class="tooltip-header">
+    <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
+    <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
+  </div>
+  
+  <div class="tooltip-main-value">
+    {{ tooltip.data.mainValue }}
+  </div>
+  
+  <div class="tooltip-details">
+    <div 
+      v-for="detail in tooltip.data.details" 
+      :key="detail.label"
+      class="tooltip-detail-row"
+    >
+      <span class="detail-label">{{ detail.label }}:</span>
+      <span class="detail-value">{{ detail.value }}</span>
+    </div>
+  </div>
+</div>
   </div>
 </template>
 
@@ -235,6 +269,133 @@ const salesData = ref(null)
 const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
+
+// Состояние тултипа
+const tooltip = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  data: null,
+  type: null // 'store' или 'region'
+})
+// Показать тултип
+const showTooltip = (event, data, type, weekId, indicator) => {
+  const tooltipData = getTooltipData(data, weekId, indicator, type)
+  
+  tooltip.value = {
+    visible: true,
+    x: event.clientX + 10,
+    y: event.clientY + 10,
+    data: tooltipData,
+    type: type
+  }
+}
+
+// Скрыть тултип
+const hideTooltip = () => {
+  tooltip.value.visible = false
+}
+
+// Обновить позицию тултипа при движении мыши
+const updateTooltipPosition = (event) => {
+  if (tooltip.value.visible) {
+    tooltip.value.x = event.clientX + 10
+    tooltip.value.y = event.clientY + 10
+  }
+}
+
+// Получить данные для тултипа
+const getTooltipData = (entity, weekId, indicator, type) => {
+  const weekData = type === 'store' 
+    ? getStoreWeekData(entity, weekId)
+    : entity.weeklyData?.find(w => w.weekId === weekId) || {}
+
+  const week = weeks.value.find(w => w.id === weekId)
+  const indicatorConfig = availableIndicators.value.find(ind => ind.key === indicator)
+  
+  const result = {
+    entityName: entity.name,
+    weekName: week?.name || `Неделя ${weekId}`,
+    indicator: indicatorConfig?.label || indicator,
+    mainValue: getDisplayValue(weekData, indicator),
+    details: []
+  }
+
+  // Добавляем основные показатели
+  result.details.push(
+    { label: 'План', value: formatNumber(weekData.plan || 0) },
+    { label: 'Факт', value: formatNumber(weekData.fact || 0) },
+    { label: 'Процент оборота', value: `${weekData.percent || 0}%` },
+    { label: 'Общий балл', value: weekData.totalScore || 0 }
+  )
+
+  // Добавляем показатели из targetTree
+  if (targetsData.value?.targetTree) {
+    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+      if (key === 'turnover') {
+        result.details.push({
+          label: 'Балл за оборот',
+          value: weekData.turnover_score || 0
+        })
+      } else {
+        const value = weekData[key] || 0
+        const percent = weekData[`${key}_percent`] || 0
+        const score = weekData[`${key}_score`] || 0
+        const targetValue = weekData[`${key}_target`] || 0
+
+        result.details.push(
+          { label: `${target.name} (значение)`, value: formatNumber(value) },
+          { label: `${target.name} (цель)`, value: formatNumber(targetValue) },
+          { label: `${target.name} (%)`, value: `${percent}%` },
+          { label: `${target.name} (балл)`, value: score }
+        )
+      }
+    })
+  }
+
+  // Добавляем информацию о ранге
+  if (weekData.columnRanks && weekData.columnRanks[indicator]) {
+    const totalItems = type === 'store' 
+      ? regions.value?.reduce((total, region) => total + (region.stores?.length || 0), 0) || 0
+      : regions.value?.length || 0
+    
+    result.details.push({
+      label: 'Ранг по показателю',
+      value: `${weekData.columnRanks[indicator]} из ${totalItems}`
+    })
+  }
+
+  return result
+}
+
+// Получить отображаемое значение
+const getDisplayValue = (weekData, indicator) => {
+  switch (indicator) {
+    case 'totalScore':
+    case 'turnover_score':
+      return weekData[indicator] || 0
+    case 'plan':
+    case 'fact':
+      return formatNumber(weekData[indicator] || 0)
+    case 'percent':
+      return `${weekData.percent || 0}%`
+    default:
+      if (indicator.endsWith('_percent')) {
+        return `${weekData[indicator] || 0}%`
+      } else if (indicator.endsWith('_score')) {
+        return weekData[indicator] || 0
+      } else {
+        return formatNumber(weekData[indicator] || 0)
+      }
+  }
+}
+
+
+
+
+
+
+
 
 const darkColors = ref([
   '#2c3e50', // Темно-синий
@@ -353,7 +514,7 @@ const indicatorGroups = computed(() => {
           key: key,
           label: target.name,
           indicators: [
-            { key: key, label: 'Значение' },
+            { key: key, label: 'факт' },
             { key: `${key}_percent`, label: '%' },
             { key: `${key}_score`, label: 'Балл' }
           ]
@@ -1193,21 +1354,21 @@ const getCellClass = (indicator, weekData) => {
     return total + (region.stores?.length || 0)
   }, 0) || 0
 
-  if (rank > 0 && totalItems > 0) {
-    const percentile = (rank / totalItems) * 100
+  // if (rank > 0 && totalItems > 0) {
+  //   const percentile = (rank / totalItems) * 100
 
-    if (percentile <= 20) {
-      classes.push('column-rank-top')
-    } else if (percentile <= 40) {
-      classes.push('column-rank-good')
-    } else if (percentile <= 60) {
-      classes.push('column-rank-average')
-    } else if (percentile <= 80) {
-      classes.push('column-rank-below')
-    } else {
-      classes.push('column-rank-poor')
-    }
-  }
+  //   if (percentile <= 20) {
+  //     classes.push('column-rank-top')
+  //   } else if (percentile <= 40) {
+  //     classes.push('column-rank-good')
+  //   } else if (percentile <= 60) {
+  //     classes.push('column-rank-average')
+  //   } else if (percentile <= 80) {
+  //     classes.push('column-rank-below')
+  //   } else {
+  //     classes.push('column-rank-poor')
+  //   }
+  // }
 
   return classes.join(' ')
 }
@@ -1872,7 +2033,7 @@ onMounted(() => {
 .table-separator {
   height: 16px;
   background: var(--border-light);
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid silver;
   border-bottom: 1px solid silver;
 }
 
@@ -2286,5 +2447,99 @@ onMounted(() => {
   gap: 4px;
   cursor: pointer;
   /* ← ДОБАВИТЬ */
+}
+
+
+// Тултип
+.custom-tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: 16px;
+  min-width: 280px;
+  max-width: 400px;
+  pointer-events: none;
+  font-size: 13px;
+  backdrop-filter: blur(8px);
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltip-header {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tooltip-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.tooltip-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tooltip-main-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-align: center;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: var(--info-light);
+  border-radius: var(--radius-md);
+}
+
+.tooltip-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tooltip-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.detail-label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  flex: 1;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 12px;
+  text-align: right;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.tooltip-trigger {
+  cursor: help;
+  transition: background 0.2s ease;
+}
+
+.tooltip-trigger:hover {
+  background: rgba(59, 130, 246, 0.05) !important;
 }
 </style>
