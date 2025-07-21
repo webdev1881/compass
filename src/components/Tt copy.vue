@@ -1,5 +1,5 @@
 <template>
-  <div class="sales-table-container table-container">
+  <div class="sales-table-container table-container" :style="[borderTopStyle]">
 
     <!-- КПИ панель -->
     <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
@@ -72,7 +72,7 @@
               type="checkbox" 
               v-model="tooltipEnabled"
             />
-            <span class="toggle-slider" :style="headerStyle"></span>
+            <span class="toggle-slider"></span>
             <span class="toggle-label">Детали</span>
           </label>
         </div>
@@ -97,12 +97,13 @@
       <!-- Таблица -->
       <div class="custom-table">
         <div class="table">
+
           <!-- Шапка: уровень 1 -->
-          <div class="table-header" :style="headerStyle">
+          <div class="table-header" :style="[headerStyle, borderRightStyle, borderTopStyle]">
             <div class="row header top">
-              <div class="cell static header-cell store-name-column">Регион / Магазин</div>
-              <div class="cell group week-group" :style="{ width: dynamicRowWidth }">
-                <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
+              <div class="cell static header-cell store-name-column" :style="[borderRightStyle, borderTopStyle]">Регион / Магазин</div>
+              <div class="cell group week-group" :style="[{ width: dynamicRowWidth }, borderRightStyle, borderTopStyle, borderBottomStyle]">
+                <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week" :style="[borderRightStyle]">
                   <h3 class="week_name">{{ week.name }} ({{ week.dateRange }})</h3>
                 </div>
               </div>
@@ -110,12 +111,12 @@
 
             <!-- Шапка: уровень 1/2 - группы показателей -->
             <div class="row header middle">
-              <div class="cell static header-cell"></div>
-              <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
+              <div class="cell static header-cell" :style="[borderRightStyle]"></div>
+              <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week" :style="[borderRightStyle]">
                 <div class="group-cols">
 
                   <div v-for="group in visibleGroups" :key="group.key + weekIndex"
-                    class="cell dynamic header-cell group-header" :style="getGroupStyle(group.key, weekIndex)">
+                    class="cell dynamic header-cell group-header" :style="[getGroupStyle(group.key, weekIndex), borderRightStyle, borderTopStyle]">
                     <div @click="toggleGroupVisibility(group.key)" class="group-content">
                       <span>{{ group.label }}</span>
                       <!-- <button v-if="group.key !== 'score'" @click="toggleGroupVisibility(group.key)"
@@ -132,12 +133,12 @@
 
             <!-- Шапка: уровень 2 -->
             <div class="row header bottom">
-              <div class="cell static header-cell"></div>
-              <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
+              <div class="cell static header-cell" :style="[borderRightStyle]"></div>
+              <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week" :style="[borderRightStyle, borderTopStyle]">
                 <div class="cols">
                   <div v-for="indicator in availableIndicators" :key="indicator.key + weekIndex"
                     class="cell dynamic header-cell metric-header sortable-header"
-                    :style="getStyle(indicator.key, weekIndex)" @click="handleRegionSort(week.id, indicator.key)">
+                    :style="[getStyle(indicator.key, weekIndex), borderRightStyle]" @click="handleRegionSort(week.id, indicator.key)">
                     <div class="header-content">
                       <span v-html="getIndicatorHeader(indicator)"></span>
                       <span class="sort-arrow" :class="getSortArrowClass(week.id, indicator.key)">
@@ -152,24 +153,24 @@
 
           <div class="table-body">
             <!-- Блок итогов по регионам -->
-            <div class="regions-summary-block">
+            <div class="regions-summary-block" :style="[borderTopStyle]">
               <transition-group name="table-row" tag="div">
                 <div v-for="region in sortedRegions" :key="`region-summary-${region.id}`"
                   class="row region-row region-summary data-row" :class="getRegionRowClass(region.regionRank)">
-                  <div class="cell static data-cell region-name">
+                  <div class="cell static data-cell region-name" :style="[borderRightStyle]">
                     <div class="region-info">
                       <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
                       <span class="region-title">{{ region.name }}</span>
                     </div>
                   </div>
                   <div class="data_cells">
-                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
+                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week" :style="[borderRightStyle]">
                       <div class="cols">
                         <div v-for="indicator in availableIndicators"
                           :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
                           class="cell dynamic data-cell region-total tooltip-trigger"
                           :class="getRegionCellClass(indicator.key, region, week.id)"
-                          :style="getStyle(indicator.key, weekIndex)"
+                          :style="[getStyle(indicator.key, weekIndex)]"
                           @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
                           {{ getRegionData(region, week.id, indicator.key) }}
@@ -181,13 +182,13 @@
               </transition-group>
             </div>
 
-            <div class="table-separator">
+            <div class="table-separator" :style="[borderTopStyle, borderBottomStyle]">
               <div class="store-sort-controls">
                 <div class="sort-controls-row">
                   <div class="sort-static-cell"></div>
                   <!-- <div class="sort-static-cell">Сортировка магазинов:</div> -->
                   <div class="sort-weeks">
-                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="sort-week">
+                    <div v-for="(week, weekIndex) in weeks" :key="week.id" class="sort-week" :style="[borderRightStyle]">
                       <div class="sort-cols">
                         <div v-for="indicator in availableIndicators" :key="`store-sort-${week.id}-${indicator.key}`"
                           class="sort-control sortable-control" :class="getStoreSortArrowClass(week.id, indicator.key)"
@@ -209,14 +210,14 @@
             <transition-group name="table-row" tag="div">
               <div v-for="store in allStores" :key="`store-${store.id}`" class="row store-row data-row"
                 :class="getStoreRowClass(store.overallRank)">
-                <div class="cell static data-cell store-name">
+                <div class="cell static data-cell store-name" :style="[borderRightStyle]">
                   <div class="store-info">
                     <div class="store-region-indicator" :style="{ backgroundColor: store.regionColor }"></div>
                     <span class="store-title">{{ store.name }}</span>
                   </div>
                 </div>
                 <div class="data_cells">
-                  <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
+                  <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week" :style="[borderRightStyle]">
                     <div class="cols">
                       <div v-for="indicator in availableIndicators"
                         :key="`store-${store.id}-${week.id}-${indicator.key}`"
@@ -524,6 +525,9 @@ const darkenColor = (color, percent = 20) => {
     (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1)
 }
 
+
+
+
 // Вычисляемый более темный цвет
 const darkerColor = computed(() => {
   return darkenColor(selectedColor.value)
@@ -533,10 +537,22 @@ const darkerColor = computed(() => {
 const headerStyle = computed(() => {
   return {
     backgroundColor: selectedColor.value,
-    // border: `1px solid ${darkerColor.value}`,
     color: '#fff',
-    borderCollapse: 'separate',
-    borderSpacing: 0
+  }
+})
+const borderRightStyle = computed((px = '1px') => {
+  return {
+    borderRight: `1px solid ${darkerColor.value}`,
+  }
+})
+const borderTopStyle = computed((px = '1px') => {
+  return {
+    borderTop: `${px} solid ${darkerColor.value}`,
+  }
+})
+const borderBottomStyle = computed((px = '1px') => {
+  return {
+    borderBottom: `${px} solid ${darkerColor.value}`,
   }
 })
 
@@ -1835,7 +1851,7 @@ onMounted(() => {
   top: 0;
   z-index: 10;
   background: var(--surface);
-  border-bottom: 2px solid var(--border-color);
+  // border-bottom: 2px solid var(--border-color);
   border-top: 1px solid silver;
 }
 
@@ -1867,7 +1883,8 @@ onMounted(() => {
   flex-shrink: 0;
   background: var(--neutral-light);
   font-weight: 600;
-  border-right: 2px solid silver;
+  // border-right: 2px solid silver;
+  // border-top: 1px solid silver;
 }
 
 .cell.dynamic {
@@ -1891,7 +1908,7 @@ onMounted(() => {
   color: var(--info-color);
   font-size: 15px;
   font-weight: 700;
-  border-bottom: 2px solid var(--info-color);
+  // border-bottom: 2px solid var(--info-color);
 }
 
 .metric-header {
@@ -1925,7 +1942,7 @@ onMounted(() => {
 .region-row {
   background: var(--neutral-light);
   font-weight: 600;
-  border-bottom: 2px solid var(--border-color);
+  // border-bottom: 2px solid var(--border-color);
 }
 
 .data-cell {
@@ -2224,8 +2241,8 @@ onMounted(() => {
 .week {
   display: flex;
   width: 100%;
-  border-top: 1px solid silver;
-  border-right: 2px solid silver;
+  // border-top: 1px solid silver;
+  // border-right: 2px solid silver;
 }
 
 .cols {
@@ -2381,8 +2398,8 @@ onMounted(() => {
 }
 
 .regions-summary-block {
-  border-top: 1px solid silver;
-  border-bottom: 2px solid silver;
+  // border-top: 1px solid silver;
+  // border-bottom: 2px solid silver;
 }
 
 .bottom {
@@ -2512,7 +2529,7 @@ onMounted(() => {
 .toggle-button {
   position: fixed;
   bottom: 0px;
-  right: 0px;
+  left: 0px;
   // z-index: 1001;
   // // background: #007bff;
   // color: white;
@@ -2857,7 +2874,6 @@ onMounted(() => {
 .toggle-label {
   user-select: none;
   white-space: nowrap;
-  color: silver;
 }
 
 // Обновить тултип заголовок
