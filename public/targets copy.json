@@ -1,0 +1,120 @@
+{
+  "targetTree": {
+    "turnover": {
+      "name": "Списание ТМЦ",
+      "maxScore": 100,
+      "type": "positive"
+    },
+    "losses": {
+      "name": "Списание ТМЦ",
+      "maxScore": 20,
+      "type": "negative"
+    },
+    "shortages": {
+      "name": "Недостачи",
+      "maxScore": 100,
+      "type": "negative"
+    },
+    "fop": {
+      "name": "ФОП",
+      "maxScore": 15,
+      "type": "negative"
+    },
+    "shiftRemainder": {
+      "name": "Ост. отриц",
+      "maxScore": 10,
+      "type": "negative"
+    },
+    "unprocessed": {
+      "name": "Непровед. списания",
+      "maxScore": 10,
+      "type": "negative"
+    }
+  },
+  "storeTargets": {
+    "1": {
+      "losses": 0.005,
+      "shortages": 0.018,
+      "fop": 0.012,
+      "shiftRemainder": 0.006,
+      "unprocessed": 0.008
+    },
+    "2": {
+      "losses": 0.005,
+      "shortages": 0.020,
+      "fop": 0.015,
+      "shiftRemainder": 0.007,
+      "unprocessed": 0.009
+    },
+    "3": {
+      "losses": 0.005,
+      "shortages": 0.022,
+      "fop": 0.013,
+      "shiftRemainder": 0.008,
+      "unprocessed": 0.010
+    },
+    "4": {
+      "losses": 0.005,
+      "shortages": 0.019,
+      "fop": 0.014,
+      "shiftRemainder": 0.007,
+      "unprocessed": 0.009
+    },
+    "5": {
+      "losses": 0.005,
+      "shortages": 0.024,
+      "fop": 0.016,
+      "shiftRemainder": 0.008,
+      "unprocessed": 0.011
+    },
+    "6": {
+      "losses": 0.005,
+      "shortages": 0.017,
+      "fop": 0.011,
+      "shiftRemainder": 0.005,
+      "unprocessed": 0.007
+    },
+    "7": {
+      "losses": 0.005,
+      "shortages": 0.016,
+      "fop": 0.010,
+      "shiftRemainder": 0.005,
+      "unprocessed": 0.007
+    },
+    "8": {
+      "losses": 0.005,
+      "shortages": 0.021,
+      "fop": 0.014,
+      "shiftRemainder": 0.007,
+      "unprocessed": 0.009
+    },
+    "9": {
+      "losses": 0.005,
+      "shortages": 0.017,
+      "fop": 0.011,
+      "shiftRemainder": 0.006,
+      "unprocessed": 0.008
+    },
+    "10": {
+      "losses": 0.005,
+      "shortages": 0.023,
+      "fop": 0.015,
+      "shiftRemainder": 0.008,
+      "unprocessed": 0.010
+    },
+    "11": {
+      "losses": 0.005,
+      "shortages": 0.018,
+      "fop": 0.012,
+      "shiftRemainder": 0.006,
+      "unprocessed": 0.008
+    },
+    "12": {
+      "losses": 0.005,
+      "shortages": 0.020,
+      "fop": 0.013,
+      "shiftRemainder": 0.007,
+      "unprocessed": 0.009
+    }
+  }
+}

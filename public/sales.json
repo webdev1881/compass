@@ -42,7 +42,7 @@
           "shortages": 22987,
           "fop": 3729,
           "shiftRemainder": 1,
-          "unprocessed": 1
+          "unprocessed": 7
         }
       ],
       "stores": [
@@ -71,7 +71,7 @@
               "shortages": 47814,
               "fop": 73618,
               "shiftRemainder": 1,
-              "unprocessed": 1
+              "unprocessed": 12
             }
           ]
         },
@@ -100,7 +100,7 @@
               "shortages": 47814,
               "fop": 73618,
               "shiftRemainder": 1,
-              "unprocessed": 1
+              "unprocessed": 21
             }
           ]
         },
@@ -129,7 +129,7 @@
               "shortages": 97006,
               "fop": 2933,
               "shiftRemainder": 1,
-              "unprocessed": 1
+              "unprocessed": 19
             }
           ]
         }
@@ -154,7 +154,7 @@
           "shortages": 71000,
           "fop": 13000,
           "shiftRemainder": 0,
-          "unprocessed": 0
+          "unprocessed": 1
         },
         {
           "weekId": 2,
@@ -165,7 +165,7 @@
           "shortages": 69305,
           "fop": 57213,
           "shiftRemainder": 0,
-          "unprocessed": 0
+          "unprocessed": 4
         }
       ],
       "stores": [
@@ -194,7 +194,7 @@
               "shortages": 65004,
               "fop": 11786,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 4
             }
           ]
         }
@@ -248,7 +248,7 @@
               "shortages": 60000,
               "fop": 18000,
               "shiftRemainder": 1,
-              "unprocessed": 1
+              "unprocessed": 11
             },
             {
               "weekId": 2,
@@ -277,7 +277,7 @@
               "shortages": 65000,
               "fop": 13000,
               "shiftRemainder": 1,
-              "unprocessed": 0
+              "unprocessed": 14
             },
             {
               "weekId": 2,

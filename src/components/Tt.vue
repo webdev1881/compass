@@ -65,6 +65,18 @@
           Обновить
         </button>
 
+
+        <div class="tooltip-controls">
+          <label class="tooltip-toggle">
+            <input 
+              type="checkbox" 
+              v-model="tooltipEnabled"
+            />
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Детали</span>
+          </label>
+        </div>
+
         <!-- <div class="indicator-toggles">
           <div class="toggle-group">
             <h4>Показатели:</h4>
@@ -127,10 +139,9 @@
                     class="cell dynamic header-cell metric-header sortable-header"
                     :style="getStyle(indicator.key, weekIndex)" @click="handleRegionSort(week.id, indicator.key)">
                     <div class="header-content">
-                      <span v-html="indicator.label"></span>
-                      <span class="sort-arrow" :class="getStoreSortArrowClass(week.id, indicator.key)">
+                      <span v-html="getIndicatorHeader(indicator)"></span>
+                      <span class="sort-arrow" :class="getSortArrowClass(week.id, indicator.key)">
                         {{ getSortIcon(week.id, indicator.key) }}
-                        <!-- {{ indicator.key }} -->
                       </span>
                     </div>
                   </div>
@@ -154,15 +165,15 @@
                   <div class="data_cells">
                     <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                       <div class="cols">
-                        <div v-for="indicator in availableIndicators" :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
-  class="cell dynamic data-cell region-total tooltip-trigger"
-  :class="getRegionCellClass(indicator.key, region, week.id)" 
-  :style="getStyle(indicator.key, weekIndex)"
-  @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
-  @mouseleave="hideTooltip"
-  @mousemove="updateTooltipPosition">
-  {{ getRegionData(region, week.id, indicator.key) }}
-</div>
+                        <div v-for="indicator in availableIndicators"
+                          :key="`region-summary-${region.id}-${week.id}-${indicator.key}`"
+                          class="cell dynamic data-cell region-total tooltip-trigger"
+                          :class="getRegionCellClass(indicator.key, region, week.id)"
+                          :style="getStyle(indicator.key, weekIndex)"
+                          @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
+                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                          {{ getRegionData(region, week.id, indicator.key) }}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -207,15 +218,15 @@
                 <div class="data_cells">
                   <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                     <div class="cols">
-                     <div v-for="indicator in availableIndicators" :key="`store-${store.id}-${week.id}-${indicator.key}`"
-  class="cell dynamic data-cell tooltip-trigger"
-  :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id)), indicator.key]"
-  :style="getStyle(indicator.key, weekIndex)"
-  @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
-  @mouseleave="hideTooltip"
-  @mousemove="updateTooltipPosition">
-  {{ getStoreData(store, week.id, indicator.key) }}
-</div>
+                      <div v-for="indicator in availableIndicators"
+                        :key="`store-${store.id}-${week.id}-${indicator.key}`"
+                        class="cell dynamic data-cell tooltip-trigger"
+                        :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id), false), indicator.key]"
+                        :style="getStyle(indicator.key, weekIndex)"
+                        @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
+                        @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                        {{ getStoreData(store, week.id, indicator.key) }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -225,42 +236,41 @@
         </div>
       </div>
     </div>
+    
     <!-- КПИ панель -->
     <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
     <!-- Тултип -->
-<div 
+    <div 
   v-if="tooltip.visible && tooltip.data"
+  ref="tooltipRef"
   class="custom-tooltip"
   :style="{ 
     left: tooltip.x + 'px', 
-    top: tooltip.y + 'px' 
+    top: tooltip.y + 'px',
+    opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
   }"
 >
-  <div class="tooltip-header">
-    <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
-    <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
-  </div>
-  
-  <div class="tooltip-main-value">
-    {{ tooltip.data.mainValue }}
-  </div>
-  
-  <div class="tooltip-details">
-    <div 
-      v-for="detail in tooltip.data.details" 
-      :key="detail.label"
-      class="tooltip-detail-row"
-    >
-      <span class="detail-label">{{ detail.label }}:</span>
-      <span class="detail-value">{{ detail.value }}</span>
+      <div class="tooltip-header">
+        <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
+        <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
+      </div>
+
+      <div class="tooltip-main-value">
+        {{ tooltip.data.mainValue }}
+      </div>
+
+      <div class="tooltip-details">
+        <div v-for="detail in tooltip.data.details" :key="detail.label" class="tooltip-detail-row">
+          <span class="detail-label">{{ detail.label }}:</span>
+          <span class="detail-value">{{ detail.value }}</span>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, nextTick } from 'vue'
 import KPISidebar from './KPISidebar.vue'
 
 const loading = ref(true)
@@ -269,6 +279,7 @@ const salesData = ref(null)
 const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
+const tooltipEnabled = ref(true)
 
 // Состояние тултипа
 const tooltip = ref({
@@ -276,19 +287,65 @@ const tooltip = ref({
   x: 0,
   y: 0,
   data: null,
-  type: null // 'store' или 'region'
+  type: null, // 'store' или 'region'
+  width: 0,    // ← ДОБАВИТЬ
+  height: 0    // ← ДОБАВИТЬ
 })
 // Показать тултип
 const showTooltip = (event, data, type, weekId, indicator) => {
+  if (!tooltipEnabled.value) return
+  
   const tooltipData = getTooltipData(data, weekId, indicator, type)
   
   tooltip.value = {
     visible: true,
-    x: event.clientX + 10,
-    y: event.clientY + 10,
+    x: 0, // Временно, пересчитаем после рендера
+    y: 0, // Временно, пересчитаем после рендера  
     data: tooltipData,
-    type: type
+    type: type,
+    width: 0,
+    height: 0
   }
+
+  // Пересчитываем позицию после рендера
+  nextTick(() => {
+    updateTooltipPosition(event)
+  })
+}
+
+// Обновить позицию тултипа при движении мыши
+const updateTooltipPosition = (event) => {
+  if (!tooltip.value.visible) return
+
+  const tooltipElement = document.querySelector('.custom-tooltip')
+  if (!tooltipElement) return
+
+  // Получаем размеры тултипа и окна
+  const tooltipRect = tooltipElement.getBoundingClientRect()
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
+
+  let x = event.clientX + 10  // Смещение от курсора
+  let y = event.clientY + 10
+
+  // Проверяем выход за правую границу окна
+  if (x + tooltipRect.width > windowWidth - 10) {
+    x = event.clientX - tooltipRect.width - 10 // Показываем слева от курсора
+  }
+
+  // Проверяем выход за нижнюю границу окна  
+  if (y + tooltipRect.height > windowHeight - 10) {
+    y = event.clientY - tooltipRect.height - 10 // Показываем сверху от курсора
+  }
+
+  // Дополнительная проверка, чтобы не выйти за левую и верхнюю границы
+  if (x < 10) x = 10
+  if (y < 10) y = 10
+
+  tooltip.value.x = x
+  tooltip.value.y = y
+  tooltip.value.width = tooltipRect.width
+  tooltip.value.height = tooltipRect.height
 }
 
 // Скрыть тултип
@@ -296,15 +353,9 @@ const hideTooltip = () => {
   tooltip.value.visible = false
 }
 
-// Обновить позицию тултипа при движении мыши
-const updateTooltipPosition = (event) => {
-  if (tooltip.value.visible) {
-    tooltip.value.x = event.clientX + 10
-    tooltip.value.y = event.clientY + 10
-  }
-}
 
-// Получить данные для тултипа
+
+// Получить данные для тултипа (только для текущей группы)
 const getTooltipData = (entity, weekId, indicator, type) => {
   const weekData = type === 'store' 
     ? getStoreWeekData(entity, weekId)
@@ -313,47 +364,84 @@ const getTooltipData = (entity, weekId, indicator, type) => {
   const week = weeks.value.find(w => w.id === weekId)
   const indicatorConfig = availableIndicators.value.find(ind => ind.key === indicator)
   
+  // Найти группу текущего показателя
+  const currentGroup = indicatorGroups.value.find(group => 
+    group.indicators.some(ind => ind.key === indicator)
+  )
+  
   const result = {
     entityName: entity.name,
     weekName: week?.name || `Неделя ${weekId}`,
+    groupName: currentGroup?.label || 'Показатели',
     indicator: indicatorConfig?.label || indicator,
     mainValue: getDisplayValue(weekData, indicator),
     details: []
   }
 
-  // Добавляем основные показатели
-  result.details.push(
-    { label: 'План', value: formatNumber(weekData.plan || 0) },
-    { label: 'Факт', value: formatNumber(weekData.fact || 0) },
-    { label: 'Процент оборота', value: `${weekData.percent || 0}%` },
-    { label: 'Общий балл', value: weekData.totalScore || 0 }
-  )
-
-  // Добавляем показатели из targetTree
-  if (targetsData.value?.targetTree) {
-    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-      if (key === 'turnover') {
+  // Добавляем показатели только текущей группы
+  if (currentGroup) {
+    if (currentGroup.key === 'score') {
+      // Группа "Общий балл"
+      result.details.push({
+        label: 'Общий балл', 
+        value: weekData.totalScore || 0
+      })
+    } else if (currentGroup.key === 'turnover') {
+      // Группа "Оборот"
+      result.details.push(
+        { label: 'План', value: formatNumber(weekData.plan || 0) },
+        { 
+          label: 'Факт', 
+          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% от плана)` 
+        },
+        { label: 'Процент оборота', value: `${weekData.percent || 0}%` }
+      )
+      
+      if (weekData.turnover_score !== undefined) {
+        const maxScore = targetsData.value?.targetTree?.turnover?.maxScore || 100
         result.details.push({
-          label: 'Балл за оборот',
+          label: `Балл за оборот (из ${maxScore})`, 
           value: weekData.turnover_score || 0
         })
-      } else {
-        const value = weekData[key] || 0
-        const percent = weekData[`${key}_percent`] || 0
-        const score = weekData[`${key}_score`] || 0
-        const targetValue = weekData[`${key}_target`] || 0
+      }
+    } else {
+      // Другие группы показателей
+      const groupKey = currentGroup.key
+      const target = targetsData.value?.targetTree?.[groupKey]
+      
+      if (target) {
+        const value = weekData[groupKey] || 0
+        const percent = weekData[`${groupKey}_percent`] || 0
+        const score = weekData[`${groupKey}_score`] || 0
+        const targetValue = weekData[`${groupKey}_target`] || 0
+        const factValue = weekData.fact || 0
+        const planValue = factValue > 0 ? targetValue : 0
 
         result.details.push(
           { label: `${target.name} (значение)`, value: formatNumber(value) },
-          { label: `${target.name} (цель)`, value: formatNumber(targetValue) },
-          { label: `${target.name} (%)`, value: `${percent}%` },
-          { label: `${target.name} (балл)`, value: score }
+          { 
+            label: `Расчетный план`, 
+            value: ` ${formatNumber(planValue)} (${((targetValue / factValue) * 100).toFixed(2)}% от факта)`
+          },
+          { 
+            label: 'Факт оборота →  ', 
+            value: `${formatNumber(factValue)}`
+          },
+          { 
+            label: ` план ${target.name.toLowerCase()}`, 
+            value: `${formatNumber(targetValue)}`
+          },
+          { label: `Процент выполнения`, value: `${percent}%` },
+          { 
+            label: `Балл (из ${target.maxScore})`, 
+            value: `${score} / ${target.maxScore}`
+          }
         )
       }
-    })
+    }
   }
 
-  // Добавляем информацию о ранге
+  // Добавляем информацию о ранге в группе
   if (weekData.columnRanks && weekData.columnRanks[indicator]) {
     const totalItems = type === 'store' 
       ? regions.value?.reduce((total, region) => total + (region.stores?.length || 0), 0) || 0
@@ -373,19 +461,19 @@ const getDisplayValue = (weekData, indicator) => {
   switch (indicator) {
     case 'totalScore':
     case 'turnover_score':
-      return weekData[indicator] || 0
+      return weekData[indicator] || '-'
     case 'plan':
     case 'fact':
-      return formatNumber(weekData[indicator] || 0)
+      return formatNumber(weekData[indicator] || '-')
     case 'percent':
       return `${weekData.percent || 0}%`
     default:
       if (indicator.endsWith('_percent')) {
         return `${weekData[indicator] || 0}%`
       } else if (indicator.endsWith('_score')) {
-        return weekData[indicator] || 0
+        return weekData[indicator] || '-'
       } else {
-        return formatNumber(weekData[indicator] || 0)
+        return formatNumber(weekData[indicator] || '-')
       }
   }
 }
@@ -510,6 +598,8 @@ const indicatorGroups = computed(() => {
           ]
         })
       } else {
+        console.log(target);
+        
         groups.push({
           key: key,
           label: target.name,
@@ -1273,7 +1363,7 @@ const getStoreData = (store, weekId, indicator) => {
 
   switch (indicator) {
     case 'totalScore':
-      return weekData.totalScore || 0
+      return weekData.totalScore || '-'
     case 'plan':
       return formatNumber(weekData.plan)
     case 'fact':
@@ -1281,14 +1371,14 @@ const getStoreData = (store, weekId, indicator) => {
     case 'percent':
       return weekData.percent ? `${weekData.percent}%` : '0%'
     case 'turnover_score':
-      return weekData.turnover_score || 0
+      return weekData.turnover_score || '-'
     default:
       if (indicator.endsWith('_percent')) {
         return weekData[indicator] ? `${weekData[indicator]}%` : '0%'
       } else if (indicator.endsWith('_score')) {
-        return weekData[indicator] || 0
+        return weekData[indicator] || '-'
       } else {
-        return formatNumber(weekData[indicator] || 0)
+        return formatNumber(weekData[indicator] || '-')
       }
   }
 }
@@ -1324,9 +1414,9 @@ const calculateTurnoverPercent = (plan, fact) => {
 
 const formatNumber = (number) => {
   if (number === null || number === undefined || isNaN(number)) {
-    return '0'
+    return '-'
   }
-  return new Intl.NumberFormat('ru-RU').format(number)
+  return new Intl.NumberFormat('UA', { maximumFractionDigits: 0 }).format(number)
 }
 
 const getStoreRowClass = (rank) => {
@@ -1341,7 +1431,7 @@ const getRegionRowClass = (regionRank) => {
   return 'region-low-rank'
 }
 
-const getCellClass = (indicator, weekData) => {
+const getCellClass = (indicator, weekData, isRegion = false, weekId = null, region = null) => {
   const classes = []
 
   if (indicator === 'totalScore') {
@@ -1349,32 +1439,117 @@ const getCellClass = (indicator, weekData) => {
   }
 
   // Условное форматирование по рангам в колонках
-  const rank = weekData.columnRanks?.[indicator] || 0
-  const totalItems = regions.value?.reduce((total, region) => {
-    return total + (region.stores?.length || 0)
-  }, 0) || 0
+  let rank = 0
+  let totalItems = 0
 
-  // if (rank > 0 && totalItems > 0) {
-  //   const percentile = (rank / totalItems) * 100
+  if (isRegion && region && weekId) {
+    // Для регионов
+    rank = region.columnRanks?.[weekId]?.[indicator] || 0
+    totalItems = regions.value?.length || 0
+  } else {
+    // Для магазинов
+    rank = weekData.columnRanks?.[indicator] || 0
+    totalItems = regions.value?.reduce((total, region) => {
+      return total + (region.stores?.length || 0)
+    }, 0) || 0
+  }
 
-  //   if (percentile <= 20) {
-  //     classes.push('column-rank-top')
-  //   } else if (percentile <= 40) {
-  //     classes.push('column-rank-good')
-  //   } else if (percentile <= 60) {
-  //     classes.push('column-rank-average')
-  //   } else if (percentile <= 80) {
-  //     classes.push('column-rank-below')
-  //   } else {
-  //     classes.push('column-rank-poor')
-  //   }
-  // }
+  if (rank > 0 && totalItems > 0) {
+    const percentile = (rank / totalItems) * 100
+
+    // Специальное форматирование для баллов и процентов
+    if (indicator.endsWith('_score') || indicator === 'totalScore' || 
+        indicator.endsWith('_percent') || indicator === 'percent') {
+      
+      if (percentile <= 20) {
+        classes.push('percentile-top')        // Топ 20%
+      } else if (percentile <= 40) {
+        classes.push('percentile-excellent')  // 20-40%
+      } else if (percentile <= 60) {
+        classes.push('percentile-good')       // 40-60%
+      } else if (percentile <= 80) {
+        classes.push('percentile-average')    // 60-80%
+      } else {
+        classes.push('percentile-poor')       // 80-100%
+      }
+    } else {
+      // Обычное форматирование для других показателей
+      if (percentile <= 20) {
+        classes.push('column-rank-top')
+      } else if (percentile <= 40) {
+        classes.push('column-rank-good')
+      } else if (percentile <= 60) {
+        classes.push('column-rank-average')
+      } else if (percentile <= 80) {
+        classes.push('column-rank-below')
+      } else {
+        classes.push('column-rank-poor')
+      }
+    }
+  }
 
   return classes.join(' ')
 }
 
+
+
+// Получить заголовок показателя с maxScore
+const getIndicatorHeader = (indicator) => {
+  if (indicator.key.endsWith('_score')) {
+    const baseKey = indicator.key.replace('_score', '')
+    if (baseKey === 'turnover' && targetsData.value?.targetTree?.turnover) {
+      return targetsData.value.targetTree.turnover.maxScore.toString()
+    } else if (targetsData.value?.targetTree?.[baseKey]) {
+      return targetsData.value.targetTree[baseKey].maxScore.toString()
+    }
+    return 'Балл'
+  }
+  return indicator.label
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const getPercentClass = (percent) => {
+  if (percent === null || percent === undefined || isNaN(percent)) {
+    return 'danger'
+  }
+  if (percent >= 70) return 'success'
+  if (percent >= 50) return 'warning'
+  return 'danger'
+}
+
+const getScoreClass = (score) => {
+  if (score === null || score === undefined || isNaN(score)) {
+    return 'danger'
+  }
+  if (score >= 90) return 'success'
+  if (score >= 70) return 'warning'
+  return 'danger'
+}
+
 const getRegionCellClass = (indicator, region, weekId) => {
-  return getCellClass(indicator, {}, true, weekId, region)
+  // Получаем weekData региона для правильного расчета рангов
+  const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId) || {}
+  
+  // Добавляем columnRanks если есть
+  if (region.columnRanks && region.columnRanks[weekId]) {
+    regionWeekData.columnRanks = { [indicator]: region.columnRanks[weekId][indicator] }
+  }
+  
+  return getCellClass(indicator, regionWeekData, true, weekId, region)
 }
 
 const toggleSortByTotalScore = () => {
@@ -1542,8 +1717,9 @@ onMounted(() => {
 .controls-panel {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  // justify-content: space-between;
   background: var(--surface);
+  gap: 20px;
   padding: 20px 24px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
@@ -1809,7 +1985,7 @@ onMounted(() => {
 .shortages,
 .fop {
   justify-content: flex-end;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12px;
 }
 
@@ -1901,6 +2077,7 @@ onMounted(() => {
   justify-content: center;
   gap: 4px;
   width: 100%;
+  // font-weight: 600;
 }
 
 .sort-arrow {
@@ -1963,31 +2140,31 @@ onMounted(() => {
 }
 
 // Условное форматирование по рангам в колонках
-.column-rank-top {
-  // background: var(--success-light);
-  color: var(--success-color);
-  font-weight: 600;
-  // border: 1px solid var(--success-color);
-  // border-radius: var(--radius-sm);
-}
+// .column-rank-top {
+//   background: red;
+//   color: var(--success-color);
+//   font-weight: 600;
+// border: 1px solid var(--success-color);
+// border-radius: var(--radius-sm);
+// }
 
 .column-rank-good {
   // background: #f0f9ff;
-  color: #0369a1;
+  // color: #0369a1;
   // border: 1px solid #0369a1;
   // border-radius: var(--radius-sm);
 }
 
 .column-rank-average {
   // background: var(--warning-light);
-  color: var(--warning-color);
+  // color: var(--warning-color);
   // border: 1px solid var(--warning-color);
   // border-radius: var(--radius-sm);
 }
 
 .column-rank-below {
   // background: #fdf2f8;
-  color: #be185d;
+  // color: #be185d;
   // border: 1px solid #be185d;
   // border-radius: var(--radius-sm);
 }
@@ -2302,7 +2479,7 @@ onMounted(() => {
   width: 100%;
   margin: 0 0 15px 0;
   color: #555;
-  font-family: Arial, sans-serif;
+  // font-family: Arial, sans-serif;
 }
 
 .color-option {
@@ -2334,8 +2511,8 @@ onMounted(() => {
 
 .toggle-button {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  bottom: 0px;
+  left: 0px;
   // z-index: 1001;
   // // background: #007bff;
   // color: white;
@@ -2451,6 +2628,7 @@ onMounted(() => {
 
 
 // Тултип
+// Тултип
 .custom-tooltip {
   position: fixed;
   z-index: 10000;
@@ -2459,12 +2637,32 @@ onMounted(() => {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
   padding: 16px;
-  min-width: 280px;
-  max-width: 400px;
+  min-width: 290px;
+  max-width: 600px;
   pointer-events: none;
   font-size: 13px;
   backdrop-filter: blur(8px);
   animation: tooltipFadeIn 0.2s ease-out;
+  transition: opacity 0.1s ease; /* ← ДОБАВИТЬ для плавного появления */
+  
+  /* ← ДОБАВИТЬ: предотвращаем выход за границы экрана */
+  max-height: 80vh;
+  overflow-y: auto;
+  
+  /* ← ДОБАВИТЬ: кастомный скролл для тултипа */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--border-light);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 2px;
+  }
 }
 
 @keyframes tooltipFadeIn {
@@ -2472,6 +2670,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -2479,8 +2678,8 @@ onMounted(() => {
 }
 
 .tooltip-header {
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  // margin-bottom: 12px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -2488,7 +2687,7 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 14px;
-  margin-bottom: 2px;
+  // margin-bottom: 2px;
 }
 
 .tooltip-subtitle {
@@ -2501,8 +2700,8 @@ onMounted(() => {
   font-weight: 700;
   color: var(--primary-color);
   text-align: center;
-  margin-bottom: 12px;
-  padding: 8px;
+  // margin-bottom: 12px;
+  padding: 6px;
   background: var(--info-light);
   border-radius: var(--radius-md);
 }
@@ -2531,7 +2730,7 @@ onMounted(() => {
   color: var(--text-primary);
   font-size: 12px;
   text-align: right;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  // font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
 .tooltip-trigger {
@@ -2542,4 +2741,148 @@ onMounted(() => {
 .tooltip-trigger:hover {
   background: rgba(59, 130, 246, 0.05) !important;
 }
+
+
+.success {
+  color: #2e7d32;
+}
+.warning {
+  color: #f57c00;
+}
+.danger {
+  color: #d32f2f;
+}
+.status-value {
+
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+
+// Специальное условное форматирование для баллов и процентов
+.percentile-top {
+  color: #2e7d32!important;
+  // background-color: #d0ffea;
+  // color: white !important;
+  // font-weight: 700;
+  // border-radius: var(--radius-sm);
+  // box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.percentile-excellent {
+  color: #2e7d32!important;
+  // background-color: #ebfff6;
+  // color: white !important;
+  // font-weight: 400;
+  // border-radius: var(--radius-sm);
+  // box-shadow: 0 1px 3px rgba(34, 197, 94, 0.3);
+}
+
+.percentile-good {
+  color: #f57c00!important;
+  // background-color: #fff3e1;
+  // color: white !important;
+  // font-weight: 500;
+  // border-radius: var(--radius-sm);
+}
+
+.percentile-average {
+  color: #ea580c!important;
+  // background-color: #fee7c5;
+  // color: white !important;
+  // font-weight: 500;
+  // border-radius: var(--radius-sm);
+}
+
+.percentile-poor {
+  color: #dc2626!important;
+  // background-color: #ffdada;
+  // color: white !important;
+  // font-weight: 700;
+  // border-radius: var(--radius-sm);
+  // box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+// Стили для тоггла тултипа
+.tooltip-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.tooltip-toggle:hover {
+  color: var(--text-primary);
+}
+
+.tooltip-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-slider {
+  width: 36px;
+  height: 20px;
+  background: var(--border-color);
+  border-radius: 20px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.tooltip-toggle input[type="checkbox"]:checked + .toggle-slider {
+  background: var(--primary-color);
+}
+
+.tooltip-toggle input[type="checkbox"]:checked + .toggle-slider::after {
+  transform: translateX(16px);
+}
+
+.toggle-label {
+  user-select: none;
+  white-space: nowrap;
+}
+
+// Обновить тултип заголовок
+.tooltip-header {
+  // margin-bottom: 12px;
+  // padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tooltip-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+// ДОБАВИТЬ стиль для группы:
+.tooltip-group {
+  font-size: 11px;
+  color: var(--info-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+* {
+  // font-size: clamp(12px, 1vw, 8px);
+}
+
 </style>

@@ -41,7 +41,7 @@
               "shortages": 1164.88,
               "fop": 339591.39,
               "shiftRemainder": 42331.9,
-              "unprocessed": 0
+              "unprocessed": 4
             }
           ]
         }
@@ -65,7 +65,7 @@
               "shortages": 968.54,
               "fop": 541431.86,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 12
             },
             {
               "weekId": "week_2",
@@ -100,7 +100,7 @@
               "shortages": 2003.01,
               "fop": 1046456.83,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 1
             },
             {
               "weekId": "week_2",
@@ -128,7 +128,7 @@
               "shortages": 119.9,
               "fop": 753359.92,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 4
             },
             {
               "weekId": "week_2",
@@ -156,7 +156,7 @@
               "shortages": 90.95,
               "fop": 99689.38,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 1
             },
             {
               "weekId": "week_2",
@@ -191,7 +191,7 @@
               "shortages": 514.22,
               "fop": 1227136.29,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 2
             },
             {
               "weekId": "week_2",
@@ -202,7 +202,7 @@
               "shortages": 129.39,
               "fop": 1227136.29,
               "shiftRemainder": 456.92,
-              "unprocessed": 1
+              "unprocessed": 11
             }
           ]
         },
@@ -230,7 +230,7 @@
               "shortages": 1111.42,
               "fop": 949887.36,
               "shiftRemainder": 597.69,
-              "unprocessed": 0
+              "unprocessed": 8
             }
           ]
         },
@@ -247,7 +247,7 @@
               "shortages": 2276.69,
               "fop": 1064610.1,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 14
             },
             {
               "weekId": "week_2",
@@ -258,7 +258,7 @@
               "shortages": 2413.1,
               "fop": 1064610.1,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 3
             }
           ]
         },
@@ -286,7 +286,7 @@
               "shortages": 116.8,
               "fop": 915742.31,
               "shiftRemainder": 219816.78,
-              "unprocessed": 3
+              "unprocessed": 1
             }
           ]
         },
@@ -303,7 +303,7 @@
               "shortages": 0,
               "fop": 824999.73,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 9
             },
             {
               "weekId": "week_2",
@@ -370,7 +370,7 @@
               "shortages": 1194.35,
               "fop": 787796.12,
               "shiftRemainder": 2367.77,
-              "unprocessed": 0
+              "unprocessed": 3
             }
           ]
         },
@@ -415,7 +415,7 @@
               "shortages": 34.9,
               "fop": 189660.15,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 2
             },
             {
               "weekId": "week_2",
@@ -482,7 +482,7 @@
               "shortages": 602.3,
               "fop": 218845.31,
               "shiftRemainder": 0,
-              "unprocessed": 0
+              "unprocessed": 5
             }
           ]
         }
