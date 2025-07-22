@@ -1,39 +1,13 @@
 <template>
   <div class="sales-table-container table-container">
-
-    <!-- КПИ панель -->
     <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
-
-    <!-- <div class="color-palette">
-      <h3>Палитра темных цветов:</h3>
-      <div 
-        v-for="color in darkColors" 
-        :key="color"
-        class="color-option"
-        :class="{ selected: selectedColor === color }"
-        :style="{ backgroundColor: color }"
-        @click="changeColor(color)"
-        :title="color"
-      />
-    </div>
-    <div class="current-color-info" v-if="selectedColor">
-      <strong>Текущий цвет:</strong> {{ selectedColor }}<br>
-      <strong>Цвет бордеров:</strong> {{ darkerColor }}
-    </div> -->
-
-    <!-- Тоггл кнопка -->
-    <!-- <button class="toggle-button" @click="togglePalette" :class="{ active: isPaletteOpen }">
-    </button> -->
-
     <img :class="{ active: isPaletteOpen }" class="toggle-button" @click="togglePalette"
       src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
       alt="">
 
-
-    <!-- Выезжающая палитра -->
     <div class="color-palette-sidebar" :class="{ open: isPaletteOpen }">
       <div class="palette-content">
-        <h3>Палитра темных цветов:</h3>
+        <h3>Палитра цветов:</h3>
         <div class="color-grid">
           <div v-for="color in darkColors" :key="color" class="color-option"
             :class="{ selected: selectedColor === color }" :style="{ backgroundColor: color }"
@@ -41,12 +15,7 @@
         </div>
       </div>
     </div>
-
-    <!-- Оверлей для закрытия палитры -->
     <div v-if="isPaletteOpen" class="overlay" @click="closePalette"></div>
-
-
-
     <div v-if="loading" class="loading-bar">
       <div class="loading-progress"></div>
     </div>
@@ -58,46 +27,21 @@
     </div>
 
     <div v-if="!loading && !error" class="content">
-      <!-- Элементы управления показателями -->
       <div class="controls-panel">
-
         <button :style="headerStyle" class="refresh-btn" @click="refreshData" :disabled="loading">
           Обновить
         </button>
-
-
         <div class="tooltip-controls">
           <label class="tooltip-toggle">
-            <input 
-              type="checkbox" 
-              v-model="tooltipEnabled"
-            />
+            <input type="checkbox" v-model="tooltipEnabled" />
             <span class="toggle-slider" :style="headerStyle"></span>
             <span class="toggle-label">Детали</span>
           </label>
         </div>
-
-        <!-- <div class="indicator-toggles">
-          <div class="toggle-group">
-            <h4>Показатели:</h4>
-            <div class="toggles-row">
-              <div class="indicator-toggle" v-for="indicator in availableIndicators" :key="indicator.key">
-                <label class="toggle-checkbox">
-                  <input type="checkbox" v-model="visible[indicator.key]" @change="onIndicatorToggle" />
-                  <span class="checkmark"></span>
-                  <span class="label-text" v-html="indicator.groupLabel"></span>
-                  {{ indicator }}
-                </label>
-              </div>
-            </div>
-          </div>
-        </div> -->
       </div>
 
-      <!-- Таблица -->
       <div class="custom-table">
         <div class="table">
-          <!-- Шапка: уровень 1 -->
           <div class="table-header" :style="headerStyle">
             <div class="row header top">
               <div class="cell static header-cell store-name-column">Регион / Магазин</div>
@@ -108,7 +52,6 @@
               </div>
             </div>
 
-            <!-- Шапка: уровень 1/2 - группы показателей -->
             <div class="row header middle">
               <div class="cell static header-cell"></div>
               <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
@@ -118,11 +61,6 @@
                     class="cell dynamic header-cell group-header" :style="getGroupStyle(group.key, weekIndex)">
                     <div @click="toggleGroupVisibility(group.key)" class="group-content">
                       <span>{{ group.label }}</span>
-                      <!-- <button v-if="group.key !== 'score'" @click="toggleGroupVisibility(group.key)"
-                        class="group-toggle-btn" :class="{ 'is-collapsed': !groupVisibility[group.key] }"
-                        :title="groupVisibility[group.key] ? 'Скрыть показатели' : 'Показать показатели'">
-                        {{ groupVisibility[group.key] ? '−' : '+' }}
-                      </button> -->
                     </div>
                   </div>
 
@@ -130,7 +68,6 @@
               </div>
             </div>
 
-            <!-- Шапка: уровень 2 -->
             <div class="row header bottom">
               <div class="cell static header-cell"></div>
               <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
@@ -151,7 +88,6 @@
           </div>
 
           <div class="table-body">
-            <!-- Блок итогов по регионам -->
             <div class="regions-summary-block">
               <transition-group name="table-row" tag="div">
                 <div v-for="region in sortedRegions" :key="`region-summary-${region.id}`"
@@ -205,7 +141,6 @@
               </div>
             </div>
 
-            <!-- Все магазины без группировки -->
             <transition-group name="table-row" tag="div">
               <div v-for="store in allStores" :key="`store-${store.id}`" class="row store-row data-row"
                 :class="getStoreRowClass(store.overallRank)">
@@ -236,20 +171,15 @@
         </div>
       </div>
     </div>
-    
-    <!-- КПИ панель -->
+
+    <!-- КПИ -->
     <KPISidebar :salesData="salesData" :targetsData="targetsData" :regions="regions" :weeks="weeks" />
     <!-- Тултип -->
-    <div 
-  v-if="tooltip.visible && tooltip.data"
-  ref="tooltipRef"
-  class="custom-tooltip"
-  :style="{ 
-    left: tooltip.x + 'px', 
-    top: tooltip.y + 'px',
-    opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
-  }"
->
+    <div v-if="tooltip.visible && tooltip.data" ref="tooltipRef" class="custom-tooltip" :style="{
+      left: tooltip.x + 'px',
+      top: tooltip.y + 'px',
+      opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
+    }">
       <div class="tooltip-header">
         <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
         <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
@@ -267,6 +197,11 @@
       </div>
     </div>
   </div>
+
+
+  
+
+
 </template>
 
 <script setup>
@@ -279,66 +214,51 @@ const salesData = ref(null)
 const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
-const tooltipEnabled = ref(true)
+const tooltipEnabled = ref(false)
 
-// Состояние тултипа
 const tooltip = ref({
   visible: false,
   x: 0,
   y: 0,
   data: null,
-  type: null, // 'store' или 'region'
-  width: 0,    // ← ДОБАВИТЬ
-  height: 0    // ← ДОБАВИТЬ
+  type: null,
+  width: 0,
+  height: 0
 })
-// Показать тултип
+// тултип
 const showTooltip = (event, data, type, weekId, indicator) => {
   if (!tooltipEnabled.value) return
-  
   const tooltipData = getTooltipData(data, weekId, indicator, type)
-  
   tooltip.value = {
     visible: true,
-    x: 0, // Временно, пересчитаем после рендера
-    y: 0, // Временно, пересчитаем после рендера  
+    x: 0,
+    y: 0,
     data: tooltipData,
     type: type,
     width: 0,
     height: 0
   }
-
-  // Пересчитываем позицию после рендера
   nextTick(() => {
     updateTooltipPosition(event)
   })
 }
 
-// Обновить позицию тултипа при движении мыши
 const updateTooltipPosition = (event) => {
   if (!tooltip.value.visible) return
 
   const tooltipElement = document.querySelector('.custom-tooltip')
   if (!tooltipElement) return
-
-  // Получаем размеры тултипа и окна
   const tooltipRect = tooltipElement.getBoundingClientRect()
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
-
-  let x = event.clientX + 10  // Смещение от курсора
+  let x = event.clientX + 10
   let y = event.clientY + 10
-
-  // Проверяем выход за правую границу окна
   if (x + tooltipRect.width > windowWidth - 10) {
-    x = event.clientX - tooltipRect.width - 10 // Показываем слева от курсора
+    x = event.clientX - tooltipRect.width - 10
   }
-
-  // Проверяем выход за нижнюю границу окна  
   if (y + tooltipRect.height > windowHeight - 10) {
-    y = event.clientY - tooltipRect.height - 10 // Показываем сверху от курсора
+    y = event.clientY - tooltipRect.height - 10
   }
-
-  // Дополнительная проверка, чтобы не выйти за левую и верхнюю границы
   if (x < 10) x = 10
   if (y < 10) y = 10
 
@@ -348,27 +268,21 @@ const updateTooltipPosition = (event) => {
   tooltip.value.height = tooltipRect.height
 }
 
-// Скрыть тултип
 const hideTooltip = () => {
   tooltip.value.visible = false
 }
 
-
-
-// Получить данные для тултипа (только для текущей группы)
 const getTooltipData = (entity, weekId, indicator, type) => {
-  const weekData = type === 'store' 
+  const weekData = type === 'store'
     ? getStoreWeekData(entity, weekId)
     : entity.weeklyData?.find(w => w.weekId === weekId) || {}
 
   const week = weeks.value.find(w => w.id === weekId)
   const indicatorConfig = availableIndicators.value.find(ind => ind.key === indicator)
-  
-  // Найти группу текущего показателя
-  const currentGroup = indicatorGroups.value.find(group => 
+  const currentGroup = indicatorGroups.value.find(group =>
     group.indicators.some(ind => ind.key === indicator)
   )
-  
+
   const result = {
     entityName: entity.name,
     weekName: week?.name || `Неделя ${weekId}`,
@@ -378,37 +292,33 @@ const getTooltipData = (entity, weekId, indicator, type) => {
     details: []
   }
 
-  // Добавляем показатели только текущей группы
   if (currentGroup) {
     if (currentGroup.key === 'score') {
-      // Группа "Общий балл"
       result.details.push({
-        label: 'Общий балл', 
+        label: 'Общий балл',
         value: weekData.totalScore || 0
       })
     } else if (currentGroup.key === 'turnover') {
-      // Группа "Оборот"
       result.details.push(
         { label: 'План', value: formatNumber(weekData.plan || 0) },
-        { 
-          label: 'Факт', 
-          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% от плана)` 
+        {
+          label: 'Факт',
+          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% от плана)`
         },
         { label: 'Процент оборота', value: `${weekData.percent || 0}%` }
       )
-      
+
       if (weekData.turnover_score !== undefined) {
         const maxScore = targetsData.value?.targetTree?.turnover?.maxScore || 100
         result.details.push({
-          label: `Балл за оборот (из ${maxScore})`, 
+          label: `Балл за оборот (из ${maxScore})`,
           value: weekData.turnover_score || 0
         })
       }
     } else {
-      // Другие группы показателей
       const groupKey = currentGroup.key
       const target = targetsData.value?.targetTree?.[groupKey]
-      
+
       if (target) {
         const value = weekData[groupKey] || 0
         const percent = weekData[`${groupKey}_percent`] || 0
@@ -419,21 +329,21 @@ const getTooltipData = (entity, weekId, indicator, type) => {
 
         result.details.push(
           { label: `${target.name} (значение)`, value: formatNumber(value) },
-          { 
-            label: `Расчетный план`, 
+          {
+            label: `Расчетный план`,
             value: ` ${formatNumber(planValue)} (${((targetValue / factValue) * 100).toFixed(2)}% от факта)`
           },
-          { 
-            label: 'Факт оборота →  ', 
+          {
+            label: 'Факт оборота →  ',
             value: `${formatNumber(factValue)}`
           },
-          { 
-            label: ` план ${target.name.toLowerCase()}`, 
+          {
+            label: ` план ${target.name.toLowerCase()}`,
             value: `${formatNumber(targetValue)}`
           },
           { label: `Процент выполнения`, value: `${percent}%` },
-          { 
-            label: `Балл (из ${target.maxScore})`, 
+          {
+            label: `Балл (из ${target.maxScore})`,
             value: `${score} / ${target.maxScore}`
           }
         )
@@ -441,12 +351,11 @@ const getTooltipData = (entity, weekId, indicator, type) => {
     }
   }
 
-  // Добавляем информацию о ранге в группе
   if (weekData.columnRanks && weekData.columnRanks[indicator]) {
-    const totalItems = type === 'store' 
+    const totalItems = type === 'store'
       ? regions.value?.reduce((total, region) => total + (region.stores?.length || 0), 0) || 0
       : regions.value?.length || 0
-    
+
     result.details.push({
       label: 'Ранг по показателю',
       value: `${weekData.columnRanks[indicator]} из ${totalItems}`
@@ -456,7 +365,6 @@ const getTooltipData = (entity, weekId, indicator, type) => {
   return result
 }
 
-// Получить отображаемое значение
 const getDisplayValue = (weekData, indicator) => {
   switch (indicator) {
     case 'totalScore':
@@ -478,13 +386,6 @@ const getDisplayValue = (weekData, indicator) => {
   }
 }
 
-
-
-
-
-
-
-
 const darkColors = ref([
   '#2c3e50', // Темно-синий
   '#34495e', // Графитовый
@@ -505,7 +406,7 @@ const darkColors = ref([
   '#7f8c8d', // Серый
   '#95a5a6'  // Светло-серый
 ])
-// Выбранный цвет
+// cмк
 const selectedColor = ref('#1c699b')
 // const selectedColor = ref('#2c3e50')
 
@@ -524,28 +425,23 @@ const darkenColor = (color, percent = 20) => {
     (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1)
 }
 
-// Вычисляемый более темный цвет
 const darkerColor = computed(() => {
   return darkenColor(selectedColor.value)
 })
 
-// Стиль для шапки таблицы
 const headerStyle = computed(() => {
   return {
     backgroundColor: selectedColor.value,
-    // border: `1px solid ${darkerColor.value}`,
     color: '#fff',
     borderCollapse: 'separate',
     borderSpacing: 0
   }
 })
 
-// Функция изменения цвета
 const changeColor = (color) => {
   selectedColor.value = color
 }
 
-// Функции управления палитрой
 const togglePalette = () => {
   isPaletteOpen.value = !isPaletteOpen.value
 }
@@ -554,23 +450,8 @@ const closePalette = () => {
   isPaletteOpen.value = false
 }
 
-
-
-
-
-
-
-
-
-
-
-// Состояние для сортировки по колонкам регионов
 const regionSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
-
-// Состояние для сортировки магазинов
 const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'asc' })
-
-// Определение групп показателей
 const indicatorGroups = computed(() => {
   const groups = [
     {
@@ -582,11 +463,9 @@ const indicatorGroups = computed(() => {
     }
   ]
 
-  // Добавляем группы из targetsData
   if (targetsData.value?.targetTree) {
     Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
       if (key === 'turnover') {
-        // Специальная группа для оборота
         groups.push({
           key: 'turnover',
           label: 'Оборот',
@@ -599,7 +478,7 @@ const indicatorGroups = computed(() => {
         })
       } else {
         console.log(target);
-        
+
         groups.push({
           key: key,
           label: target.name,
@@ -612,7 +491,6 @@ const indicatorGroups = computed(() => {
       }
     })
   } else {
-    // Если нет targetsData, добавляем базовую группу оборота
     groups.push({
       key: 'turnover',
       label: 'Оборот',
@@ -627,7 +505,6 @@ const indicatorGroups = computed(() => {
   return groups
 })
 
-// Определение доступных показателей (плоский список)
 const availableIndicators = computed(() => {
   const indicators = []
   indicatorGroups.value.forEach(group => {
@@ -642,57 +519,34 @@ const availableIndicators = computed(() => {
   return indicators
 })
 
-// Видимость показателей
 const visible = reactive({})
 const groupVisibility = reactive({})
-
-// Инициализация видимости групп
 const initializeGroupVisibility = () => {
   indicatorGroups.value.forEach(group => {
     if (group.key === 'score') {
-      groupVisibility[group.key] = true // Общий балл всегда открыт
+      groupVisibility[group.key] = true
     } else {
-      groupVisibility[group.key] = false // Остальные группы закрыты
+      groupVisibility[group.key] = false
     }
   })
 }
-
-
-
-
-// Инициализация видимости показателей
-// const initializeVisibility = () => {
-//   indicatorGroups.value.forEach(group => {
-//     group.indicators.forEach(indicator => {
-//       if (['totalScore', 'turnover_score', 'losses_score', 'shortages_score', 'fop_score', 'shiftRemainder_score', 'unprocessed_score',].includes(indicator.key)) {
-//         visible[indicator.key] = true
-//       } else {
-//         visible[indicator.key] = false
-//       }
-//     })
-//   })
-// }
-// Инициализация видимости показателей  
-// Инициализация видимости показателей
 const initializeVisibility = () => {
-  // Сначала инициализируем groupVisibility
   indicatorGroups.value.forEach(group => {
     if (group.key === 'score') {
-      groupVisibility[group.key] = true // Общий балл всегда открыт
+      groupVisibility[group.key] = true
     } else {
-      groupVisibility[group.key] = false // Остальные группы закрыты по умолчанию
+      groupVisibility[group.key] = false
     }
   })
 
-  // Затем инициализируем visible на основе groupVisibility
   indicatorGroups.value.forEach(group => {
     group.indicators.forEach(indicator => {
       if (indicator.key === 'totalScore') {
-        visible[indicator.key] = true // БАЛЛ всегда видим
+        visible[indicator.key] = true
       } else if (indicator.key.includes('_score')) {
-        visible[indicator.key] = true // Все баллы всегда видимы
+        visible[indicator.key] = true
       } else if (group.key === 'score') {
-        visible[indicator.key] = true // Группа "Общий балл" видима
+        visible[indicator.key] = true
       } else {
         visible[indicator.key] = groupVisibility[group.key] || false
       }
@@ -700,36 +554,24 @@ const initializeVisibility = () => {
   })
 }
 
-// Тоггл видимости группы
 const toggleGroupVisibility = (groupKey) => {
-  if (groupKey === 'score') return // Общий балл нельзя скрывать
-
+  if (groupKey === 'score') return
   groupVisibility[groupKey] = !groupVisibility[groupKey]
-
-  // Обновляем видимость показателей группы
   const group = indicatorGroups.value.find(g => g.key === groupKey)
   if (group) {
     group.indicators.forEach(indicator => {
       if (indicator.key.includes('_score') || indicator.key === 'totalScore') {
-        visible[indicator.key] = true // БАЛЛ всегда видим
+        visible[indicator.key] = true
       } else {
         visible[indicator.key] = groupVisibility[groupKey]
       }
     })
   }
 }
-
-
-
-
-
-
-// Видимые показатели (плоский список)
 const visibleIndicators = computed(() =>
   availableIndicators.value.filter(indicator => visible[indicator.key])
 )
 
-// Видимые группы показателей
 const visibleGroups = computed(() => {
   return indicatorGroups.value.map(group => ({
     ...group,
@@ -772,16 +614,13 @@ function getGroupStyle(groupKey, weekIndex) {
 }
 
 const onIndicatorToggle = () => {
-  // Пересчитываем стили при изменении видимости
+  //стили
 }
 
-// Загрузка данных
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
-
-    // Загружаем данные из двух API
     const [salesResponse, targetsResponse] = await Promise.all([
       fetch('/real-data.json'),
       fetch('/targets.json')
@@ -790,12 +629,10 @@ const loadData = async () => {
     if (!salesResponse.ok || !targetsResponse.ok) {
       throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)
     }
-
     const [salesDataResult, targetsDataResult] = await Promise.all([
       salesResponse.json(),
       targetsResponse.json()
     ])
-
     if (!salesDataResult.weeks || !salesDataResult.regions) {
       throw new Error('Неверная структура данных продаж')
     }
@@ -803,19 +640,11 @@ const loadData = async () => {
     if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
       throw new Error('Неверная структура данных целей')
     }
-
     salesData.value = salesDataResult
     targetsData.value = targetsDataResult
     regions.value = Object.values(salesDataResult.regions)
-
-    // Инициализируем видимость после загрузки данных
     initializeVisibility()
-
-    // initializeGroupVisibility() 
-
-    // Обработка данных после загрузки
     processData()
-
   } catch (err) {
     console.error('Ошибка загрузки данных:', err)
     error.value = err.message || 'Ошибка загрузки данных'
@@ -826,11 +655,8 @@ const loadData = async () => {
   }
 }
 
-// Обработка данных
 const processData = () => {
   if (!regions.value || !salesData.value || !targetsData.value) return
-
-  // Добавляем цвета регионов к магазинам
   regions.value.forEach(region => {
     if (region.stores) {
       region.stores.forEach(store => {
@@ -840,8 +666,6 @@ const processData = () => {
       })
     }
   })
-
-  // Собираем все магазины для расчета
   const allStores = []
   regions.value.forEach(region => {
     if (region.stores) {
@@ -850,54 +674,36 @@ const processData = () => {
       })
     }
   })
-
-  // Расчет показателей для каждой недели
   salesData.value.weeks.forEach(week => {
     calculateWeeklyMetrics(week.id, allStores)
   })
-
-  // Расчет общего балла и рангов
   calculateOverallScores(allStores)
-
-  // Расчет показателей для регионов
   calculateRegionMetrics()
-
-  // Расчет рангов по колонкам для регионов
   calculateRegionColumnRanks()
 }
 
-// Расчет показателей для недели
 const calculateWeeklyMetrics = (weekId, allStores) => {
   const { targetTree, storeTargets } = targetsData.value
 
   allStores.forEach(store => {
     const weekData = getStoreWeekData(store, weekId)
     const storeTargetConfig = storeTargets[store.id] || {}
-
-    // 1. Расчет процента для оборота
     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
-
-    // 2. Расчет показателей и баллов для каждого типа целей
     let weeklyScore = 0
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') {
-        // Пропускаем, обработаем отдельно
+        //
         return
       }
-
       const targetPercent = storeTargetConfig[key] || 0
       const actualValue = weekData[key] || 0
       const target = targetPercent * weekData.fact
-
-      // Расчет процента выполнения
       let achievementPercent = 0
       if (target > 0) {
         if (targetConfig.type === 'negative') {
-          // Для негативных показателей: меньше = лучше
           achievementPercent = Math.min((target / actualValue) * 100, 200)
         } else {
-          // Для позитивных показателей: больше = лучше
           achievementPercent = (actualValue / target) * 100
         }
       }
@@ -906,22 +712,15 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       weekData[`${key}_target`] = target
     })
 
-    // 3. Расчет баллов после получения всех процентов
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') {
-        // Пропускаем, обработаем отдельно
         return
       }
-
       const achievementPercent = weekData[`${key}_percent`] || 0
-
-      // Находим максимальный процент среди всех магазинов для этого показателя
       const maxPercent = Math.max(...allStores.map(s => {
         const sWeekData = getStoreWeekData(s, weekId)
         return sWeekData[`${key}_percent`] || 0
       }))
-
-      // Расчет балла
       let score = 0
       if (maxPercent > 0) {
         score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
@@ -933,8 +732,6 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 
     weekData.totalScore = weeklyScore
   })
-
-  // 4. Расчет балла для оборота (отдельно, после расчета всех процентов)
   if (targetTree.turnover) {
     const maxTurnoverPercent = Math.max(...allStores.map(store => {
       const weekData = getStoreWeekData(store, weekId)
@@ -944,8 +741,6 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
     allStores.forEach(store => {
       const weekData = getStoreWeekData(store, weekId)
       const turnoverPercent = weekData.percent || 0
-
-      // Расчет балла для оборота
       let turnoverScore = 0
       if (maxTurnoverPercent > 0) {
         turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
@@ -955,30 +750,21 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
     })
   } else {
-    // Если нет настройки turnover в targetTree, используем старую логику
     allStores.forEach(store => {
       const weekData = getStoreWeekData(store, weekId)
       const turnoverScore = Math.round(weekData.percent || 0)
       weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
     })
   }
-
-  // Расчет рангов по колонкам для недели
   calculateColumnRanks(weekId, allStores)
 }
 
-// Расчет показателей для регионов (новая логика)
 const calculateRegionMetrics = () => {
   if (!regions.value || !salesData.value || !targetsData.value) return
-
   const { targetTree, storeTargets } = targetsData.value
-
   salesData.value.weeks.forEach(week => {
-    // Сначала рассчитываем проценты для регионов
     regions.value.forEach(region => {
       if (!region.stores) return
-
-      // Инициализируем weeklyData для региона если нет
       if (!region.weeklyData) {
         region.weeklyData = []
       }
@@ -988,11 +774,8 @@ const calculateRegionMetrics = () => {
         regionWeekData = { weekId: week.id }
         region.weeklyData.push(regionWeekData)
       }
-
-      // 1. Расчет оборота региона
       let totalPlan = 0
       let totalFact = 0
-
       region.stores.forEach(store => {
         const storeWeekData = getStoreWeekData(store, week.id)
         totalPlan += storeWeekData.plan || 0
@@ -1003,13 +786,10 @@ const calculateRegionMetrics = () => {
       regionWeekData.fact = totalFact
       regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
 
-      // 2. Расчет других показателей региона
       Object.entries(targetTree).forEach(([key, targetConfig]) => {
         if (key === 'turnover') return
-
         let totalValue = 0
         let totalTarget = 0
-
         region.stores.forEach(store => {
           const storeWeekData = getStoreWeekData(store, week.id)
           const storeTargetConfig = storeTargets[store.id] || {}
@@ -1021,7 +801,6 @@ const calculateRegionMetrics = () => {
 
         regionWeekData[key] = totalValue
 
-        // Расчет процента выполнения для региона
         let achievementPercent = 0
         if (totalTarget > 0) {
           if (targetConfig.type === 'negative') {
@@ -1036,17 +815,13 @@ const calculateRegionMetrics = () => {
       })
     })
 
-    // Теперь рассчитываем баллы для регионов по той же логике что и для магазинов
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') return
-
-      // Находим максимальный процент среди всех регионов
       const maxPercent = Math.max(...regions.value.map(region => {
         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
         return regionWeekData?.[`${key}_percent`] || 0
       }))
 
-      // Рассчитываем баллы для каждого региона
       regions.value.forEach(region => {
         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
         if (!regionWeekData) return
@@ -1060,7 +835,6 @@ const calculateRegionMetrics = () => {
       })
     })
 
-    // Расчет балла для оборота регионов
     if (targetTree.turnover) {
       const maxTurnoverPercent = Math.max(...regions.value.map(region => {
         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
@@ -1080,7 +854,6 @@ const calculateRegionMetrics = () => {
       })
     }
 
-    // Расчет общего балла для регионов
     regions.value.forEach(region => {
       const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
       if (!regionWeekData) return
@@ -1100,9 +873,7 @@ const calculateRegionMetrics = () => {
   })
 }
 
-// Расчет общих баллов и рангов
 const calculateOverallScores = (allStores) => {
-  // Расчет общего балла по всем неделям
   allStores.forEach(store => {
     let totalScore = 0
     salesData.value.weeks.forEach(week => {
@@ -1112,7 +883,6 @@ const calculateOverallScores = (allStores) => {
     store.overallTotalScore = totalScore
   })
 
-  // Сортировка по общим баллам и присвоение рангов
   allStores.sort((a, b) => b.overallTotalScore - a.overallTotalScore)
   allStores.forEach((store, index) => {
     store.overallRank = index + 1
@@ -1121,16 +891,13 @@ const calculateOverallScores = (allStores) => {
 
 const weeks = computed(() => {
   if (!salesData.value?.weeks) return []
-  // Сортируем недели по id в убывающем порядке (новые сначала)
   return [...salesData.value.weeks].sort((a, b) => b.id - a.id)
 })
 
-// Расчет рангов по колонкам для магазинов
 const calculateColumnRanks = (weekId, allStores) => {
   const indicators = availableIndicators.value.map(ind => ind.key)
 
   indicators.forEach(indicator => {
-    // Создаем массив магазинов с их значениями для данного показателя
     const storesWithValues = allStores.map(store => {
       const weekData = getStoreWeekData(store, weekId)
       let value = 0
@@ -1155,11 +922,7 @@ const calculateColumnRanks = (weekId, allStores) => {
 
       return { store, value, weekData }
     })
-
-    // Сортируем по убыванию (большие значения = лучше)
     storesWithValues.sort((a, b) => b.value - a.value)
-
-    // Присваиваем ранги
     storesWithValues.forEach((item, index) => {
       if (!item.weekData.columnRanks) {
         item.weekData.columnRanks = {}
@@ -1169,24 +932,17 @@ const calculateColumnRanks = (weekId, allStores) => {
   })
 }
 
-// Расчет рангов по колонкам для регионов
 const calculateRegionColumnRanks = () => {
   if (!regions.value || !salesData.value) return
 
   salesData.value.weeks.forEach(week => {
     const indicators = availableIndicators.value.map(ind => ind.key)
-
     indicators.forEach(indicator => {
-      // Создаем массив регионов с их значениями для данного показателя
       const regionsWithValues = regions.value.map(region => {
         let value = getRegionIndicatorValue(region, week.id, indicator)
         return { region, value }
       })
-
-      // Сортируем по убыванию
       regionsWithValues.sort((a, b) => b.value - a.value)
-
-      // Присваиваем ранги
       regionsWithValues.forEach((item, index) => {
         if (!item.region.columnRanks) {
           item.region.columnRanks = {}
@@ -1209,10 +965,7 @@ const getRegionIndicatorValue = (region, weekId, indicator) => {
 
 const sortedRegions = computed(() => {
   if (!regions.value) return []
-
   let sorted = [...regions.value]
-
-  // Рассчитываем общий балл регионов
   sorted.forEach(region => {
     let totalScore = 0
 
@@ -1225,7 +978,6 @@ const sortedRegions = computed(() => {
     region.overallTotalScore = totalScore
   })
 
-  // Сортировка регионов по выбранному критерию
   sorted.sort((a, b) => {
     let aValue = 0
     let bValue = 0
@@ -1241,7 +993,6 @@ const sortedRegions = computed(() => {
     return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
   })
 
-  // Присваиваем ранги регионам
   sorted.forEach((region, index) => {
     region.regionRank = index + 1
   })
@@ -1249,7 +1000,6 @@ const sortedRegions = computed(() => {
   return sorted
 })
 
-// Все магазины без группировки по регионам
 const allStores = computed(() => {
   const stores = []
 
@@ -1266,7 +1016,6 @@ const allStores = computed(() => {
     }
   })
 
-  // Сортировка магазинов
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
     stores.sort((a, b) => {
       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
@@ -1438,16 +1187,13 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
     classes.push('score-cell')
   }
 
-  // Условное форматирование по рангам в колонках
   let rank = 0
   let totalItems = 0
 
   if (isRegion && region && weekId) {
-    // Для регионов
     rank = region.columnRanks?.[weekId]?.[indicator] || 0
     totalItems = regions.value?.length || 0
   } else {
-    // Для магазинов
     rank = weekData.columnRanks?.[indicator] || 0
     totalItems = regions.value?.reduce((total, region) => {
       return total + (region.stores?.length || 0)
@@ -1456,11 +1202,9 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
 
   if (rank > 0 && totalItems > 0) {
     const percentile = (rank / totalItems) * 100
+    if (indicator.endsWith('_score') || indicator === 'totalScore' ||
+      indicator.endsWith('_percent') || indicator === 'percent') {
 
-    // Специальное форматирование для баллов и процентов
-    if (indicator.endsWith('_score') || indicator === 'totalScore' || 
-        indicator.endsWith('_percent') || indicator === 'percent') {
-      
       if (percentile <= 20) {
         classes.push('percentile-top')        // Топ 20%
       } else if (percentile <= 40) {
@@ -1473,7 +1217,6 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
         classes.push('percentile-poor')       // 80-100%
       }
     } else {
-      // Обычное форматирование для других показателей
       if (percentile <= 20) {
         classes.push('column-rank-top')
       } else if (percentile <= 40) {
@@ -1491,9 +1234,6 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
   return classes.join(' ')
 }
 
-
-
-// Получить заголовок показателя с maxScore
 const getIndicatorHeader = (indicator) => {
   if (indicator.key.endsWith('_score')) {
     const baseKey = indicator.key.replace('_score', '')
@@ -1506,21 +1246,6 @@ const getIndicatorHeader = (indicator) => {
   }
   return indicator.label
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const getPercentClass = (percent) => {
   if (percent === null || percent === undefined || isNaN(percent)) {
@@ -1541,14 +1266,12 @@ const getScoreClass = (score) => {
 }
 
 const getRegionCellClass = (indicator, region, weekId) => {
-  // Получаем weekData региона для правильного расчета рангов
   const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId) || {}
-  
-  // Добавляем columnRanks если есть
+
   if (region.columnRanks && region.columnRanks[weekId]) {
     regionWeekData.columnRanks = { [indicator]: region.columnRanks[weekId][indicator] }
   }
-  
+
   return getCellClass(indicator, regionWeekData, true, weekId, region)
 }
 
@@ -1573,12 +1296,10 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-// CSS переменные для современного дизайна
 :root {
 
-  /* Определяем цветовые схемы */
-  :root {
-    /* Синяя схема (по умолчанию) */
+  :default {
+    /* <СМК> схема (по умолчанию) */
     --header-primary: #00a3e6;
     --header-primary-dark: #2563eb;
     --header-secondary: #6366f1;
@@ -1616,12 +1337,6 @@ onMounted(() => {
     --header-accent: #fbbf24;
     --header-accent-dark: #f59e0b;
   }
-
-
-
-
-
-
 
   --primary-color: #3b82f6;
   --success-color: #10b981;
@@ -1717,7 +1432,6 @@ onMounted(() => {
 .controls-panel {
   display: flex;
   align-items: center;
-  // justify-content: space-between;
   background: var(--surface);
   gap: 20px;
   padding: 20px 24px;
@@ -1826,8 +1540,6 @@ onMounted(() => {
 
 .table {
   width: 100%;
-  // min-width: 1675px;
-  // min-width: 1400px;
 }
 
 .table-header {
@@ -1848,7 +1560,6 @@ onMounted(() => {
 .cell {
   height: 30px;
   padding: 6px 0px;
-  // border-right: 1px solid var(--border-color);
   box-sizing: border-box;
   text-align: center;
   overflow: hidden;
@@ -1858,8 +1569,6 @@ onMounted(() => {
   justify-content: center;
   font-size: 13px;
   border-right: 1px solid silver;
-  // border-bottom: 1px solid silver;
-  // line-height: 1.4;
 }
 
 .cell.static {
@@ -1873,14 +1582,10 @@ onMounted(() => {
 .cell.dynamic {
   display: flex;
   justify-content: center;
-  // min-width: 60px;
-  // flex: 1;
   transition: all 0.2s ease;
 }
 
 .header-cell {
-  // font-weight: 600;
-  // color: var(--text-primary);
   background: var(--neutral-light);
   font-size: 12px;
   border-bottom: 1px solid var(--border-color);
@@ -1897,7 +1602,6 @@ onMounted(() => {
 .metric-header {
   background: var(--surface);
   font-size: 13px;
-  // font-weight: 600;
   color: var(--text-secondary);
 }
 
@@ -2003,7 +1707,6 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-// Современное условное форматирование
 .top-rank {
   background: var(--success-light);
   border-left: 4px solid var(--success-color);
@@ -2040,7 +1743,6 @@ onMounted(() => {
   border-radius: 50%;
   flex-shrink: 0;
   border: 2px solid rgba(255, 255, 255, 1);
-  // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .store-region-indicator {
@@ -2049,7 +1751,6 @@ onMounted(() => {
   border-radius: 50%;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 1);
-  // box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .store-region-label {
@@ -2059,7 +1760,6 @@ onMounted(() => {
   margin-left: 4px;
 }
 
-// Сортировка в заголовках
 .sortable-header {
   cursor: pointer;
   transition: all 0.2s ease;
@@ -2077,7 +1777,6 @@ onMounted(() => {
   justify-content: center;
   gap: 4px;
   width: 100%;
-  // font-weight: 600;
 }
 
 .sort-arrow {
@@ -2108,7 +1807,6 @@ onMounted(() => {
   opacity: 0.8;
 }
 
-// Современные стрелки направления
 .rank-arrow,
 .region-arrow {
   display: inline-flex;
@@ -2139,45 +1837,34 @@ onMounted(() => {
   border: 1px solid var(--danger-color);
 }
 
-// Условное форматирование по рангам в колонках
+// по рангам
 // .column-rank-top {
-//   background: red;
-//   color: var(--success-color);
-//   font-weight: 600;
+// background: red;
+// color: var(--success-color);
+// font-weight: 600;
 // border: 1px solid var(--success-color);
 // border-radius: var(--radius-sm);
 // }
 
-.column-rank-good {
-  // background: #f0f9ff;
-  // color: #0369a1;
-  // border: 1px solid #0369a1;
-  // border-radius: var(--radius-sm);
-}
+// .column-rank-good {
+// background: #f0f9ff;
+// color: #0369a1;
+// border: 1px solid #0369a1;
+// border-radius: var(--radius-sm);
+// }
 
-.column-rank-average {
-  // background: var(--warning-light);
-  // color: var(--warning-color);
-  // border: 1px solid var(--warning-color);
-  // border-radius: var(--radius-sm);
-}
-
-.column-rank-below {
-  // background: #fdf2f8;
-  // color: #be185d;
-  // border: 1px solid #be185d;
-  // border-radius: var(--radius-sm);
-}
+// .column-rank-average {
+// background: var(--warning-light);
+// color: var(--warning-color);
+// border: 1px solid var(--warning-color);
+// border-radius: var(--radius-sm);
+// }
 
 .column-rank-poor {
-  // background: var(--danger-light);
   color: var(--danger-color);
   font-weight: 600;
-  // border: 1px solid var(--danger-color);
-  // border-radius: var(--radius-sm);
 }
 
-// Дополнительное форматирование для процентов
 .percent-excellent {
   color: var(--success-color) !important;
   font-weight: 700;
@@ -2198,13 +1885,10 @@ onMounted(() => {
   font-weight: 700;
 }
 
-// Форматирование для отрицательных показателей
 .negative-indicator {
-  // background: var(--danger-light);
   color: var(--danger-color);
   font-weight: 600;
   border-radius: var(--radius-sm);
-  // border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .table-separator {
@@ -2280,7 +1964,6 @@ onMounted(() => {
   box-shadow: var(--shadow-md);
 }
 
-// Анимации для transition-group
 .table-row-enter-active,
 .table-row-leave-active {
   transition: all 0.4s ease;
@@ -2296,21 +1979,15 @@ onMounted(() => {
   transition: transform 0.4s ease;
 }
 
-
-
-
 .table-separator {
   background: var(--border-light);
   border-top: 1px solid var(--border-color);
   border-bottom: 1px solid silver;
-  // padding: 8px 0;
 }
 
 .store-sort-controls {
   display: flex;
   flex-direction: column;
-  // gap: 8px;
-  // padding: 0 12px;
 }
 
 .sort-label {
@@ -2367,8 +2044,6 @@ onMounted(() => {
 }
 
 .sort-control {
-  // min-width: 60px;
-  // flex: 1;
   padding: 0px 0px;
   display: flex;
   align-items: center;
@@ -2385,18 +2060,11 @@ onMounted(() => {
   border-bottom: 2px solid silver;
 }
 
-.bottom {
-  // border-top: 1px solid silver;
-}
-
 .group-cols {
   width: 100%;
   display: flex;
   align-items: center;
 }
-
-
-
 
 .region-total {
   // min-width: 13%;
@@ -2407,7 +2075,6 @@ onMounted(() => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  // font-size: clamp(4px, 1vw, 12px) !important;
 }
 
 .region-row,
@@ -2424,46 +2091,6 @@ onMounted(() => {
   position: relative;
 }
 
-
-
-
-// // Переопределяем цвета
-// .week-group {
-//   background: var(--header-primary, #00a3e6) !important;
-//   color: white !important;
-//   border-bottom: 2px solid var(--header-primary-dark, #4f46e5) !important;
-// }
-
-// .group-header {
-//   background: var(--header-secondary, #a78bfa) !important;
-//   color: white !important;
-//   border-bottom: 1px solid var(--header-secondary-dark, #8b5cf6) !important;
-//   border-right: 1px solid var(--header-secondary-dark, #8b5cf6) !important;
-// }
-
-// .metric-header {
-//   background: var(--header-accent, #f59e0b) !important;
-//   color: white !important;
-//   border-bottom: 1px solid var(--header-accent-dark, #d97706) !important;
-//   border-right: 1px solid var(--header-accent-dark, #d97706) !important;
-// }
-
-// // Дополнительные бордеры шапки
-// .table-header {
-//   border-bottom: 3px solid var(--header-primary-dark, #4f46e5) !important;
-// }
-
-// .row.header.top {
-//   border-bottom: 2px solid var(--header-primary-dark, #4f46e5) !important;
-// }
-
-// .row.header.middle {
-//   border-bottom: 1px solid var(--header-secondary-dark, #8b5cf6) !important;
-// }
-
-// .row.header.bottom {
-//   border-bottom: 1px solid var(--header-accent-dark, #d97706) !important;
-// }
 .color-palette {
   display: flex;
   flex-wrap: wrap;
@@ -2479,7 +2106,6 @@ onMounted(() => {
   width: 100%;
   margin: 0 0 15px 0;
   color: #555;
-  // font-family: Arial, sans-serif;
 }
 
 .color-option {
@@ -2513,20 +2139,6 @@ onMounted(() => {
   position: fixed;
   bottom: 0px;
   right: 0px;
-  // z-index: 1001;
-  // // background: #007bff;
-  // color: white;
-  // border: none;
-  // padding: 12px 20px;
-  // border-radius: 25px;
-  // cursor: pointer;
-  // font-size: 14px;
-  // font-weight: bold;
-  // transition: all 0.3s ease;
-  // box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
-  // display: flex;
-  // align-items: center;
-  // gap: 8px;
   width: 20px;
   height: 20px;
   background: red;
@@ -2582,7 +2194,6 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  // background: rgba(0,0,0,0.5);
   z-index: 999;
   transition: opacity 0.3s ease;
 }
@@ -2623,12 +2234,8 @@ onMounted(() => {
   padding: 4px 2px;
   gap: 4px;
   cursor: pointer;
-  /* ← ДОБАВИТЬ */
 }
 
-
-// Тултип
-// Тултип
 .custom-tooltip {
   position: fixed;
   z-index: 10000;
@@ -2643,22 +2250,21 @@ onMounted(() => {
   font-size: 13px;
   backdrop-filter: blur(8px);
   animation: tooltipFadeIn 0.2s ease-out;
-  transition: opacity 0.1s ease; /* ← ДОБАВИТЬ для плавного появления */
-  
-  /* ← ДОБАВИТЬ: предотвращаем выход за границы экрана */
+  transition: opacity 0.1s ease;
+
+
   max-height: 80vh;
   overflow-y: auto;
-  
-  /* ← ДОБАВИТЬ: кастомный скролл для тултипа */
+
   &::-webkit-scrollbar {
     width: 4px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: var(--border-light);
     border-radius: 2px;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 2px;
@@ -2678,7 +2284,6 @@ onMounted(() => {
 }
 
 .tooltip-header {
-  // margin-bottom: 12px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border-light);
 }
@@ -2687,7 +2292,6 @@ onMounted(() => {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 14px;
-  // margin-bottom: 2px;
 }
 
 .tooltip-subtitle {
@@ -2700,7 +2304,6 @@ onMounted(() => {
   font-weight: 700;
   color: var(--primary-color);
   text-align: center;
-  // margin-bottom: 12px;
   padding: 6px;
   background: var(--info-light);
   border-radius: var(--radius-md);
@@ -2730,7 +2333,6 @@ onMounted(() => {
   color: var(--text-primary);
   font-size: 12px;
   text-align: right;
-  // font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
 .tooltip-trigger {
@@ -2746,12 +2348,15 @@ onMounted(() => {
 .success {
   color: #2e7d32;
 }
+
 .warning {
   color: #f57c00;
 }
+
 .danger {
   color: #d32f2f;
 }
+
 .status-value {
 
   padding: 2px 6px;
@@ -2760,51 +2365,36 @@ onMounted(() => {
   font-weight: 600;
 }
 
-
-// Специальное условное форматирование для баллов и процентов
 .percentile-top {
-  color: #2e7d32!important;
+  color: #2e7d32 !important;
   // background-color: #d0ffea;
   // color: white !important;
-  // font-weight: 700;
-  // border-radius: var(--radius-sm);
-  // box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
 .percentile-excellent {
-  color: #2e7d32!important;
+  color: #2e7d32 !important;
   // background-color: #ebfff6;
   // color: white !important;
-  // font-weight: 400;
-  // border-radius: var(--radius-sm);
-  // box-shadow: 0 1px 3px rgba(34, 197, 94, 0.3);
 }
 
 .percentile-good {
-  color: #f57c00!important;
+  color: #f57c00 !important;
   // background-color: #fff3e1;
   // color: white !important;
-  // font-weight: 500;
-  // border-radius: var(--radius-sm);
 }
 
 .percentile-average {
-  color: #ea580c!important;
+  color: #ea580c !important;
   // background-color: #fee7c5;
   // color: white !important;
-  // font-weight: 500;
-  // border-radius: var(--radius-sm);
 }
 
 .percentile-poor {
-  color: #dc2626!important;
+  color: #dc2626 !important;
   // background-color: #ffdada;
   // color: white !important;
-  // font-weight: 700;
-  // border-radius: var(--radius-sm);
-  // box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
-// Стили для тоггла тултипа
+
 .tooltip-toggle {
   display: flex;
   align-items: center;
@@ -2843,14 +2433,14 @@ onMounted(() => {
   top: 2px;
   left: 2px;
   transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-.tooltip-toggle input[type="checkbox"]:checked + .toggle-slider {
+.tooltip-toggle input[type="checkbox"]:checked+.toggle-slider {
   background: var(--primary-color);
 }
 
-.tooltip-toggle input[type="checkbox"]:checked + .toggle-slider::after {
+.tooltip-toggle input[type="checkbox"]:checked+.toggle-slider::after {
   transform: translateX(16px);
 }
 
@@ -2860,10 +2450,7 @@ onMounted(() => {
   color: silver;
 }
 
-// Обновить тултип заголовок
 .tooltip-header {
-  // margin-bottom: 12px;
-  // padding-bottom: 8px;
   border-bottom: 1px solid var(--border-light);
 }
 
@@ -2872,7 +2459,6 @@ onMounted(() => {
   color: var(--text-secondary);
 }
 
-// ДОБАВИТЬ стиль для группы:
 .tooltip-group {
   font-size: 11px;
   color: var(--info-color);
@@ -2881,9 +2467,9 @@ onMounted(() => {
   letter-spacing: 0.5px;
   margin-bottom: 2px;
 }
-
-* {
-  // font-size: clamp(12px, 1vw, 8px);
-}
-
 </style>
+
+
+
+
+
