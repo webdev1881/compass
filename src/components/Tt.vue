@@ -370,7 +370,7 @@
             <td><strong>Positive (позитивні)</strong></td>
             <td>Більше значення = кращий результат<br>
               Процент = (факт / ціль) × 100</td>
-            <td>Оборот, продажі, виконання плану, чеки, грн./кв.м</td>
+            <td>Продажі, сервіс, дисципліна</td>
             <td>Необмежена кількість показників</td>
           </tr>
           <tr>
@@ -406,8 +406,8 @@
         <ul>
           <li>Бали розраховуються відносно найкращого результату</li>
           <li>Максимальний бал (maxScore) задається для кожного показника</li>
-          <li>Система адаптується до різних діапазонів значень</li>
-          <li>Рейтинги оновлюються автоматично при зміні даних</li>
+          <li>Адаптивність до різних діапазонів значень</li>
+          <li>Ранги по окремим показникам</li>
         </ul>
       </div>
 
@@ -463,8 +463,8 @@
       </table>
     </div>
 
-    <h3>Інтерактивні підказки (проміжкові розрахунки)</h3>
-    <h4>Перемикач "Деталі", потім при наведенні на ячейки з даними.</h4>
+    <h3>Інтерактивні підказки (проміжні обчислення)</h3>
+    <h4>Кнопка "Деталі" активує курсор при наведенні на табличні дані</h4>
 
     <div class="metrics-table">
       <div class="metric-group">
@@ -522,7 +522,7 @@
       </div>
     </div>
 
-    <h3>Умовне форматування (налаштування ранжування)</h3>
+    <h3>Умовне форматування (5 кольрів ранжування)</h3>
 
     <div class="table-container">
       <table class="ranking-table">
@@ -1636,7 +1636,7 @@ const allStores = computed(() => {
       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
 
-      return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
+      return storeSortBy.value.direction === 'asc' ? bValue - aValue : aValue - bValue
     })
   } else if (sortByTotalScore.value) {
     stores.sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
