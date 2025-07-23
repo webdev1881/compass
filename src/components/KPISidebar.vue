@@ -963,5 +963,3 @@ watch(isOpen, (newValue) => {
   }
 }
 </style>
-
-
