@@ -330,7 +330,7 @@
       left: tooltip.x + 'px',
       top: tooltip.y + 'px',
       opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
-    }">
+      }">
       <div class="tooltip-header">
         <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
         <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
@@ -378,7 +378,7 @@
             <td><strong>Negative (негативні)</strong></td>
             <td>Менше значення = кращий результат<br>
               Процент = (ціль / факт) × 100</td>
-            <td>Втрати, недостачі, ФОП, відємні залишки</td>
+            <td>Втрати, Нестачі, ФОП, відємні залишки</td>
             <td>Автоматичне додавання нових типів</td>
           </tr>
         </tbody>
@@ -386,19 +386,19 @@
     </div>
 
     <div class="info-block" style="margin-bottom: 15px;">
-      <div class="info-title">Масштабованість системи показників</div>
+      <div class="info-title">Масштабованість показників / обмеження</div>
       <ul>
         <li>Додавання нових показників через налаштування</li>
         <li>Автоматичне створення груп показників</li>
         <li>Підтримка необмеженої кількості регіонів, магазинів та періодів</li>
-        <li>Динамічна генерація стовпців таблиці на основі даних</li>
+        <li>Обмеження несумірних значеннь (заглушка) = 200%</li>
       </ul>
     </div>
 
     <h3>Система балів та рангів</h3>
 
     <div class="formula-box">
-      Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (максимальний бал по показнику)
+      Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (макс. бал по показнику)
     </div>
 
     <div class="two-column">
@@ -540,31 +540,31 @@
             <td>81-100%</td>
             <td>Топ-рівень (найкращі 20%)</td>
             <td>Зелений градієнт</td>
-            <td>Бали та проценти показників</td>
+            <td>localstorage, spaindexdb</td>
           </tr>
           <tr class="rank-2">
             <td>61-80%</td>
             <td>Відмінний рівень</td>
             <td>Світло-зелений</td>
-            <td>Всі типи показників</td>
+            <td>localstorage, spaindexdb</td>
           </tr>
           <tr class="rank-3">
             <td>41-60%</td>
             <td>Хороший рівень</td>
             <td>Жовтий/помаранчевий</td>
-            <td>Автоматичне застосування</td>
+            <td>localstorage, spa_indexDB</td>
           </tr>
           <tr class="rank-4">
             <td>21-40%</td>
             <td>Середній рівень</td>
             <td>Помаранчевий</td>
-            <td>За рангом у колонці</td>
+            <td>localstorage, spaindexdb</td>
           </tr>
           <tr class="rank-5">
             <td>≤ 20%</td>
             <td>Низький рівень (потребує уваги)</td>
             <td>Червоний градієнт</td>
-            <td>ВВиділення проблем</td>
+            <td>localstorage, spaindexdb</td>
           </tr>
         </tbody>
       </table>
@@ -612,8 +612,8 @@ const salesData = ref(null)
 const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
-const tooltipEnabled = ref(false)
-const KPITopStores = ref(7)
+const tooltipEnabled = ref(true)
+const KPITopStores = ref(5)
 
 const isOpen = ref(false)
 
@@ -947,7 +947,7 @@ const getTooltipData = (entity, weekId, indicator, type) => {
         const planValue = factValue > 0 ? targetValue : 0
 
         result.details.push(
-          { label: `${target.name} (значение)`, value: formatNumber(value) },
+          { label: `${target.name} (факт)`, value: formatNumber(value) },
           {
             label: `Расчетный план`,
             value: ` ${formatNumber(planValue)} (${((targetValue / factValue) * 100).toFixed(2)}% от факта)`
@@ -1069,8 +1069,8 @@ const closePalette = () => {
   isPaletteOpen.value = false
 }
 
-const regionSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
+const regionSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
 const indicatorGroups = computed(() => {
   const groups = [
     {
@@ -1619,7 +1619,7 @@ const sortedRegions = computed(() => {
   return sorted
 })
 
-const allStores = computed(() => {
+const allStores = computed(() => {   //allStores
   const stores = []
 
   regions.value.forEach(region => {
@@ -1635,9 +1635,28 @@ const allStores = computed(() => {
     }
   })
 
+// console.log('stores', stores);
 
-  
+  // stores.sort((a, b) => {
+  //   let aValue = 0
+  //   let bValue = 0
+
+  //   if (storeSortBy.value.columnKey === 'totalScore') {
+  //     aValue = a.overallTotalScore
+  //     bValue = b.overallTotalScore
+  //   } else {
+  //     aValue = getRegionIndicatorValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+  //     bValue = getRegionIndicatorValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+  //   }
+
+  //   return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
+  // })
+
+
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
+
+    // console.log('storeSortBy.value', storeSortBy.value.weekId);
+    
     stores.sort((a, b) => {
       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
@@ -1645,9 +1664,9 @@ const allStores = computed(() => {
       return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
     })
   } else if (sortByTotalScore.value) {
-    stores.sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
+    stores.sort((a, b) => (b.overallTotalScore ) - (a.overallTotalScore ))
   }
-  // stores.sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
+
 
   return stores
 })
@@ -1732,8 +1751,6 @@ const getStoreWeekData = (store, weekId) => {
 const getStoreData = (store, weekId, indicator) => {
   const weekData = getStoreWeekData(store, weekId, indicator)
 
-  console.log('weekData', weekData.columnRanks);
-  
 
   switch (indicator) {
     case 'totalScore':
@@ -2354,7 +2371,7 @@ onMounted(() => {
   }
 
   .sortable-header:hover {
-    background: rgba(59, 130, 246, 0.1);
+    background: #0d598a;
     color: var(--primary-color);
   }
 
@@ -3639,7 +3656,7 @@ onMounted(() => {
     margin: 1.5rem 0;
     text-align: center;
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    font-size: 1.1rem;
+    font-size: 15px;
     font-weight: 600;
     color: #1e293b;
   }
