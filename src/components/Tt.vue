@@ -35,7 +35,7 @@
           <label class="tooltip-toggle">
             <input type="checkbox" v-model="tooltipEnabled" />
             <span class="toggle-slider" :style="headerStyle"></span>
-            <span class="toggle-label">Детали</span>
+            <span class="toggle-label">Деталі</span>
           </label>
         </div>
       </div>
