@@ -161,6 +161,7 @@
                         @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
                         @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
                         {{ getStoreData(store, week.id, indicator.key) }}
+                        <!-- {{ indicator.key }} -->
                       </div>
                     </div>
                   </div>
@@ -226,7 +227,7 @@
           </div>
 
           <div class="kpi-section">
-            <h3>⭐ Топ магазины</h3>
+            <h3>⭐ Топ <b> {{ KPITopStores }} </b> магазины</h3>
             <div class="kpi-list">
               <div v-for="(store, index) in processedData.topStores" :key="store.id" class="kpi-list-item"
                 :class="`rank-${index + 1}`">
@@ -353,7 +354,7 @@
 
     <h2>Аналіз ефективності регіонів та магазинів</h2>
 
-    <h3>Типи показників та масштабованість</h3>
+    <h3>Типи показників</h3>
 
     <div class="table-container">
       <table>
@@ -397,7 +398,7 @@
     <h3>Система балів та рангів</h3>
 
     <div class="formula-box">
-      Бал = (процент виконання поточного / максимальний процент виконання) × maxScore
+      Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (максимальний бал по показнику)
     </div>
 
     <div class="two-column">
@@ -612,6 +613,7 @@ const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
 const tooltipEnabled = ref(false)
+const KPITopStores = ref(7)
 
 const isOpen = ref(false)
 
@@ -639,6 +641,8 @@ const processedData = computed(() => {
       })
     }
   })
+
+  
 
   const totalStores = allStores.length
   const totalRegions = regions.value.length
@@ -670,7 +674,7 @@ const processedData = computed(() => {
 
   const topStores = [...allStores]
     .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
-    .slice(0, 5)
+    .slice(0, KPITopStores.value)
 
   const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.7).length
   const belowPlanStores = allStores.filter(store => {
@@ -1066,7 +1070,7 @@ const closePalette = () => {
 }
 
 const regionSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'asc' })
+const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
 const indicatorGroups = computed(() => {
   const groups = [
     {
@@ -1092,7 +1096,7 @@ const indicatorGroups = computed(() => {
           ]
         })
       } else {
-        console.log(target);
+
 
         groups.push({
           key: key,
@@ -1292,9 +1296,9 @@ const processData = () => {
   salesData.value.weeks.forEach(week => {
     calculateWeeklyMetrics(week.id, allStores)
   })
-  calculateOverallScores(allStores)
   calculateRegionMetrics()
   calculateRegionColumnRanks()
+  calculateOverallScores(allStores)
 }
 
 const calculateWeeklyMetrics = (weekId, allStores) => {
@@ -1631,16 +1635,19 @@ const allStores = computed(() => {
     }
   })
 
+
+  
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
     stores.sort((a, b) => {
       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
 
-      return storeSortBy.value.direction === 'asc' ? bValue - aValue : aValue - bValue
+      return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
     })
   } else if (sortByTotalScore.value) {
     stores.sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
   }
+  // stores.sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
 
   return stores
 })
@@ -1723,7 +1730,10 @@ const getStoreWeekData = (store, weekId) => {
 }
 
 const getStoreData = (store, weekId, indicator) => {
-  const weekData = getStoreWeekData(store, weekId)
+  const weekData = getStoreWeekData(store, weekId, indicator)
+
+  console.log('weekData', weekData.columnRanks);
+  
 
   switch (indicator) {
     case 'totalScore':
@@ -1900,7 +1910,6 @@ const getSortArrowClass = (weekId, indicator) => {
   }
   return 'sort-inactive'
 }
-
 const refreshData = async () => {
   await loadData()
 }
@@ -1911,48 +1920,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+
 :root {
-
-  :default {
-    /* <СМК> схема (по умолчанию) */
-    --header-primary: #00a3e6;
-    --header-primary-dark: #2563eb;
-    --header-secondary: #6366f1;
-    --header-secondary-dark: #4f46e5;
-    --header-accent: #f59e0b;
-    --header-accent-dark: #d97706;
-  }
-
-  /* Зеленая схема */
-  .theme-green {
-    --header-primary: #10b981;
-    --header-primary-dark: #059669;
-    --header-secondary: #34d399;
-    --header-secondary-dark: #10b981;
-    --header-accent: #fbbf24;
-    --header-accent-dark: #f59e0b;
-  }
-
-  /* Фиолетовая схема */
-  .theme-purple {
-    --header-primary: #8b5cf6;
-    --header-primary-dark: #7c3aed;
-    --header-secondary: #a78bfa;
-    --header-secondary-dark: #8b5cf6;
-    --header-accent: #f472b6;
-    --header-accent-dark: #ec4899;
-  }
-
-  /* Красная схема */
-  .theme-red {
-    --header-primary: #ef4444;
-    --header-primary-dark: #dc2626;
-    --header-secondary: #f87171;
-    --header-secondary-dark: #ef4444;
-    --header-accent: #fbbf24;
-    --header-accent-dark: #f59e0b;
-  }
-
   --primary-color: #3b82f6;
   --success-color: #10b981;
   --warning-color: #f59e0b;
@@ -1983,11 +1952,14 @@ onMounted(() => {
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
 
+
+
 .sales-table-container {
+
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   padding-top: 2px;
-  // max-width: 2300px;
   border-top: 1px solid silver;
   background: var(--neutral-light);
   font-family: BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -2028,8 +2000,6 @@ onMounted(() => {
   }
 
   .content {
-    height: 100vh;
-    overflow-y: auto;
     padding: 24px;
     animation: fadeIn 0.6s ease-out;
   }
@@ -2454,29 +2424,6 @@ onMounted(() => {
     border: 1px solid var(--danger-color);
   }
 
-  // по рангам
-  // .column-rank-top {
-  // background: red;
-  // color: var(--success-color);
-  // font-weight: 600;
-  // border: 1px solid var(--success-color);
-  // border-radius: var(--radius-sm);
-  // }
-
-  // .column-rank-good {
-  // background: #f0f9ff;
-  // color: #0369a1;
-  // border: 1px solid #0369a1;
-  // border-radius: var(--radius-sm);
-  // }
-
-  // .column-rank-average {
-  // background: var(--warning-light);
-  // color: var(--warning-color);
-  // border: 1px solid var(--warning-color);
-  // border-radius: var(--radius-sm);
-  // }
-
   .column-rank-poor {
     color: var(--danger-color);
     font-weight: 600;
@@ -2683,10 +2630,7 @@ onMounted(() => {
     align-items: center;
   }
 
-  .region-total {
-    // min-width: 13%;
-    // font-size: 0.55em;
-  }
+
 
   * {
     overflow: hidden;
@@ -2778,15 +2722,16 @@ onMounted(() => {
   .color-palette-sidebar {
     position: fixed;
     top: 0;
-    left: 0;
+    right: 0;
     width: auto;
     height: 100vh;
     background: white;
     z-index: 1000;
-    transform: translateX(-100%);
+    transform: translateX(100%);
     transition: transform 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
+    box-shadow: 0 0 15px 0px #818181;
   }
 
   .color-palette-sidebar.open {
@@ -2794,7 +2739,7 @@ onMounted(() => {
   }
 
   .palette-content {
-    padding: 80px 20px 20px 20px;
+    padding: 130px 20px 20px 20px;
   }
 
   .color-grid {
@@ -2984,32 +2929,22 @@ onMounted(() => {
 
   .percentile-top {
     color: #2e7d32 !important;
-    // background-color: #d0ffea;
-    // color: white !important;
   }
 
   .percentile-excellent {
     color: #2e7d32 !important;
-    // background-color: #ebfff6;
-    // color: white !important;
   }
 
   .percentile-good {
     color: #f57c00 !important;
-    // background-color: #fff3e1;
-    // color: white !important;
   }
 
   .percentile-average {
     color: #ea580c !important;
-    // background-color: #fee7c5;
-    // color: white !important;
   }
 
   .percentile-poor {
     color: #dc2626 !important;
-    // background-color: #ffdada;
-    // color: white !important;
   }
 
   .tooltip-toggle {
@@ -3093,7 +3028,6 @@ onMounted(() => {
     height: 60px;
     border: #2c3e50 1px solid;
     border-radius: 6px;
-    // padding: 3px;
   }
 
   .kpi-toggle-btn {
@@ -3104,7 +3038,6 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 8px;
-    // padding: 3px 4px;
     background: white;
     color: white;
     border: none;
@@ -3128,12 +3061,10 @@ onMounted(() => {
     left: 0;
     right: 0;
     bottom: 0;
-    // background: rgba(255, 255, 255, 0.8);
-    // background: white;
     z-index: 1001;
     backdrop-filter: blur(4px);
     animation: fadeIn 0.3s ease;
-    border-left: var(--shadow-md) // width: 20%;
+    border-left: var(--shadow-md)
   }
 
   @keyframes fadeIn {
@@ -3159,6 +3090,7 @@ onMounted(() => {
     transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 15px 0px #818181;
   }
 
   .kpi-sidebar--open {
@@ -3857,4 +3789,40 @@ onMounted(() => {
     }
   }
 }
+
+
+
+
 </style>
+
+
+
+
+<!-- // .percentile-top {
+//   background-color: #d0ffea;
+//   color: white !important;
+// }
+
+// .percentile-excellent {
+//   background-color: #ebfff6;
+//   color: white !important;
+// }
+
+// .percentile-good {
+//   background-color: #fff3e1;
+//   color: white !important;
+// }
+
+// .percentile-average {
+//   background-color: #fee7c5;
+//   color: white !important;
+// }
+
+// .percentile-poor {
+//   background-color: #ffdada;
+//   color: white !important;
+// } -->
+
+
+
+
