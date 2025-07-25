@@ -5,13 +5,26 @@
       src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
       alt="">
 
+      <pre>
+
+        <!-- {{ processedData }} -->
+      </pre>
     <div class="color-palette-sidebar" :class="{ open: isPaletteOpen }">
       <div class="palette-content">
-        <h3>Палитра цветов:</h3>
+        <h3>Палітра:</h3>
         <div class="color-grid">
           <div v-for="color in darkColors" :key="color" class="color-option"
             :class="{ selected: selectedColor === color }" :style="{ backgroundColor: color }"
             @click="changeColor(color)" :title="color" />
+        </div>
+        <div class="cells_format">
+          <div class="tooltip-controls">
+            <label class="tooltip-toggle">
+              <input type="checkbox" v-model="formatter"  @click="formatter = !formatter"/>
+              <span class="toggle-slider" :style="headerStyle"></span>
+              <span class="toggle-label" style="color: black;">Форматування</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -29,7 +42,7 @@
     <div v-if="!loading && !error" class="content">
       <div class="controls-panel">
         <button :style="headerStyle" class="refresh-btn" @click="refreshData" :disabled="loading">
-          Обновить
+          Оновити
         </button>
         <div class="tooltip-controls">
           <label class="tooltip-toggle">
@@ -44,7 +57,7 @@
         <div class="table">
           <div class="table-header" :style="headerStyle">
             <div class="row header top">
-              <div class="cell static header-cell store-name-column">Регион / Магазин</div>
+              <div class="cell static header-cell store-name-column">Регіон / Магазин</div>
               <div class="cell group week-group" :style="{ width: dynamicRowWidth }">
                 <div v-for="(week, weekIndex) in weeks" :key="week.id" class="week">
                   <h3 class="week_name">{{ week.name }} ({{ week.dateRange }})</h3>
@@ -183,36 +196,36 @@
       <div v-if="isOpen" class="kpi-overlay" @click="closePanel"></div>
       <div class="kpi-sidebar" :class="{ 'kpi-sidebar--open': isOpen }">
         <div class="kpi-header">
-          <h2>📊 Ключевые показатели</h2>
+          <h2>📊 Ключові показники</h2>
           <button @click="closePanel" class="close-btn" title="Закрыть">✕</button>
         </div>
 
         <div class="kpi-content" v-if="processedData">
 
           <div class="kpi-section">
-            <h3>🎯 Общая сводка</h3>
+            <h3>🎯 Загальне зведення</h3>
             <div class="kpi-cards">
               <div class="kpi-card primary">
                 <div class="kpi-value">{{ processedData.totalStores }}</div>
-                <div class="kpi-label">Всего магазинов</div>
+                <div class="kpi-label">Всьго магазинів</div>
               </div>
               <div class="kpi-card success">
                 <div class="kpi-value">{{ processedData.totalRegions }}</div>
-                <div class="kpi-label">Регионов</div>
+                <div class="kpi-label">Регіонів</div>
               </div>
               <div class="kpi-card info">
                 <div class="kpi-value">{{ formatNumber(processedData.averageScore) }}</div>
-                <div class="kpi-label">Средний балл</div>
+                <div class="kpi-label">Середній бал</div>
               </div>
               <div class="kpi-card warning">
                 <div class="kpi-value">{{ processedData.planExecutionPercent }}%</div>
-                <div class="kpi-label">Выполнение плана</div>
+                <div class="kpi-label">Выконання плану</div>
               </div>
             </div>
           </div>
 
           <div class="kpi-section">
-            <h3>🏆 Топ регионы</h3>
+            <h3>🏆 Топ регіони</h3>
             <div class="kpi-list">
               <div v-for="(region, index) in processedData.topRegions" :key="region.id" class="kpi-list-item"
                 :class="`rank-${index + 1}`">
@@ -227,7 +240,7 @@
           </div>
 
           <div class="kpi-section">
-            <h3>⭐ Топ <b> {{ KPITopStores }} </b> магазины</h3>
+            <h3>⭐ Топ <b> {{ KPITopStores }} </b> магазини</h3>
             <div class="kpi-list">
               <div v-for="(store, index) in processedData.topStores" :key="store.id" class="kpi-list-item"
                 :class="`rank-${index + 1}`">
@@ -247,11 +260,11 @@
             <div class="kpi-cards">
               <div class="kpi-card danger">
                 <div class="kpi-value">{{ processedData.problemStores }}</div>
-                <div class="kpi-label">Магазинов в зоне риска</div>
+                <div class="kpi-label">Магазинів в зоні ризику</div>
               </div>
               <div class="kpi-card warning">
                 <div class="kpi-value">{{ processedData.belowPlanStores }}</div>
-                <div class="kpi-label">Не выполняют план</div>
+                <div class="kpi-label">Не виконують план</div>
               </div>
             </div>
 
@@ -260,14 +273,14 @@
                 <div class="issue-type">{{ issue.name }}</div>
                 <div class="issue-stats">
                   <span class="issue-value">{{ formatNumber(issue.totalValue) }}</span>
-                  <span class="issue-stores">{{ issue.affectedStores }} магазинов</span>
+                  <span class="issue-stores">{{ issue.affectedStores }} магазинів</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="kpi-section">
-            <h3>📈 Динамика по неделям</h3>
+            <h3>📈 Динаміка по неділям</h3>
             <div class="week-comparison">
               <div v-for="week in processedData.weeklyComparison" :key="week.id" class="week-stats">
                 <div class="week-header">
@@ -276,15 +289,15 @@
                 </div>
                 <div class="week-metrics">
                   <div class="metric">
-                    <span class="metric-label">Общий балл:</span>
+                    <span class="metric-label">Загальний бал:</span>
                     <span class="metric-value">{{ formatNumber(week.totalScore) }}</span>
                   </div>
                   <div class="metric">
-                    <span class="metric-label">Выполнение плана:</span>
+                    <span class="metric-label">Выконання плану:</span>
                     <span class="metric-value">{{ week.planExecution }}%</span>
                   </div>
                   <div class="metric">
-                    <span class="metric-label">Средний факт:</span>
+                    <span class="metric-label">Середній факт:</span>
                     <span class="metric-value">{{ formatNumber(week.averageFact) }}</span>
                   </div>
                 </div>
@@ -300,7 +313,7 @@
           </div>
 
           <div class="kpi-section">
-            <h3>🎯 Цели и достижения</h3>
+            <h3>🎯 Цілі та досягнення</h3>
             <div class="targets-overview">
               <div v-for="target in processedData.targetsOverview" :key="target.key" class="target-item">
                 <div class="target-header">
@@ -330,7 +343,7 @@
       left: tooltip.x + 'px',
       top: tooltip.y + 'px',
       opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
-      }">
+    }">
       <div class="tooltip-header">
         <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
         <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
@@ -612,10 +625,49 @@ const salesData = ref(null)
 const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
-const tooltipEnabled = ref(true)
+const tooltipEnabled = ref(false)
+const formatter = ref(false)
 const KPITopStores = ref(5)
-
 const isOpen = ref(false)
+
+const loadData = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    const [salesResponse, targetsResponse] = await Promise.all([
+      fetch('/real-data.json'),
+      fetch('/targets.json')
+    ])
+
+    if (!salesResponse.ok || !targetsResponse.ok) {
+      throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)
+    }
+    const [salesDataResult, targetsDataResult] = await Promise.all([
+      salesResponse.json(),
+      targetsResponse.json()
+    ])
+    if (!salesDataResult.weeks || !salesDataResult.regions) {
+      throw new Error('Неверная структура данных продаж')
+    }
+
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
+      throw new Error('Неверная структура данных целей')
+    }
+    salesData.value = salesDataResult
+    targetsData.value = targetsDataResult
+    regions.value = Object.values(salesDataResult.regions)
+    initializeVisibility()
+    processData()
+  } catch (err) {
+    console.error('Ошибка загрузки данных:', err)
+    error.value = err.message || 'Ошибка загрузки данных'
+  } finally {
+    setTimeout(() => {
+      loading.value = false
+    }, 400)
+  }
+}
+
 
 const togglePanel = () => {
   isOpen.value = !isOpen.value
@@ -641,13 +693,13 @@ const processedData = computed(() => {
       })
     }
   })
-
-  
-
+ 
   const totalStores = allStores.length
   const totalRegions = regions.value.length
   const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
   const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
+  
+  
 
   let totalPlan = 0
   let totalFact = 0
@@ -691,10 +743,19 @@ const processedData = computed(() => {
   }).length
 
   const topIssues = []
+  let affectedStores = 0;
   if (targetsData.value.targetTree) {
     Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
       let totalValue = 0
       let affectedStores = 0
+      affectedStores = affectedStores + target.maxScore
+
+
+      console.log(affectedStores);
+      
+
+
+
 
       allStores.forEach(store => {
         let storeValue = 0
@@ -720,6 +781,7 @@ const processedData = computed(() => {
       }
     })
   }
+
   topIssues.sort((a, b) => b.totalValue - a.totalValue).splice(3)
 
   const weeklyComparison = weeks.value.map(week => {
@@ -813,7 +875,7 @@ const processedData = computed(() => {
     topIssues,
     weeklyComparison,
     weeklyTrend,
-    targetsOverview
+    targetsOverview,
   }
 })
 
@@ -914,7 +976,7 @@ const getTooltipData = (entity, weekId, indicator, type) => {
   if (currentGroup) {
     if (currentGroup.key === 'score') {
       result.details.push({
-        label: 'Общий балл',
+        label: 'Загальний бал',
         value: weekData.totalScore || 0
       })
     } else if (currentGroup.key === 'turnover') {
@@ -924,13 +986,13 @@ const getTooltipData = (entity, weekId, indicator, type) => {
           label: 'Факт',
           value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% от плана)`
         },
-        { label: 'Процент оборота', value: `${weekData.percent || 0}%` }
+        { label: 'Процент обороту', value: `${weekData.percent || 0}%` }
       )
 
       if (weekData.turnover_score !== undefined) {
         const maxScore = targetsData.value?.targetTree?.turnover?.maxScore || 100
         result.details.push({
-          label: `Балл за оборот (из ${maxScore})`,
+          label: `Бал за оборот (з ${maxScore})`,
           value: weekData.turnover_score || 0
         })
       }
@@ -949,20 +1011,20 @@ const getTooltipData = (entity, weekId, indicator, type) => {
         result.details.push(
           { label: `${target.name} (факт)`, value: formatNumber(value) },
           {
-            label: `Расчетный план`,
+            label: `Розрахунковий план`,
             value: ` ${formatNumber(planValue)} (${((targetValue / factValue) * 100).toFixed(2)}% от факта)`
           },
           {
-            label: 'Факт оборота →  ',
+            label: 'Факт обороту →  ',
             value: `${formatNumber(factValue)}`
           },
           {
             label: ` план ${target.name.toLowerCase()}`,
             value: `${formatNumber(targetValue)}`
           },
-          { label: `Процент выполнения`, value: `${percent}%` },
+          { label: `Процент виконання`, value: `${percent}%` },
           {
-            label: `Балл (из ${target.maxScore})`,
+            label: `Бал (з ${target.maxScore})`,
             value: `${score} / ${target.maxScore}`
           }
         )
@@ -976,7 +1038,7 @@ const getTooltipData = (entity, weekId, indicator, type) => {
       : regions.value?.length || 0
 
     result.details.push({
-      label: 'Ранг по показателю',
+      label: 'Ранг по показнику',
       value: `${weekData.columnRanks[indicator]} из ${totalItems}`
     })
   }
@@ -1075,7 +1137,7 @@ const indicatorGroups = computed(() => {
   const groups = [
     {
       key: 'score',
-      label: 'Общий балл',
+      label: 'Заг. бал',
       indicators: [
         { key: 'totalScore', label: 'Балл' }
       ]
@@ -1104,7 +1166,7 @@ const indicatorGroups = computed(() => {
           indicators: [
             { key: key, label: 'факт' },
             { key: `${key}_percent`, label: '%' },
-            { key: `${key}_score`, label: 'Балл' }
+            { key: `${key}_score`, label: 'Бал' }
           ]
         })
       }
@@ -1174,6 +1236,7 @@ const initializeVisibility = () => {
 }
 
 const toggleGroupVisibility = (groupKey) => {
+
   if (groupKey === 'score') return
   groupVisibility[groupKey] = !groupVisibility[groupKey]
   const group = indicatorGroups.value.find(g => g.key === groupKey)
@@ -1208,12 +1271,15 @@ function getStyle(key, weekIndex) {
   const total = visibleIndicators.value.length
   const isVisible = visible[key]
   const width = isVisible ? `${100 / total}%` : '0%'
+  
   return {
     width,
     opacity: isVisible ? 1 : 0,
     transition: 'width 0.3s ease, opacity 0.3s ease',
     overflow: 'hidden',
     borderRight: isVisible ? '1px solid #ddd' : 'none',
+    // background: key === 'totalScore' ? 'red' : '',
+    fontWeight: key === 'totalScore' ? '700' : '',
   }
 }
 
@@ -1224,54 +1290,20 @@ function getGroupStyle(groupKey, weekIndex) {
   const total = visibleIndicators.value.length
   const groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
 
+  const isVisible = visible[groupKey]
+
   return {
     width: groupWidth,
     opacity: group.visibleCount > 0 ? 1 : 0,
     transition: 'width 0.3s ease, opacity 0.3s ease',
     overflow: 'hidden',
+    background: group.visibleCount > 1 ? darkenColor(selectedColor.value, 13) : '',
+    // background: 'red',
   }
 }
 
 const onIndicatorToggle = () => {
   //стили
-}
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    error.value = null
-    const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/real-data.json'),
-      fetch('/targets.json')
-    ])
-
-    if (!salesResponse.ok || !targetsResponse.ok) {
-      throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)
-    }
-    const [salesDataResult, targetsDataResult] = await Promise.all([
-      salesResponse.json(),
-      targetsResponse.json()
-    ])
-    if (!salesDataResult.weeks || !salesDataResult.regions) {
-      throw new Error('Неверная структура данных продаж')
-    }
-
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
-      throw new Error('Неверная структура данных целей')
-    }
-    salesData.value = salesDataResult
-    targetsData.value = targetsDataResult
-    regions.value = Object.values(salesDataResult.regions)
-    initializeVisibility()
-    processData()
-  } catch (err) {
-    console.error('Ошибка загрузки данных:', err)
-    error.value = err.message || 'Ошибка загрузки данных'
-  } finally {
-    setTimeout(() => {
-      loading.value = false
-    }, 400)
-  }
 }
 
 const processData = () => {
@@ -1635,28 +1667,8 @@ const allStores = computed(() => {   //allStores
     }
   })
 
-// console.log('stores', stores);
-
-  // stores.sort((a, b) => {
-  //   let aValue = 0
-  //   let bValue = 0
-
-  //   if (storeSortBy.value.columnKey === 'totalScore') {
-  //     aValue = a.overallTotalScore
-  //     bValue = b.overallTotalScore
-  //   } else {
-  //     aValue = getRegionIndicatorValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-  //     bValue = getRegionIndicatorValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-  //   }
-
-  //   return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
-  // })
-
-
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
 
-    // console.log('storeSortBy.value', storeSortBy.value.weekId);
-    
     stores.sort((a, b) => {
       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
@@ -1664,7 +1676,7 @@ const allStores = computed(() => {   //allStores
       return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
     })
   } else if (sortByTotalScore.value) {
-    stores.sort((a, b) => (b.overallTotalScore ) - (a.overallTotalScore ))
+    stores.sort((a, b) => (b.overallTotalScore) - (a.overallTotalScore))
   }
 
 
@@ -1849,14 +1861,19 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
 
       if (percentile <= 20) {
         classes.push('percentile-top')        // Топ 20%
+        if(formatter.value)  {classes.push('percento-top')}        // Топ 20%
       } else if (percentile <= 40) {
         classes.push('percentile-excellent')  // 20-40%
+        if(formatter.value)  {classes.push('percento-excellent')}  // 20-40%
       } else if (percentile <= 60) {
         classes.push('percentile-good')       // 40-60%
+        if(formatter.value)  {classes.push('percento-good')}       // 40-60%
       } else if (percentile <= 80) {
         classes.push('percentile-average')    // 60-80%
+        if(formatter.value)  {classes.push('percento-average')}    // 60-80%
       } else {
         classes.push('percentile-poor')       // 80-100%
+        if(formatter.value)  {classes.push('percento-poor')}       // 80-100%
       }
     } else {
       if (percentile <= 20) {
@@ -1884,7 +1901,7 @@ const getIndicatorHeader = (indicator) => {
     } else if (targetsData.value?.targetTree?.[baseKey]) {
       return targetsData.value.targetTree[baseKey].maxScore.toString()
     }
-    return 'Балл'
+    return 'Бал'
   }
   return indicator.label
 }
@@ -1937,7 +1954,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-
 :root {
   --primary-color: #3b82f6;
   --success-color: #10b981;
@@ -2187,6 +2203,10 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     transition: all 0.2s ease;
+  }
+
+  .cell.dynamic:hover {
+    background: #0d598a;
   }
 
   .header-cell {
@@ -2763,8 +2783,12 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
-    margin-top: 20px;
+    margin: 20px 0;
     padding: 3px;
+  }
+
+  .cells_format {
+    margin-top: 70px;
   }
 
   .overlay {
@@ -3682,6 +3706,7 @@ onMounted(() => {
     border-bottom: 1px solid #e2e8f0;
   }
 
+
   .metric-group-content {
     padding: 16px;
   }
@@ -3806,39 +3831,31 @@ onMounted(() => {
     }
   }
 }
+.percento-top {
+  background-color: #d0ffea;
+  color: white !important;
+}
 
+.percento-excellent {
+  background-color: #ebfff6;
+  color: white !important;
+}
 
+.percento-good {
+  background-color: #fff3e1;
+  color: white !important;
+}
 
+.percento-average {
+  background-color: #fee7c5;
+  color: white !important;
+}
 
+.percento-poor {
+  background-color: #ffdada;
+  color: white !important;
+}
 </style>
-
-
-
-
-<!-- // .percentile-top {
-//   background-color: #d0ffea;
-//   color: white !important;
-// }
-
-// .percentile-excellent {
-//   background-color: #ebfff6;
-//   color: white !important;
-// }
-
-// .percentile-good {
-//   background-color: #fff3e1;
-//   color: white !important;
-// }
-
-// .percentile-average {
-//   background-color: #fee7c5;
-//   color: white !important;
-// }
-
-// .percentile-poor {
-//   background-color: #ffdada;
-//   color: white !important;
-// } -->
 
 
 

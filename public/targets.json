@@ -1,17 +1,17 @@
 {
   "targetTree": {
     "turnover": {
-      "name": "Списание ТМЦ",
+      "name": "Оборот",
       "maxScore": 100,
       "type": "positive"
     },
     "losses": {
-      "name": "Списание ТМЦ",
+      "name": "Списання ТМЦ",
       "maxScore": 20,
       "type": "negative"
     },
     "shortages": {
-      "name": "Недостачи",
+      "name": "Нестачі",
       "maxScore": 100,
       "type": "negative"
     },
@@ -21,7 +21,7 @@
       "type": "negative"
     },
     "unprocessed": {
-      "name": "Непровед. списания",
+      "name": "Непровед. списання",
       "maxScore": 10,
       "type": "negative"
     }
