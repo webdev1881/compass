@@ -6,7 +6,7 @@
       alt="">
 
       <pre>
-
+{{ planScore }}
         <!-- {{ processedData }} -->
       </pre>
     <div class="color-palette-sidebar" :class="{ open: isPaletteOpen }">
@@ -629,14 +629,15 @@ const tooltipEnabled = ref(false)
 const formatter = ref(false)
 const KPITopStores = ref(5)
 const isOpen = ref(false)
+const planScore = ref(0)
 
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
     const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/real-data.json'),
-      fetch('/targets.json')
+      fetch('/real-data0.json'),
+      fetch('/targets0.json')
     ])
 
     if (!salesResponse.ok || !targetsResponse.ok) {
@@ -656,6 +657,9 @@ const loadData = async () => {
     salesData.value = salesDataResult
     targetsData.value = targetsDataResult
     regions.value = Object.values(salesDataResult.regions)
+    
+    console.log(regions.value);
+    
     initializeVisibility()
     processData()
   } catch (err) {
@@ -743,20 +747,12 @@ const processedData = computed(() => {
   }).length
 
   const topIssues = []
-  let affectedStores = 0;
+  let summ = 0;
   if (targetsData.value.targetTree) {
     Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
       let totalValue = 0
       let affectedStores = 0
-      affectedStores = affectedStores + target.maxScore
-
-
-      console.log(affectedStores);
-      
-
-
-
-
+      summ += target.maxScore
       allStores.forEach(store => {
         let storeValue = 0
         weeks.value.forEach(week => {
@@ -781,7 +777,7 @@ const processedData = computed(() => {
       }
     })
   }
-
+planScore.value = summ
   topIssues.sort((a, b) => b.totalValue - a.totalValue).splice(3)
 
   const weeklyComparison = weeks.value.map(week => {
@@ -862,6 +858,9 @@ const processedData = computed(() => {
       })
     })
   }
+
+  console.log(allStores);
+  
 
   return {
     totalStores,
@@ -1139,7 +1138,7 @@ const indicatorGroups = computed(() => {
       key: 'score',
       label: 'Заг. бал',
       indicators: [
-        { key: 'totalScore', label: 'Балл' }
+        { key: 'totalScore', label: `${planScore.value}` }
       ]
     }
   ]
@@ -1154,7 +1153,7 @@ const indicatorGroups = computed(() => {
             { key: 'plan', label: 'План' },
             { key: 'fact', label: 'Факт' },
             { key: 'percent', label: '%' },
-            { key: 'turnover_score', label: 'Балл' }
+            { key: 'turnover_score', label: 'planScore.value' }
           ]
         })
       } else {
