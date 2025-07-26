@@ -1,5 +1,9 @@
 <template>
   <div id="app">
+<<<<<<< HEAD
+=======
+    <TableComponent />
+>>>>>>> 557ad9291ee41f3d5c07534ac7cdf46543e544d7
     <Tdiv />
     <!-- <Tt /> -->
     <!-- <T /> -->
