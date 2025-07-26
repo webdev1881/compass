@@ -1,7 +1,13 @@
 <template>
   <div id="app">
+<<<<<<< HEAD
     <Tt />
     <!-- <Tdiv /> -->
+=======
+    <TableComponent />
+    <Tdiv />
+    <!-- <Tt /> -->
+>>>>>>> origin/main
     <!-- <T /> -->
     <!-- <TableComponent /> -->
     <!-- <TableComponent0 /> -->
