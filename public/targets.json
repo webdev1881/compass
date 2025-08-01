@@ -7,22 +7,22 @@
     },
     "losses": {
       "name": "Списання ТМЦ",
-      "maxScore": 20,
+      "maxScore": 50,
       "type": "negative"
     },
     "shortages": {
       "name": "Нестачі",
-      "maxScore": 100,
+      "maxScore": 50,
       "type": "negative"
     },
     "fop": {
       "name": "ФОП",
-      "maxScore": 15,
+      "maxScore": 100,
       "type": "negative"
     },
     "unprocessed": {
       "name": "Непровед. списання",
-      "maxScore": 10,
+      "maxScore": 30,
       "type": "negative"
     }
   },
@@ -30,7 +30,7 @@
     "1": {
       "losses": 0.0007,
       "shortages": 0.00018,
-      "fop": 0.012,
+      "fop": 0.003,
       "unprocessed": 0.0000008
     },
     "2": {

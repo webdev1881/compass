@@ -6,7 +6,7 @@
       alt="">
 
       <pre>
-{{ planScore }}
+        {{ '1' }}
         <!-- {{ processedData }} -->
       </pre>
     <div class="color-palette-sidebar" :class="{ open: isPaletteOpen }">
@@ -41,9 +41,9 @@
 
     <div v-if="!loading && !error" class="content">
       <div class="controls-panel">
-        <button :style="headerStyle" class="refresh-btn" @click="refreshData" :disabled="loading">
+        <buttonk :style="headerStyle" class="refresh-btn" @click="refreshData" :disabled="loading">
           Оновити
-        </button>
+        </buttonk>
         <div class="tooltip-controls">
           <label class="tooltip-toggle">
             <input type="checkbox" v-model="tooltipEnabled" />
@@ -272,7 +272,7 @@
               <div class="problem-item" v-for="issue in processedData.topIssues" :key="issue.type">
                 <div class="issue-type">{{ issue.name }}</div>
                 <div class="issue-stats">
-                  <span class="issue-value">{{ formatNumber(issue.totalValue) }}</span>
+                  <span :class="`issue-${issue.type}`" class="issue-value">{{ formatNumber(issue.totalValue) }}</span>
                   <span class="issue-stores">{{ issue.affectedStores }} магазинів</span>
                 </div>
               </div>
@@ -636,8 +636,8 @@ const loadData = async () => {
     loading.value = true
     error.value = null
     const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/real-data0.json'),
-      fetch('/targets0.json')
+      fetch('/real-data.json'),
+      fetch('/targets.json')
     ])
 
     if (!salesResponse.ok || !targetsResponse.ok) {
@@ -3854,6 +3854,12 @@ onMounted(() => {
   background-color: #ffdada;
   color: white !important;
 }
+
+.issue-fop {
+  filter: blur(3px);
+}
+
+
 </style>
 
 
