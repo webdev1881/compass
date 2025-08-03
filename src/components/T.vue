@@ -1,33 +1,27 @@
 <template>
   <div class="odx-sales-dashboard">
-    <img :class="{ 'odx-palette-toggle--active': isPaletteOpen }" 
-         class="odx-palette-toggle" 
-         @click="togglePalette"
-         src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
-         alt="Palette">
+    <img :class="{ 'odx-palette-toggle--active': isPaletteOpen }" class="odx-palette-toggle" @click="togglePalette"
+      src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
+      alt="Palette">
 
     <div class="odx-color-palette" :class="{ 'odx-color-palette--open': isPaletteOpen }">
       <div class="odx-color-palette__content">
         <h3>Палітра:</h3>
         <div class="odx-color-palette__grid">
-          <div v-for="color in darkColors" 
-               :key="color" 
-               class="odx-color-option"
-               :class="{ 'odx-color-option--selected': selectedColor === color }" 
-               :style="{ backgroundColor: color }"
-               @click="changeColor(color)" 
-               :title="color" />
+          <div v-for="color in darkColors" :key="color" class="odx-color-option"
+            :class="{ 'odx-color-option--selected': selectedColor === color }" :style="{ backgroundColor: color }"
+            @click="changeColor(color)" :title="color" />
         </div>
         <div class="odx-format-controls">
           <label class="odx-toggle">
-            <input type="checkbox" v-model="formatter" @click="formatter = !formatter"/>
+            <input type="checkbox" v-model="formatter" @click="formatter = !formatter" />
             <span class="odx-toggle__slider" :style="headerStyle"></span>
             <span class="odx-toggle__label">Форматування</span>
           </label>
         </div>
       </div>
     </div>
-    
+
     <div v-if="isPaletteOpen" class="odx-overlay" @click="closePalette"></div>
 
     <div v-if="loading" class="odx-loading">
@@ -42,10 +36,7 @@
 
     <div v-if="!loading && !error" class="odx-dashboard">
       <div class="odx-controls">
-        <button :style="headerStyle" 
-                class="odx-controls__refresh" 
-                @click="refreshData" 
-                :disabled="loading">
+        <button :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
           Оновити
         </button>
         <div class="odx-controls__tooltip">
@@ -73,10 +64,8 @@
               <div class="odx-table__cell odx-table__cell--static"></div>
               <div v-for="week in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__groups">
-                  <div v-for="group in visibleGroups" 
-                       :key="group.key" 
-                       class="odx-table__cell odx-table__cell--group-header" 
-                       :style="getGroupStyle(group.key)">
+                  <div v-for="group in visibleGroups" :key="group.key"
+                    class="odx-table__cell odx-table__cell--group-header" :style="getGroupStyle(group.key)">
                     <div @click="toggleGroupVisibility(group.key)" class="odx-group-toggle">
                       <span>{{ group.label }}</span>
                     </div>
@@ -89,11 +78,9 @@
               <div class="odx-table__cell odx-table__cell--static"></div>
               <div v-for="week in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__columns">
-                  <div v-for="indicator in availableIndicators" 
-                       :key="indicator.key" 
-                       class="odx-table__cell odx-table__cell--metric" 
-                       :style="getStyle(indicator.key)" 
-                       @click="handleRegionSort(week.id, indicator.key)">
+                  <div v-for="indicator in availableIndicators" :key="indicator.key"
+                    class="odx-table__cell odx-table__cell--metric" :style="getStyle(indicator.key)"
+                    @click="handleRegionSort(week.id, indicator.key)">
                     <div class="odx-metric-header">
                       <span v-html="getIndicatorHeader(indicator)"></span>
                       <span class="odx-sort-arrow" :class="getSortArrowClass(week.id, indicator.key)">
@@ -108,33 +95,32 @@
 
           <div class="odx-table__body">
             <div class="odx-regions">
-              <div v-for="region in sortedRegions" 
-                   :key="`region-${region.id}`"
-                   class="odx-table__row odx-table__row--region" 
-                   :class="getRegionRowClass(region.regionRank)">
-                <div class="odx-table__cell odx-table__cell--static">
-                  <div class="odx-region-info">
-                    <div class="odx-region-info__indicator" :style="{ backgroundColor: region.color }"></div>
-                    <span class="odx-region-info__title">{{ region.name }}</span>
+              <transition-group name="table-row" tag="div">
+
+                <div v-for="region in sortedRegions" :key="`region-${region.id}`"
+                  class="odx-table__row odx-table__row--region" :class="getRegionRowClass(region.regionRank)">
+                  <div class="odx-table__cell odx-table__cell--static">
+                    <div class="odx-region-info">
+                      <div class="odx-region-info__indicator" :style="{ backgroundColor: region.color }"></div>
+                      <span class="odx-region-info__title">{{ region.name }}</span>
+                    </div>
                   </div>
-                </div>
-                <div class="odx-table__data">
-                  <div v-for="week in weeks" :key="week.id" class="odx-week">
-                    <div class="odx-week__columns">
-                      <div v-for="indicator in availableIndicators"
-                           :key="`region-${region.id}-${week.id}-${indicator.key}`"
-                           class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
-                           :class="getRegionCellClass(indicator.key, region, week.id)"
-                           :style="getStyle(indicator.key)"
-                           @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
-                           @mouseleave="hideTooltip" 
-                           @mousemove="updateTooltipPosition">
-                        {{ getRegionData(region, week.id, indicator.key) }}
+                  <div class="odx-table__data">
+                    <div v-for="week in weeks" :key="week.id" class="odx-week">
+                      <div class="odx-week__columns">
+                        <div v-for="indicator in availableIndicators"
+                          :key="`region-${region.id}-${week.id}-${indicator.key}`"
+                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+                          :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
+                          @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
+                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                          {{ getRegionData(region, week.id, indicator.key) }}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </transition-group>
             </div>
 
             <div class="odx-separator">
@@ -144,13 +130,11 @@
                   <div class="odx-sort-controls__weeks">
                     <div v-for="week in weeks" :key="week.id" class="odx-sort-week">
                       <div class="odx-sort-week__columns">
-                        <div v-for="indicator in availableIndicators" 
-                             :key="`sort-${week.id}-${indicator.key}`"
-                             class="odx-sort-control" 
-                             :class="getStoreSortArrowClass(week.id, indicator.key)"
-                             :style="getStyle(indicator.key)"
-                             :title="`Сортировать магазины по ${indicator.label.replace(/<br>/g, ' ')} (${week.name})`"
-                             @click="handleStoreSort(week.id, indicator.key)">
+                        <div v-for="indicator in availableIndicators" :key="`sort-${week.id}-${indicator.key}`"
+                          class="odx-sort-control" :class="getStoreSortArrowClass(week.id, indicator.key)"
+                          :style="getStyle(indicator.key)"
+                          :title="`Сортировать магазины по ${indicator.label.replace(/<br>/g, ' ')} (${week.name})`"
+                          @click="handleStoreSort(week.id, indicator.key)">
                           <span class="odx-sort-arrow">
                             {{ getStoreSortIcon(week.id, indicator.key) }}
                           </span>
@@ -163,33 +147,33 @@
             </div>
 
             <div class="odx-stores">
-              <div v-for="store in allStores" 
-                   :key="`store-${store.id}`" 
-                   class="odx-table__row odx-table__row--store"
-                   :class="getStoreRowClass(store.overallRank)">
-                <div class="odx-table__cell odx-table__cell--static">
-                  <div class="odx-store-info">
-                    <div class="odx-store-info__indicator" :style="{ backgroundColor: store.regionColor }"></div>
-                    <span class="odx-store-info__title">{{ store.name }}</span>
+              <transition-group name="table-row" tag="div">
+
+                <div v-for="store in allStores" :key="`store-${store.id}`" class="odx-table__row odx-table__row--store"
+                  :class="getStoreRowClass(store.overallRank)">
+                  <div class="odx-table__cell odx-table__cell--static">
+                    <div class="odx-store-info">
+                      <div class="odx-store-info__indicator" :style="{ backgroundColor: store.regionColor }"></div>
+                      <span class="odx-store-info__title">{{ store.name }}</span>
+                    </div>
                   </div>
-                </div>
-                <div class="odx-table__data">
-                  <div v-for="week in weeks" :key="week.id" class="odx-week">
-                    <div class="odx-week__columns">
-                      <div v-for="indicator in availableIndicators"
-                           :key="`store-${store.id}-${week.id}-${indicator.key}`"
-                           class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
-                           :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id), false), indicator.key]"
-                           :style="getStyle(indicator.key)"
-                           @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
-                           @mouseleave="hideTooltip" 
-                           @mousemove="updateTooltipPosition">
-                        {{ getStoreData(store, week.id, indicator.key) }}
+                  <div class="odx-table__data">
+                    <div v-for="week in weeks" :key="week.id" class="odx-week">
+                      <div class="odx-week__columns">
+                        <div v-for="indicator in availableIndicators"
+                          :key="`store-${store.id}-${week.id}-${indicator.key}`"
+                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+                          :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id), false), indicator.key]"
+                          :style="getStyle(indicator.key)"
+                          @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
+                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                          {{ getStoreData(store, week.id, indicator.key) }}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </transition-group>
             </div>
           </div>
         </div>
@@ -282,18 +266,15 @@
       </div>
     </div>
 
-    <div v-if="tooltip.visible && tooltip.data" 
-         class="odx-tooltip" 
-         :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px', opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1 }">
+    <div v-if="tooltip.visible && tooltip.data" class="odx-tooltip"
+      :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px', opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1 }">
       <div class="odx-tooltip__header">
         <div class="odx-tooltip__title">{{ tooltip.data.entityName }}</div>
         <div class="odx-tooltip__subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
       </div>
       <div class="odx-tooltip__main">{{ tooltip.data.mainValue }}</div>
       <div class="odx-tooltip__details">
-        <div v-for="detail in tooltip.data.details" 
-             :key="detail.label" 
-             class="odx-tooltip__detail">
+        <div v-for="detail in tooltip.data.details" :key="detail.label" class="odx-tooltip__detail">
           <span class="odx-tooltip__detail-label">{{ detail.label }}:</span>
           <span class="odx-tooltip__detail-value">{{ detail.value }}</span>
         </div>
@@ -330,12 +311,12 @@ const loadData = async () => {
     if (!salesResponse.ok || !targetsResponse.ok) {
       throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)
     }
-    
+
     const [salesDataResult, targetsDataResult] = await Promise.all([
       salesResponse.json(),
       targetsResponse.json()
     ])
-    
+
     if (!salesDataResult.weeks || !salesDataResult.regions) {
       throw new Error('Неверная структура данных продаж')
     }
@@ -343,13 +324,17 @@ const loadData = async () => {
     if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
       throw new Error('Неверная структура данных целей')
     }
-    
+
     salesData.value = salesDataResult
     targetsData.value = targetsDataResult
     regions.value = Object.values(salesDataResult.regions)
+
+    console.log(regions.value);
     
+
     initializeVisibility()
     processData()
+    // console.log('Processed Data:', processedData.value);
   } catch (err) {
     console.error('Ошибка загрузки данных:', err)
     error.value = err.message || 'Ошибка загрузки данных'
@@ -364,79 +349,204 @@ const togglePanel = () => { isOpen.value = !isOpen.value }
 const closePanel = () => { isOpen.value = false }
 
 const processedData = computed(() => {
-  if (!salesData.value || !regions.value || !weeks.value) return null
+    if (!salesData.value || !regions.value || !weeks.value) return null
 
-  const allStores = []
-  regions.value.forEach(region => {
-    if (region.stores) {
-      region.stores.forEach(store => {
-        allStores.push({
-          ...store,
-          regionId: region.id,
-          regionName: region.name,
-          regionColor: region.color
+    const allStores = []
+    regions.value.forEach(region => {
+        if (region.stores) {
+            region.stores.forEach(store => {
+                allStores.push({
+                    ...store,
+                    regionId: region.id,
+                    regionName: region.name,
+                    regionColor: region.color
+                })
+            })
+        }
+    })
+
+    const totalStores = allStores.length
+    const totalRegions = regions.value.length
+    const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
+    const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
+
+
+
+    let totalPlan = 0
+    let totalFact = 0
+    allStores.forEach(store => {
+        weeks.value.forEach(week => {
+            const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+            if (weekData) {
+                totalPlan += weekData.plan || 0
+                totalFact += weekData.fact || 0
+            }
         })
-      })
-    }
-  })
- 
-  const totalStores = allStores.length
-  const totalRegions = regions.value.length
-  const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
-  const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
-
-  let totalPlan = 0
-  let totalFact = 0
-  allStores.forEach(store => {
-    weeks.value.forEach(week => {
-      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-      if (weekData) {
-        totalPlan += weekData.plan || 0
-        totalFact += weekData.fact || 0
-      }
     })
-  })
-  const planExecutionPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
+    const planExecutionPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
 
-  const regionsWithScores = regions.value.map(region => {
-    let regionScore = 0
-    if (region.stores) {
-      region.stores.forEach(store => {
-        regionScore += store.overallTotalScore || 0
-      })
+    const regionsWithScores = regions.value.map(region => {
+        let regionScore = 0
+        if (region.stores) {
+            region.stores.forEach(store => {
+                regionScore += store.overallTotalScore || 0
+            })
+        }
+        return { ...region, score: regionScore }
+    }).sort((a, b) => b.score - a.score).slice(0, 5)
+
+    const topStores = [...allStores]
+        .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
+        .slice(0, KPITopStores.value)
+
+    const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.7).length
+    const belowPlanStores = allStores.filter(store => {
+        let storePlan = 0
+        let storeFact = 0
+        weeks.value.forEach(week => {
+            const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+            if (weekData) {
+                storePlan += weekData.plan || 0
+                storeFact += weekData.fact || 0
+            }
+        })
+        return storePlan > 0 && (storeFact / storePlan) < 0.95
+    }).length
+
+    const topIssues = []
+    let summ = 0;
+    if (targetsData.value.targetTree) {
+        Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+            let totalValue = 0
+            let affectedStores = 0
+            summ += target.maxScore
+            allStores.forEach(store => {
+                let storeValue = 0
+                weeks.value.forEach(week => {
+                    const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+                    if (weekData && weekData[key]) {
+                        storeValue += weekData[key] || 0
+                    }
+                })
+                if (storeValue > 0) {
+                    totalValue += storeValue
+                    affectedStores++
+                }
+            })
+
+            if (totalValue > 0) {
+                topIssues.push({
+                    type: key,
+                    name: target.name,
+                    totalValue,
+                    affectedStores
+                })
+            }
+        })
     }
-    return { ...region, score: regionScore }
-  }).sort((a, b) => b.score - a.score).slice(0, 5)
+    planScore.value = summ
+    topIssues.sort((a, b) => b.totalValue - a.totalValue).splice(3)
 
-  const topStores = [...allStores]
-    .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
-    .slice(0, KPITopStores.value)
+    const weeklyComparison = weeks.value.map(week => {
+        let weekTotalScore = 0
+        let weekTotalPlan = 0
+        let weekTotalFact = 0
+        let storeCount = 0
 
-  const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.7).length
-  const belowPlanStores = allStores.filter(store => {
-    let storePlan = 0
-    let storeFact = 0
-    weeks.value.forEach(week => {
-      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-      if (weekData) {
-        storePlan += weekData.plan || 0
-        storeFact += weekData.fact || 0
-      }
+        allStores.forEach(store => {
+            const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+            if (weekData) {
+                weekTotalScore += weekData.totalScore || 0
+                weekTotalPlan += weekData.plan || 0
+                weekTotalFact += weekData.fact || 0
+                storeCount++
+            }
+        })
+
+        return {
+            ...week,
+            totalScore: weekTotalScore,
+            planExecution: weekTotalPlan > 0 ? Math.round((weekTotalFact / weekTotalPlan) * 100) : 0,
+            averageFact: storeCount > 0 ? Math.round(weekTotalFact / storeCount) : 0
+        }
     })
-    return storePlan > 0 && (storeFact / storePlan) < 0.95
-  }).length
 
-  return {
-    totalStores,
-    totalRegions,
-    averageScore,
-    planExecutionPercent,
-    topRegions: regionsWithScores,
-    topStores,
-    problemStores,
-    belowPlanStores,
-  }
+    let weeklyTrend = null
+    if (weeklyComparison.length >= 2) {
+        const latestWeek = weeklyComparison[0]
+        const previousWeek = weeklyComparison[1]
+        const scoreDiff = latestWeek.totalScore - previousWeek.totalScore
+        const planDiff = latestWeek.planExecution - previousWeek.planExecution
+
+        if (scoreDiff > 0 && planDiff > 0) {
+            weeklyTrend = { type: 'positive', icon: '📈', text: 'Положительная динамика' }
+        } else if (scoreDiff < 0 || planDiff < 0) {
+            weeklyTrend = { type: 'negative', icon: '📉', text: 'Отрицательная динамика' }
+        } else {
+            weeklyTrend = { type: 'stable', icon: '➡️', text: 'Стабильные показатели' }
+        }
+    }
+
+    const targetsOverview = []
+    if (targetsData.value.targetTree) {
+        Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+            let totalScore = 0
+            let successfulStores = 0
+            let problemStores = 0
+
+            allStores.forEach(store => {
+                let storeScore = 0
+                weeks.value.forEach(week => {
+                    const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+                    if (weekData && weekData[`${key}_score`]) {
+                        storeScore += weekData[`${key}_score`] || 0
+                    }
+                })
+
+                totalScore += storeScore
+                const averageStoreScore = weeks.value.length > 0 ? storeScore / weeks.value.length : 0
+
+                if (averageStoreScore >= target.maxScore * 0.8) {
+                    successfulStores++
+                } else if (averageStoreScore < target.maxScore * 0.5) {
+                    problemStores++
+                }
+            })
+
+            const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
+
+            targetsOverview.push({
+                key,
+                name: target.name,
+                maxScore: target.maxScore,
+                averageScore,
+                successfulStores,
+                problemStores
+            })
+        })
+    }
+
+    // console.log(allStores);
+
+
+    return {
+        totalStores,
+        totalRegions,
+        averageScore,
+        planExecutionPercent,
+        topRegions: regionsWithScores,
+        topStores,
+        problemStores,
+        belowPlanStores,
+        topIssues,
+        weeklyComparison,
+        weeklyTrend,
+        targetsOverview,
+    }
 })
+
+
+
 
 const handleKeydown = (event) => {
   if (event.key === 'Escape' && isOpen.value) {
@@ -486,14 +596,14 @@ const updateTooltipPosition = (event) => {
 
   const tooltipElement = document.querySelector('.odx-tooltip')
   if (!tooltipElement) return
-  
+
   const tooltipRect = tooltipElement.getBoundingClientRect()
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
-  
+
   let x = event.clientX + 10
   let y = event.clientY + 10
-  
+
   if (x + tooltipRect.width > windowWidth - 10) {
     x = event.clientX - tooltipRect.width - 10
   }
@@ -723,7 +833,7 @@ function getStyle(key) {
   const total = visibleIndicators.value.length
   const isVisible = visible[key]
   const width = isVisible ? `${100 / total}%` : '0%'
-  
+
   return {
     width,
     transform: isVisible ? 'scaleX(1)' : 'scaleX(0)',
@@ -752,7 +862,7 @@ function getGroupStyle(groupKey) {
 
 const processData = () => {
   if (!regions.value || !salesData.value || !targetsData.value) return
-  
+
   regions.value.forEach(region => {
     if (region.stores) {
       region.stores.forEach(store => {
@@ -762,7 +872,7 @@ const processData = () => {
       })
     }
   })
-  
+
   const allStores = []
   regions.value.forEach(region => {
     if (region.stores) {
@@ -771,11 +881,11 @@ const processData = () => {
       })
     }
   })
-  
+
   salesData.value.weeks.forEach(week => {
     calculateWeeklyMetrics(week.id, allStores)
   })
-  
+
   calculateRegionMetrics()
   calculateRegionColumnRanks()
   calculateOverallScores(allStores)
@@ -792,12 +902,12 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') return
-      
+
       const targetPercent = storeTargetConfig[key] || 0
       const actualValue = weekData[key] || 0
       const target = targetPercent * weekData.fact
       let achievementPercent = 0
-      
+
       if (target > 0) {
         if (targetConfig.type === 'negative') {
           achievementPercent = Math.min((target / actualValue) * 100, 200)
@@ -812,13 +922,13 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') return
-      
+
       const achievementPercent = weekData[`${key}_percent`] || 0
       const maxPercent = Math.max(...allStores.map(s => {
         const sWeekData = getStoreWeekData(s, weekId)
         return sWeekData[`${key}_percent`] || 0
       }))
-      
+
       let score = 0
       if (maxPercent > 0) {
         score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
@@ -841,7 +951,7 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       const weekData = getStoreWeekData(store, weekId)
       const turnoverPercent = weekData.percent || 0
       let turnoverScore = 0
-      
+
       if (maxTurnoverPercent > 0) {
         turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
       }
@@ -856,54 +966,122 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
     })
   }
-  
+
   calculateColumnRanks(weekId, allStores)
 }
 
 const calculateRegionMetrics = () => {
-  if (!regions.value || !salesData.value || !targetsData.value) return
-  
-  const { targetTree, storeTargets } = targetsData.value
-  
-  salesData.value.weeks.forEach(week => {
-    regions.value.forEach(region => {
-      if (!region.stores) return
-      
-      if (!region.weeklyData) {
-        region.weeklyData = []
-      }
+    if (!regions.value || !salesData.value || !targetsData.value) return
+    const { targetTree, storeTargets } = targetsData.value
+    salesData.value.weeks.forEach(week => {
+        regions.value.forEach(region => {
+            if (!region.stores) return
+            if (!region.weeklyData) {
+                region.weeklyData = []
+            }
 
-      let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
-      if (!regionWeekData) {
-        regionWeekData = { weekId: week.id }
-        region.weeklyData.push(regionWeekData)
-      }
-      
-      let totalPlan = 0
-      let totalFact = 0
-      
-      region.stores.forEach(store => {
-        const storeWeekData = getStoreWeekData(store, week.id)
-        totalPlan += storeWeekData.plan || 0
-        totalFact += storeWeekData.fact || 0
-      })
+            let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
+            if (!regionWeekData) {
+                regionWeekData = { weekId: week.id }
+                region.weeklyData.push(regionWeekData)
+            }
+            let totalPlan = 0
+            let totalFact = 0
+            region.stores.forEach(store => {
+                const storeWeekData = getStoreWeekData(store, week.id)
+                totalPlan += storeWeekData.plan || 0
+                totalFact += storeWeekData.fact || 0
+            })
 
-      regionWeekData.plan = totalPlan
-      regionWeekData.fact = totalFact
-      regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
+            regionWeekData.plan = totalPlan
+            regionWeekData.fact = totalFact
+            regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
 
-      let totalScore = 0
-      Object.entries(targetTree).forEach(([key, targetConfig]) => {
-        if (key === 'turnover') {
-          totalScore += regionWeekData.turnover_score || 0
-        } else {
-          totalScore += regionWeekData[`${key}_score`] || 0
+            Object.entries(targetTree).forEach(([key, targetConfig]) => {
+                if (key === 'turnover') return
+                let totalValue = 0
+                let totalTarget = 0
+                region.stores.forEach(store => {
+                    const storeWeekData = getStoreWeekData(store, week.id)
+                    const storeTargetConfig = storeTargets[store.id] || {}
+                    const targetPercent = storeTargetConfig[key] || 0
+
+                    totalValue += storeWeekData[key] || 0
+                    totalTarget += targetPercent * (storeWeekData.fact || 0)
+                })
+
+                regionWeekData[key] = totalValue
+
+                let achievementPercent = 0
+                if (totalTarget > 0) {
+                    if (targetConfig.type === 'negative') {
+                        achievementPercent = Math.min((totalTarget / totalValue) * 100, 200)
+                    } else {
+                        achievementPercent = (totalValue / totalTarget) * 100
+                    }
+                }
+
+                regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
+                regionWeekData[`${key}_target`] = totalTarget
+            })
+        })
+
+        Object.entries(targetTree).forEach(([key, targetConfig]) => {
+            if (key === 'turnover') return
+            const maxPercent = Math.max(...regions.value.map(region => {
+                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+                return regionWeekData?.[`${key}_percent`] || 0
+            }))
+
+            regions.value.forEach(region => {
+                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+                if (!regionWeekData) return
+
+                const achievementPercent = regionWeekData[`${key}_percent`] || 0
+                let score = 0
+                if (maxPercent > 0) {
+                    score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
+                }
+                regionWeekData[`${key}_score`] = score
+            })
+        })
+
+        if (targetTree.turnover) {
+            const maxTurnoverPercent = Math.max(...regions.value.map(region => {
+                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+                return regionWeekData?.percent || 0
+            }))
+
+            regions.value.forEach(region => {
+                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+                if (!regionWeekData) return
+
+                const turnoverPercent = regionWeekData.percent || 0
+                let turnoverScore = 0
+                if (maxTurnoverPercent > 0) {
+                    turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+                }
+                regionWeekData.turnover_score = turnoverScore
+            })
         }
-      })
 
-      regionWeekData.totalScore = totalScore
+        regions.value.forEach(region => {
+            const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+            if (!regionWeekData) return
+
+            let totalScore = 0
+
+            Object.entries(targetTree).forEach(([key, targetConfig]) => {
+                if (key === 'turnover') {
+                    totalScore += regionWeekData.turnover_score || 0
+                } else {
+                    totalScore += regionWeekData[`${key}_score`] || 0
+                }
+            })
+
+            regionWeekData.totalScore = totalScore
+        })
     })
-  })
 }
 
 const calculateOverallScores = (allStores) => {
@@ -955,7 +1133,7 @@ const calculateColumnRanks = (weekId, allStores) => {
 
       return { store, value, weekData }
     })
-    
+
     storesWithValues.sort((a, b) => b.value - a.value)
     storesWithValues.forEach((item, index) => {
       if (!item.weekData.columnRanks) {
@@ -976,7 +1154,7 @@ const calculateRegionColumnRanks = () => {
         let value = getRegionIndicatorValue(region, week.id, indicator)
         return { region, value }
       })
-      
+
       regionsWithValues.sort((a, b) => b.value - a.value)
       regionsWithValues.forEach((item, index) => {
         if (!item.region.columnRanks) {
@@ -993,6 +1171,8 @@ const calculateRegionColumnRanks = () => {
 
 const getRegionIndicatorValue = (region, weekId, indicator) => {
   const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId)
+  // console.log(regionWeekData);
+  
   if (!regionWeekData) return 0
   return regionWeekData[indicator] || 0
 }
@@ -1000,7 +1180,7 @@ const getRegionIndicatorValue = (region, weekId, indicator) => {
 const sortedRegions = computed(() => {
   if (!regions.value) return []
   let sorted = [...regions.value]
-  
+
   sorted.forEach(region => {
     let totalScore = 0
     if (region.weeklyData) {
@@ -1141,7 +1321,12 @@ const getStoreData = (store, weekId, indicator) => {
 const getRegionData = (region, weekId, indicator) => {
   const value = getRegionIndicatorValue(region, weekId, indicator)
 
-  switch (indicator) {
+  // console.log( region);
+  // console.log( weekId);
+  // console.log( indicator);
+  
+
+  switch (value) {
     case 'totalScore': return value
     case 'percent': return `${value}%`
     case 'plan':
@@ -1205,8 +1390,8 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
   if (rank > 0 && totalItems > 0) {
     const percentile = (rank / totalItems) * 100
     if (indicator.endsWith('_score') || indicator === 'totalScore' ||
-        indicator.endsWith('_percent') || indicator === 'percent') {
-      
+      indicator.endsWith('_percent') || indicator === 'percent') {
+
       if (percentile <= 20) {
         classes.push('odx-table__cell--percentile-top')
         if (formatter.value) { classes.push('odx-table__cell--formatted-top') }
@@ -1392,9 +1577,20 @@ onMounted(() => {
   }
 
   @keyframes odx-loading {
-    0% { width: 0%; transform: translateX(-100%); }
-    50% { width: 70%; transform: translateX(0%); }
-    100% { width: 100%; transform: translateX(100%); }
+    0% {
+      width: 0%;
+      transform: translateX(-100%);
+    }
+
+    50% {
+      width: 70%;
+      transform: translateX(0%);
+    }
+
+    100% {
+      width: 100%;
+      transform: translateX(100%);
+    }
   }
 
   .odx-error {
@@ -1445,8 +1641,15 @@ onMounted(() => {
   }
 
   @keyframes odx-fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .odx-controls {
@@ -1514,7 +1717,7 @@ onMounted(() => {
       }
     }
 
-    input[type="checkbox"]:checked + &__slider {
+    input[type="checkbox"]:checked+&__slider {
       background: var(--odx-primary) !important;
 
       &::after {
@@ -1554,8 +1757,10 @@ onMounted(() => {
       display: flex !important;
       width: 100% !important;
       border-bottom: 1px solid var(--odx-border) !important;
-      transition: all 0.15s ease !important;
+      // transition: all 0.15s ease !important;
       will-change: transform !important;
+      transition: all .2s ease;
+      transform-origin: center !important;
 
       &:hover {
         transform: translateY(-1px) !important;
@@ -1626,7 +1831,7 @@ onMounted(() => {
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       white-space: nowrap !important;
-      transition: transform 1.2s ease !important;
+      transition: transform 0.5s ease !important;
       will-change: transform !important;
 
       &--static {
@@ -1736,6 +1941,9 @@ onMounted(() => {
     &__data {
       display: flex !important;
       width: 100% !important;
+      overflow: hidden !important;
+      transition: all .2s ease;
+        transform-origin: center;
     }
 
     &__body {
@@ -1747,6 +1955,7 @@ onMounted(() => {
     display: flex !important;
     width: 100% !important;
     border-right: 2px solid var(--odx-border) !important;
+    overflow: hidden;
 
     &__name {
       font-weight: 600 !important;
@@ -1848,6 +2057,8 @@ onMounted(() => {
       display: flex !important;
       width: 100% !important;
       align-items: center !important;
+      transition: all .2s ease;
+        transform-origin: center;
     }
 
     &__static {
@@ -1884,6 +2095,8 @@ onMounted(() => {
     border-radius: 4px !important;
     transition: all 0.2s ease !important;
     border: 1px solid transparent !important;
+    transition: all .2s ease;
+        transform-origin: center;
 
     &:hover {
       background: var(--odx-surface-hover) !important;
@@ -1971,8 +2184,15 @@ onMounted(() => {
   }
 
   @keyframes odx-tooltipFadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .odx-tooltip-trigger {
@@ -2267,6 +2487,26 @@ onMounted(() => {
     }
   }
 }
+
+* {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+.odx-table__row-enter-active,
+.odx-table__row-leave-active {
+    transition: all 0.4s ease;
+}
+
+.odx-table__row-enter-from,
+.odx-table__row-leave-to {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.odx-table__row-move {
+    transition: transform 0.4s ease;
+}
 </style>
-
-
