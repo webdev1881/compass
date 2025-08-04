@@ -114,7 +114,8 @@
                           :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
                           @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-                          {{ getRegionData(region, week.id, indicator.key) }}
+                          {{ getRegionData(region, week.id, indicator.key) }} 
+                          <!-- | {{ region.overallTotalScore }} -->
                         </div>
                       </div>
                     </div>
@@ -697,8 +698,8 @@ const changeColor = (color) => { selectedColor.value = color }
 const togglePalette = () => { isPaletteOpen.value = !isPaletteOpen.value }
 const closePalette = () => { isPaletteOpen.value = false }
 
-const regionSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
+const regionSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
 
 const indicatorGroups = computed(() => {
   const groups = [
@@ -1177,18 +1178,23 @@ const sortedRegions = computed(() => {
     if (region.weeklyData) {
       region.weeklyData.forEach(weekData => {
         totalScore += weekData.totalScore || 0
+        console.log(weekData);
       })
     }
     region.overallTotalScore = totalScore
   })
+
+  
 
   sorted.sort((a, b) => {
     let aValue = 0
     let bValue = 0
 
     if (regionSortBy.value.columnKey === 'totalScore') {
-      aValue = a.overallTotalScore
-      bValue = b.overallTotalScore
+      // aValue = a.overallTotalScore
+      // bValue = b.overallTotalScore
+      aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+      bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
     } else {
       aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
       bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
@@ -1197,9 +1203,9 @@ const sortedRegions = computed(() => {
     return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
   })
 
-  sorted.forEach((region, index) => {
-    region.regionRank = index + 1
-  })
+  // sorted.forEach((region, index) => {
+  //   region.regionRank = index + 1
+  // })
 
   return sorted
 })
@@ -1839,7 +1845,7 @@ onMounted(() => {
       }
 
       &--group-header {
-        background: var(--odx-surface) !important;
+        // background: var(--odx-surface) !important;
         font-size: 13px !important;
         color: var(--odx-text-muted) !important;
         cursor: pointer !important;
