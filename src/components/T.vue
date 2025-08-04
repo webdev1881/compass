@@ -1195,7 +1195,7 @@ const sortedRegions = computed(() => {
     let aValue = 0
     let bValue = 0
 
-    if (regionSortBy.value.columnKey === 'totalScore') {
+    if (regionSortBy.value.columnKey && regionSortBy.value.weekId) {
       aValue = a.overallTotalScore
       bValue = b.overallTotalScore
     } else {

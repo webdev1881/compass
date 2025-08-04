@@ -17,7 +17,7 @@
     },
     "fop": {
       "name": "ФОП",
-      "maxScore": 100,
+      "maxScore": 15,
       "type": "negative"
     },
     "unprocessed": {
@@ -98,6 +98,30 @@
       "shortages": 0.00020,
       "fop": 0.013,
       "unprocessed": 0.0000009
+    },
+    "13": {
+      "losses": 0.0007,
+      "shortages": 0.00022,
+      "fop": 0.013,
+      "unprocessed": 0.0000010
+    },
+    "14": {
+      "losses": 0.0007,
+      "shortages": 0.00019,
+      "fop": 0.014,
+      "unprocessed": 0.0000009
+    },
+    "15": {
+      "losses": 0.0007,
+      "shortages": 0.00024,
+      "fop": 0.016,
+      "unprocessed": 0.0000011
     }
-  }
+  },
+  "16": {
+      "losses": 0.0007,
+      "shortages": 0.00024,
+      "fop": 0.016,
+      "unprocessed": 0.0000011
+    }
 }
