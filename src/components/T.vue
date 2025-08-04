@@ -36,9 +36,9 @@
 
     <div v-if="!loading && !error" class="odx-dashboard">
       <div class="odx-controls">
-        <button :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
+        <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
           Оновити
-        </button>
+        </div>
         <div class="odx-controls__tooltip">
           <label class="odx-toggle">
             <input type="checkbox" v-model="tooltipEnabled" />
@@ -182,9 +182,9 @@
     </div>
 
     <div class="odx-kpi">
-      <button v-if="!isOpen" @click="togglePanel" class="odx-kpi__toggle">
+      <div v-if="!isOpen" @click="togglePanel" class="odx-kpi__toggle">
         <img src="https://i.ibb.co/fV6qHXLb/com.png" alt="" class="odx-kpi__icon">
-      </button>
+      </div>
       <div v-if="isOpen" class="odx-kpi__overlay" @click="closePanel"></div>
       <div class="odx-kpi__sidebar" :class="{ 'odx-kpi__sidebar--open': isOpen }">
         <div class="odx-kpi__header">
@@ -1447,7 +1447,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .odx-sales-dashboard {
-  --odx-primary: #3b82f6;
+  --odx-primary: #1c699b;
   --odx-success: #10b981;
   --odx-warning: #f59e0b;
   --odx-danger: #ef4444;
@@ -1710,7 +1710,7 @@ onMounted(() => {
     }
 
     input[type="checkbox"]:checked+&__slider {
-      background: var(--odx-primary) !important;
+      // background: var(--odx-primary) !important;
 
       &::after {
         transform: translateX(16px) !important;
@@ -1725,7 +1725,7 @@ onMounted(() => {
   }
 
   .odx-table-container {
-    background: var(--odx-surface) !important;
+    // background: var(--odx-surface) !important;
     border-radius: 12px !important;
     border: 1px solid var(--odx-border) !important;
     overflow: hidden !important;
@@ -1741,7 +1741,7 @@ onMounted(() => {
       position: sticky !important;
       top: 0 !important;
       z-index: 10 !important;
-      background: var(--odx-surface) !important;
+      // background: var(--odx-surface) !important;
       border-bottom: 2px solid var(--odx-border) !important;
     }
 
@@ -1829,7 +1829,7 @@ onMounted(() => {
       &--static {
         min-width: 230px !important;
         flex-shrink: 0 !important;
-        background: var(--odx-neutral) !important;
+        // background: var(--odx-neutral) !important;
         font-weight: 600 !important;
         border-right: 2px solid var(--odx-border) !important;
         justify-content: flex-start !important;
@@ -1837,29 +1837,29 @@ onMounted(() => {
       }
 
       &--group {
-        background: #eef2ff !important;
-        color: var(--odx-info) !important;
+        // background: #eef2ff !important;
+        // color: var(--odx-info) !important;
         font-size: 15px !important;
         font-weight: 700 !important;
-        border-bottom: 2px solid var(--odx-info) !important;
+        // border-bottom: 2px solid var(--odx-info) !important;
       }
 
       &--group-header {
         // background: var(--odx-surface) !important;
         font-size: 13px !important;
-        color: var(--odx-text-muted) !important;
+        // color: var(--odx-text-muted) !important;
         cursor: pointer !important;
 
         &:hover {
           background: #0d598a !important;
-          color: white !important;
+          // color: white !important;
         }
       }
 
       &--metric {
-        background: var(--odx-surface) !important;
+        // background: var(--odx-surface) !important;
         font-size: 12px !important;
-        color: var(--odx-text-muted) !important;
+        // color: var(--odx-text-muted) !important;
         cursor: pointer !important;
 
         &:hover {
@@ -1951,7 +1951,7 @@ onMounted(() => {
 
     &__name {
       font-weight: 600 !important;
-      color: var(--odx-info) !important;
+      // color: var(--odx-info) !important;
       padding: 12px !important;
       text-align: center !important;
       font-size: 14px !important;
@@ -2198,26 +2198,26 @@ onMounted(() => {
   .odx-kpi {
     &__toggle {
       position: fixed !important;
-      top: 20px !important;
-      right: 20px !important;
+      top: 50% !important;
+      right: 0px !important;
       z-index: 1000 !important;
-      background: white !important;
+      // background: white !important;
       border: none !important;
       border-radius: 6px !important;
       cursor: pointer !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
       transition: all 0.3s ease !important;
-      padding: 8px !important;
-
+      // padding: 8px !important;
+      
       &:hover {
-        background: #2c3e50 !important;
+        background: silver !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
         transform: translateY(-1px) !important;
       }
     }
 
     &__icon {
-      width: 40px !important;
-      height: 40px !important;
+      width: 60px !important;
+      height: 60px !important;
       border: 1px solid #2c3e50 !important;
       border-radius: 6px !important;
     }
