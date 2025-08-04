@@ -328,13 +328,9 @@ const loadData = async () => {
     salesData.value = salesDataResult
     targetsData.value = targetsDataResult
     regions.value = Object.values(salesDataResult.regions)
-
-    console.log(regions.value);
     
-
     initializeVisibility()
     processData()
-    // console.log('Processed Data:', processedData.value);
   } catch (err) {
     console.error('Ошибка загрузки данных:', err)
     error.value = err.message || 'Ошибка загрузки данных'
@@ -526,9 +522,6 @@ const processedData = computed(() => {
         })
     }
 
-    // console.log(allStores);
-
-
     return {
         totalStores,
         totalRegions,
@@ -704,8 +697,8 @@ const changeColor = (color) => { selectedColor.value = color }
 const togglePalette = () => { isPaletteOpen.value = !isPaletteOpen.value }
 const closePalette = () => { isPaletteOpen.value = false }
 
-const regionSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
+const regionSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: 2, columnKey: 'totalScore', direction: 'desc' })
 
 const indicatorGroups = computed(() => {
   const groups = [
@@ -1171,8 +1164,6 @@ const calculateRegionColumnRanks = () => {
 
 const getRegionIndicatorValue = (region, weekId, indicator) => {
   const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId)
-  // console.log(regionWeekData);
-  
   if (!regionWeekData) return 0
   return regionWeekData[indicator] || 0
 }
@@ -1320,11 +1311,6 @@ const getStoreData = (store, weekId, indicator) => {
 
 const getRegionData = (region, weekId, indicator) => {
   const value = getRegionIndicatorValue(region, weekId, indicator)
-
-  // console.log( region);
-  // console.log( weekId);
-  // console.log( indicator);
-  
 
   switch (value) {
     case 'totalScore': return value
