@@ -39,11 +39,11 @@
         <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
           Оновити
         </div>
-        <div class="odx-controls__tooltip">
-          <label class="odx-toggle">
+        <div class="tooltip-controls">
+          <label class="tooltip-toggle">
             <input type="checkbox" v-model="tooltipEnabled" />
-            <span class="odx-toggle__slider" :style="headerStyle"></span>
-            <span class="odx-toggle__label">Деталі</span>
+            <span class="toggle-slider" :style="headerStyle"></span>
+            <span class="toggle-label">Деталі</span>
           </label>
         </div>
       </div>
@@ -55,7 +55,7 @@
               <div class="odx-table__cell odx-table__cell--static">Регіон / Магазин</div>
               <div class="odx-table__cell odx-table__cell--group" :style="{ width: dynamicRowWidth }">
                 <div v-for="week in weeks" :key="week.id" class="odx-week">
-                  <h3 class="odx-week__name">{{ week.name }} ({{ week.dateRange }})</h3>
+                  <div class="odx-week__name">{{ week.name }} ({{ week.dateRange }})</div>
                 </div>
               </div>
             </div>
@@ -114,7 +114,7 @@
                           :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
                           @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-                          {{ getRegionData(region, week.id, indicator.key) }} 
+                          {{ getRegionData(region, week.id, indicator.key) }}
                           <!-- | {{ region.overallTotalScore }} -->
                         </div>
                       </div>
@@ -181,88 +181,150 @@
       </div>
     </div>
 
-    <div class="odx-kpi">
-      <div v-if="!isOpen" @click="togglePanel" class="odx-kpi__toggle">
-        <img src="https://i.ibb.co/fV6qHXLb/com.png" alt="" class="odx-kpi__icon">
+    <div class="kpi">
+      <div v-if="!isOpen" @click="togglePanel" class="kpi-toggle-btn" title="Открыть панель КПИ">
+        <img src="https://i.ibb.co/fV6qHXLb/com.png" alt="" class="comp">
       </div>
-      <div v-if="isOpen" class="odx-kpi__overlay" @click="closePanel"></div>
-      <div class="odx-kpi__sidebar" :class="{ 'odx-kpi__sidebar--open': isOpen }">
-        <div class="odx-kpi__header">
+      <div v-if="isOpen" class="kpi-overlay" @click="closePanel"></div>
+      <div class="kpi-sidebar" :class="{ 'kpi-sidebar--open': isOpen }">
+        <div class="kpi-header">
           <h2>📊 Ключові показники</h2>
-          <button @click="closePanel" class="odx-kpi__close">✕</button>
+          <button @click="closePanel" class="close-btn" title="Закрыть">✕</button>
         </div>
 
-        <div class="odx-kpi__content" v-if="processedData">
-          <div class="odx-kpi__section">
+        <div class="kpi-content" v-if="processedData">
+
+          <div class="kpi-section">
             <h3>🎯 Загальне зведення</h3>
-            <div class="odx-kpi__cards">
-              <div class="odx-kpi__card odx-kpi__card--primary">
-                <div class="odx-kpi__value">{{ processedData.totalStores }}</div>
-                <div class="odx-kpi__label">Всьго магазинів</div>
+            <div class="kpi-cards">
+              <div class="kpi-card primary">
+                <div class="kpi-value">{{ processedData.totalStores }}</div>
+                <div class="kpi-label">Всьго магазинів</div>
               </div>
-              <div class="odx-kpi__card odx-kpi__card--success">
-                <div class="odx-kpi__value">{{ processedData.totalRegions }}</div>
-                <div class="odx-kpi__label">Регіонів</div>
+              <div class="kpi-card success">
+                <div class="kpi-value">{{ processedData.totalRegions }}</div>
+                <div class="kpi-label">Регіонів</div>
               </div>
-              <div class="odx-kpi__card odx-kpi__card--info">
-                <div class="odx-kpi__value">{{ formatNumber(processedData.averageScore) }}</div>
-                <div class="odx-kpi__label">Середній бал</div>
+              <div class="kpi-card info">
+                <div class="kpi-value">{{ formatNumber(processedData.averageScore) }}</div>
+                <div class="kpi-label">Середній бал</div>
               </div>
-              <div class="odx-kpi__card odx-kpi__card--warning">
-                <div class="odx-kpi__value">{{ processedData.planExecutionPercent }}%</div>
-                <div class="odx-kpi__label">Виконання плану</div>
+              <div class="kpi-card warning">
+                <div class="kpi-value">{{ processedData.planExecutionPercent }}%</div>
+                <div class="kpi-label">Выконання плану</div>
               </div>
             </div>
           </div>
 
-          <div class="odx-kpi__section">
+          <div class="kpi-section">
             <h3>🏆 Топ регіони</h3>
-            <div class="odx-kpi__list">
-              <div v-for="(region, index) in processedData.topRegions" 
-                   :key="region.id" 
-                   class="odx-kpi__item"
-                   :class="`odx-kpi__item--rank-${index + 1}`">
-                <div class="odx-kpi__rank">{{ index + 1 }}</div>
-                <div class="odx-region-info">
-                  <div class="odx-region-info__indicator" :style="{ backgroundColor: region.color }"></div>
-                  <span class="odx-region-info__name">{{ region.name }}</span>
+            <div class="kpi-list">
+              <div v-for="(region, index) in processedData.topRegions" :key="region.id" class="kpi-list-item"
+                :class="`rank-${index + 1}`">
+                <div class="rank-badge">{{ index + 1 }}</div>
+                <div class="region-info">
+                  <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
+                  <span class="region-name">{{ region.name }}</span>
                 </div>
-                <div class="odx-kpi__score">{{ formatNumber(region.score) }}</div>
+                <div class="region-score">{{ formatNumber(region.score) }}</div>
               </div>
             </div>
           </div>
 
-          <div class="odx-kpi__section">
-            <h3>⭐ Топ {{ KPITopStores }} магазини</h3>
-            <div class="odx-kpi__list">
-              <div v-for="(store, index) in processedData.topStores" 
-                   :key="store.id" 
-                   class="odx-kpi__item"
-                   :class="`odx-kpi__item--rank-${index + 1}`">
-                <div class="odx-kpi__rank">{{ index + 1 }}</div>
-                <div class="odx-store-info">
-                  <div class="odx-store-info__indicator" :style="{ backgroundColor: store.regionColor }"></div>
-                  <span class="odx-store-info__name">{{ store.name }}</span>
-                  <span class="odx-store-info__region">{{ store.regionName }}</span>
+          <div class="kpi-section">
+            <h3>⭐ Топ <b> {{ KPITopStores }} </b> магазини</h3>
+            <div class="kpi-list">
+              <div v-for="(store, index) in processedData.topStores" :key="store.id" class="kpi-list-item"
+                :class="`rank-${index + 1}`">
+                <div class="rank-badge">{{ index + 1 }}</div>
+                <div class="store-info">
+                  <div class="store-region-indicator" :style="{ backgroundColor: store.regionColor }">
+                  </div>
+                  <span class="store-name">{{ store.name }}</span>
+                  <span class="store-region">{{ store.regionName }}</span>
                 </div>
-                <div class="odx-kpi__score">{{ formatNumber(store.overallTotalScore) }}</div>
+                <div class="store-score">{{ formatNumber(store.overallTotalScore) }}</div>
               </div>
             </div>
           </div>
 
-          <div class="odx-kpi__section">
-            <h3>⚠️ Проблемные зоны</h3>
-            <div class="odx-kpi__cards">
-              <div class="odx-kpi__card odx-kpi__card--danger">
-                <div class="odx-kpi__value">{{ processedData.problemStores }}</div>
-                <div class="odx-kpi__label">Магазинів в зоні ризику</div>
+          <div class="kpi-section">
+            <h3>⚠️ Проблемні зони</h3>
+            <div class="kpi-cards">
+              <div class="kpi-card danger">
+                <div class="kpi-value">{{ processedData.problemStores }}</div>
+                <div class="kpi-label">Магазинів в зоні ризику</div>
               </div>
-              <div class="odx-kpi__card odx-kpi__card--warning">
-                <div class="odx-kpi__value">{{ processedData.belowPlanStores }}</div>
-                <div class="odx-kpi__label">Не виконують план</div>
+              <div class="kpi-card warning">
+                <div class="kpi-value">{{ processedData.belowPlanStores }}</div>
+                <div class="kpi-label">Не виконують план</div>
+              </div>
+            </div>
+
+            <div class="problem-details">
+              <div class="problem-item" v-for="issue in processedData.topIssues" :key="issue.type">
+                <div class="issue-type">{{ issue.name }}</div>
+                <div class="issue-stats">
+                  <span class="issue-value">{{ formatNumber(issue.totalValue) }}</span>
+                  <span class="issue-stores">{{ issue.affectedStores }} магазинів</span>
+                </div>
               </div>
             </div>
           </div>
+
+          <div class="kpi-section">
+            <h3>📈 Динаміка по неділям</h3>
+            <div class="week-comparison">
+              <div v-for="week in processedData.weeklyComparison" :key="week.id" class="week-stats">
+                <div class="week-header">
+                  <div class="week-name">{{ week.name }}</div>
+                  <div class="week-period">{{ week.dateRange }}</div>
+                </div>
+                <div class="week-metrics">
+                  <div class="metric">
+                    <span class="metric-label">Загальний бал:</span>
+                    <span class="metric-value">{{ formatNumber(week.totalScore) }}</span>
+                  </div>
+                  <div class="metric">
+                    <span class="metric-label">Выконання плану:</span>
+                    <span class="metric-value">{{ week.planExecution }}%</span>
+                  </div>
+                  <div class="metric">
+                    <span class="metric-label">Середній факт:</span>
+                    <span class="metric-value">{{ formatNumber(week.averageFact) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="trend-indicator" v-if="processedData.weeklyTrend">
+                <div class="trend-label">Тренд:</div>
+                <div class="trend-value" :class="processedData.weeklyTrend.type">
+                  {{ processedData.weeklyTrend.icon }} {{ processedData.weeklyTrend.text }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-section">
+            <h3>🎯 Цілі та досягнення</h3>
+            <div class="targets-overview">
+              <div v-for="target in processedData.targetsOverview" :key="target.key" class="target-item">
+                <div class="target-header">
+                  <span class="target-name">{{ target.name }}</span>
+                  <span class="target-score">{{ target.averageScore }}/{{ target.maxScore }}</span>
+                </div>
+                <div class="target-progress">
+                  <div class="progress-bar" :style="{ width: `${(target.averageScore / target.maxScore) * 100}%` }">
+                  </div>
+                </div>
+                <div class="target-stats">
+                  <span class="success-stores">✅ {{ target.successfulStores }}</span>
+                  <span class="problem-stores">❌ {{ target.problemStores }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -271,7 +333,7 @@
       :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px', opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1 }">
       <div class="odx-tooltip__header">
         <div class="odx-tooltip__title">{{ tooltip.data.entityName }}</div>
-        <div class="odx-tooltip__subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
+        <div class="odx-tooltip__subtitle">{{ tooltip.data.weekName }} </div>
       </div>
       <div class="odx-tooltip__main">{{ tooltip.data.mainValue }}</div>
       <div class="odx-tooltip__details">
@@ -281,6 +343,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -293,7 +356,7 @@ const salesData = ref(null)
 const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
-const tooltipEnabled = ref(false)
+const tooltipEnabled = ref(true)
 const formatter = ref(false)
 const KPITopStores = ref(5)
 const isOpen = ref(false)
@@ -329,7 +392,7 @@ const loadData = async () => {
     salesData.value = salesDataResult
     targetsData.value = targetsDataResult
     regions.value = Object.values(salesDataResult.regions)
-    
+
     initializeVisibility()
     processData()
   } catch (err) {
@@ -346,197 +409,197 @@ const togglePanel = () => { isOpen.value = !isOpen.value }
 const closePanel = () => { isOpen.value = false }
 
 const processedData = computed(() => {
-    if (!salesData.value || !regions.value || !weeks.value) return null
+  if (!salesData.value || !regions.value || !weeks.value) return null
 
-    const allStores = []
-    regions.value.forEach(region => {
-        if (region.stores) {
-            region.stores.forEach(store => {
-                allStores.push({
-                    ...store,
-                    regionId: region.id,
-                    regionName: region.name,
-                    regionColor: region.color
-                })
-            })
-        }
+  const allStores = []
+  regions.value.forEach(region => {
+    if (region.stores) {
+      region.stores.forEach(store => {
+        allStores.push({
+          ...store,
+          regionId: region.id,
+          regionName: region.name,
+          regionColor: region.color
+        })
+      })
+    }
+  })
+
+  const totalStores = allStores.length
+  const totalRegions = regions.value.length
+  const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
+  const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
+
+
+
+  let totalPlan = 0
+  let totalFact = 0
+  allStores.forEach(store => {
+    weeks.value.forEach(week => {
+      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+      if (weekData) {
+        totalPlan += weekData.plan || 0
+        totalFact += weekData.fact || 0
+      }
     })
+  })
+  const planExecutionPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
 
-    const totalStores = allStores.length
-    const totalRegions = regions.value.length
-    const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
-    const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
+  const regionsWithScores = regions.value.map(region => {
+    let regionScore = 0
+    if (region.stores) {
+      region.stores.forEach(store => {
+        regionScore += store.overallTotalScore || 0
+      })
+    }
+    return { ...region, score: regionScore }
+  }).sort((a, b) => b.score - a.score).slice(0, 5)
 
+  const topStores = [...allStores]
+    .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
+    .slice(0, KPITopStores.value)
 
+  const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.7).length
+  const belowPlanStores = allStores.filter(store => {
+    let storePlan = 0
+    let storeFact = 0
+    weeks.value.forEach(week => {
+      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+      if (weekData) {
+        storePlan += weekData.plan || 0
+        storeFact += weekData.fact || 0
+      }
+    })
+    return storePlan > 0 && (storeFact / storePlan) < 0.95
+  }).length
 
-    let totalPlan = 0
-    let totalFact = 0
+  const topIssues = []
+  let summ = 0;
+  if (targetsData.value.targetTree) {
+    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+      let totalValue = 0
+      let affectedStores = 0
+      summ += target.maxScore
+      allStores.forEach(store => {
+        let storeValue = 0
+        weeks.value.forEach(week => {
+          const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+          if (weekData && weekData[key]) {
+            storeValue += weekData[key] || 0
+          }
+        })
+        if (storeValue > 0) {
+          totalValue += storeValue
+          affectedStores++
+        }
+      })
+
+      if (totalValue > 0) {
+        topIssues.push({
+          type: key,
+          name: target.name,
+          totalValue,
+          affectedStores
+        })
+      }
+    })
+  }
+  planScore.value = summ
+  topIssues.sort((a, b) => b.totalValue - a.totalValue).splice(3)
+
+  const weeklyComparison = weeks.value.map(week => {
+    let weekTotalScore = 0
+    let weekTotalPlan = 0
+    let weekTotalFact = 0
+    let storeCount = 0
+
     allStores.forEach(store => {
-        weeks.value.forEach(week => {
-            const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-            if (weekData) {
-                totalPlan += weekData.plan || 0
-                totalFact += weekData.fact || 0
-            }
-        })
+      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+      if (weekData) {
+        weekTotalScore += weekData.totalScore || 0
+        weekTotalPlan += weekData.plan || 0
+        weekTotalFact += weekData.fact || 0
+        storeCount++
+      }
     })
-    const planExecutionPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
-
-    const regionsWithScores = regions.value.map(region => {
-        let regionScore = 0
-        if (region.stores) {
-            region.stores.forEach(store => {
-                regionScore += store.overallTotalScore || 0
-            })
-        }
-        return { ...region, score: regionScore }
-    }).sort((a, b) => b.score - a.score).slice(0, 5)
-
-    const topStores = [...allStores]
-        .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
-        .slice(0, KPITopStores.value)
-
-    const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.7).length
-    const belowPlanStores = allStores.filter(store => {
-        let storePlan = 0
-        let storeFact = 0
-        weeks.value.forEach(week => {
-            const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-            if (weekData) {
-                storePlan += weekData.plan || 0
-                storeFact += weekData.fact || 0
-            }
-        })
-        return storePlan > 0 && (storeFact / storePlan) < 0.95
-    }).length
-
-    const topIssues = []
-    let summ = 0;
-    if (targetsData.value.targetTree) {
-        Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-            let totalValue = 0
-            let affectedStores = 0
-            summ += target.maxScore
-            allStores.forEach(store => {
-                let storeValue = 0
-                weeks.value.forEach(week => {
-                    const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-                    if (weekData && weekData[key]) {
-                        storeValue += weekData[key] || 0
-                    }
-                })
-                if (storeValue > 0) {
-                    totalValue += storeValue
-                    affectedStores++
-                }
-            })
-
-            if (totalValue > 0) {
-                topIssues.push({
-                    type: key,
-                    name: target.name,
-                    totalValue,
-                    affectedStores
-                })
-            }
-        })
-    }
-    planScore.value = summ
-    topIssues.sort((a, b) => b.totalValue - a.totalValue).splice(3)
-
-    const weeklyComparison = weeks.value.map(week => {
-        let weekTotalScore = 0
-        let weekTotalPlan = 0
-        let weekTotalFact = 0
-        let storeCount = 0
-
-        allStores.forEach(store => {
-            const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-            if (weekData) {
-                weekTotalScore += weekData.totalScore || 0
-                weekTotalPlan += weekData.plan || 0
-                weekTotalFact += weekData.fact || 0
-                storeCount++
-            }
-        })
-
-        return {
-            ...week,
-            totalScore: weekTotalScore,
-            planExecution: weekTotalPlan > 0 ? Math.round((weekTotalFact / weekTotalPlan) * 100) : 0,
-            averageFact: storeCount > 0 ? Math.round(weekTotalFact / storeCount) : 0
-        }
-    })
-
-    let weeklyTrend = null
-    if (weeklyComparison.length >= 2) {
-        const latestWeek = weeklyComparison[0]
-        const previousWeek = weeklyComparison[1]
-        const scoreDiff = latestWeek.totalScore - previousWeek.totalScore
-        const planDiff = latestWeek.planExecution - previousWeek.planExecution
-
-        if (scoreDiff > 0 && planDiff > 0) {
-            weeklyTrend = { type: 'positive', icon: '📈', text: 'Положительная динамика' }
-        } else if (scoreDiff < 0 || planDiff < 0) {
-            weeklyTrend = { type: 'negative', icon: '📉', text: 'Отрицательная динамика' }
-        } else {
-            weeklyTrend = { type: 'stable', icon: '➡️', text: 'Стабильные показатели' }
-        }
-    }
-
-    const targetsOverview = []
-    if (targetsData.value.targetTree) {
-        Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-            let totalScore = 0
-            let successfulStores = 0
-            let problemStores = 0
-
-            allStores.forEach(store => {
-                let storeScore = 0
-                weeks.value.forEach(week => {
-                    const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-                    if (weekData && weekData[`${key}_score`]) {
-                        storeScore += weekData[`${key}_score`] || 0
-                    }
-                })
-
-                totalScore += storeScore
-                const averageStoreScore = weeks.value.length > 0 ? storeScore / weeks.value.length : 0
-
-                if (averageStoreScore >= target.maxScore * 0.8) {
-                    successfulStores++
-                } else if (averageStoreScore < target.maxScore * 0.5) {
-                    problemStores++
-                }
-            })
-
-            const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
-
-            targetsOverview.push({
-                key,
-                name: target.name,
-                maxScore: target.maxScore,
-                averageScore,
-                successfulStores,
-                problemStores
-            })
-        })
-    }
 
     return {
-        totalStores,
-        totalRegions,
-        averageScore,
-        planExecutionPercent,
-        topRegions: regionsWithScores,
-        topStores,
-        problemStores,
-        belowPlanStores,
-        topIssues,
-        weeklyComparison,
-        weeklyTrend,
-        targetsOverview,
+      ...week,
+      totalScore: weekTotalScore,
+      planExecution: weekTotalPlan > 0 ? Math.round((weekTotalFact / weekTotalPlan) * 100) : 0,
+      averageFact: storeCount > 0 ? Math.round(weekTotalFact / storeCount) : 0
     }
+  })
+
+  let weeklyTrend = null
+  if (weeklyComparison.length >= 2) {
+    const latestWeek = weeklyComparison[0]
+    const previousWeek = weeklyComparison[1]
+    const scoreDiff = latestWeek.totalScore - previousWeek.totalScore
+    const planDiff = latestWeek.planExecution - previousWeek.planExecution
+
+    if (scoreDiff > 0 && planDiff > 0) {
+      weeklyTrend = { type: 'positive', icon: '📈', text: 'Позитивна динаміка' }
+    } else if (scoreDiff < 0 || planDiff < 0) {
+      weeklyTrend = { type: 'negative', icon: '📉', text: 'Негативна динаміка' }
+    } else {
+      weeklyTrend = { type: 'stable', icon: '➡️', text: 'Стабільні показники' }
+    }
+  }
+
+  const targetsOverview = []
+  if (targetsData.value.targetTree) {
+    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+      let totalScore = 0
+      let successfulStores = 0
+      let problemStores = 0
+
+      allStores.forEach(store => {
+        let storeScore = 0
+        weeks.value.forEach(week => {
+          const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+          if (weekData && weekData[`${key}_score`]) {
+            storeScore += weekData[`${key}_score`] || 0
+          }
+        })
+
+        totalScore += storeScore
+        const averageStoreScore = weeks.value.length > 0 ? storeScore / weeks.value.length : 0
+
+        if (averageStoreScore >= target.maxScore * 0.8) {
+          successfulStores++
+        } else if (averageStoreScore < target.maxScore * 0.5) {
+          problemStores++
+        }
+      })
+
+      const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
+
+      targetsOverview.push({
+        key,
+        name: target.name,
+        maxScore: target.maxScore,
+        averageScore,
+        successfulStores,
+        problemStores
+      })
+    })
+  }
+
+  return {
+    totalStores,
+    totalRegions,
+    averageScore,
+    planExecutionPercent,
+    topRegions: regionsWithScores,
+    topStores,
+    problemStores,
+    belowPlanStores,
+    topIssues,
+    weeklyComparison,
+    weeklyTrend,
+    targetsOverview,
+  }
 })
 
 
@@ -624,23 +687,87 @@ const getTooltipData = (entity, weekId, indicator, type) => {
 
   const week = weeks.value.find(w => w.id === weekId)
   const indicatorConfig = availableIndicators.value.find(ind => ind.key === indicator)
+  const currentGroup = indicatorGroups.value.find(group =>
+    group.indicators.some(ind => ind.key === indicator)
+  )
 
   const result = {
     entityName: entity.name,
-    weekName: week?.name || `Неделя ${weekId}`,
+    weekName: week?.name || `Неділя ${weekId}`,
+    groupName: currentGroup?.label || 'Показники',
     indicator: indicatorConfig?.label || indicator,
     mainValue: getDisplayValue(weekData, indicator),
     details: []
   }
 
-  if (weekData.plan !== undefined) {
-    result.details.push({ label: 'План', value: formatNumber(weekData.plan || 0) })
+  if (currentGroup) {
+    if (currentGroup.key === 'score') {
+      result.details.push({
+        label: 'Загальний бал',
+        value: weekData.totalScore || 0
+      })
+    } else if (currentGroup.key === 'turnover') {
+      result.details.push(
+        { label: 'План', value: formatNumber(weekData.plan || 0) },
+        {
+          label: 'Факт',
+          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% от плана)`
+        },
+        { label: 'Процент обороту', value: `${weekData.percent || 0}%` }
+      )
+
+      if (weekData.turnover_score !== undefined) {
+        const maxScore = targetsData.value?.targetTree?.turnover?.maxScore || 100
+        result.details.push({
+          label: `Бал за оборот (з ${maxScore})`,
+          value: weekData.turnover_score || 0
+        })
+      }
+    } else {
+      const groupKey = currentGroup.key
+      const target = targetsData.value?.targetTree?.[groupKey]
+
+      if (target) {
+        const value = weekData[groupKey] || 0
+        const percent = weekData[`${groupKey}_percent`] || 0
+        const score = weekData[`${groupKey}_score`] || 0
+        const targetValue = weekData[`${groupKey}_target`] || 0
+        const factValue = weekData.fact || 0
+        const planValue = factValue > 0 ? targetValue : 0
+
+        result.details.push(
+          { label: `${target.name} (факт)`, value: formatNumber(value) },
+          {
+            label: `План, коеф. %`,
+            value: `  (${((targetValue / factValue) * 100).toFixed(2)}% від факту)`
+          },
+          {
+            label: `Розрахунковий план. грн`,
+            value: ` ${formatNumber(planValue)} `
+          },
+          {
+            label: 'Факт обороту →',
+            value: `${formatNumber(factValue)}`
+          },
+          { label: `Процент виконання`, value: `${percent}%` },
+          {
+            label: `Бал (з ${target.maxScore})`,
+            value: `${score} / ${target.maxScore}`
+          }
+        )
+      }
+    }
   }
-  if (weekData.fact !== undefined) {
-    result.details.push({ label: 'Факт', value: formatNumber(weekData.fact || 0) })
-  }
-  if (weekData.percent !== undefined) {
-    result.details.push({ label: 'Процент', value: `${weekData.percent || 0}%` })
+
+  if (weekData.columnRanks && weekData.columnRanks[indicator]) {
+    const totalItems = type === 'store'
+      ? regions.value?.reduce((total, region) => total + (region.stores?.length || 0), 0) || 0
+      : regions.value?.length || 0
+
+    result.details.push({
+      label: 'Ранг по показнику',
+      value: `${weekData.columnRanks[indicator]} з ${totalItems}`
+    })
   }
 
   return result
@@ -690,7 +817,7 @@ const darkenColor = (color, percent = 20) => {
 const headerStyle = computed(() => ({
   backgroundColor: selectedColor.value,
   color: '#fff',
-  borderCollapse: 'separate',
+  // borderCollapse: 'separate',
   borderSpacing: 0
 }))
 
@@ -965,117 +1092,117 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 }
 
 const calculateRegionMetrics = () => {
-    if (!regions.value || !salesData.value || !targetsData.value) return
-    const { targetTree, storeTargets } = targetsData.value
-    salesData.value.weeks.forEach(week => {
-        regions.value.forEach(region => {
-            if (!region.stores) return
-            if (!region.weeklyData) {
-                region.weeklyData = []
-            }
+  if (!regions.value || !salesData.value || !targetsData.value) return
+  const { targetTree, storeTargets } = targetsData.value
+  salesData.value.weeks.forEach(week => {
+    regions.value.forEach(region => {
+      if (!region.stores) return
+      if (!region.weeklyData) {
+        region.weeklyData = []
+      }
 
-            let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
-            if (!regionWeekData) {
-                regionWeekData = { weekId: week.id }
-                region.weeklyData.push(regionWeekData)
-            }
-            let totalPlan = 0
-            let totalFact = 0
-            region.stores.forEach(store => {
-                const storeWeekData = getStoreWeekData(store, week.id)
-                totalPlan += storeWeekData.plan || 0
-                totalFact += storeWeekData.fact || 0
-            })
+      let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
+      if (!regionWeekData) {
+        regionWeekData = { weekId: week.id }
+        region.weeklyData.push(regionWeekData)
+      }
+      let totalPlan = 0
+      let totalFact = 0
+      region.stores.forEach(store => {
+        const storeWeekData = getStoreWeekData(store, week.id)
+        totalPlan += storeWeekData.plan || 0
+        totalFact += storeWeekData.fact || 0
+      })
 
-            regionWeekData.plan = totalPlan
-            regionWeekData.fact = totalFact
-            regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
+      regionWeekData.plan = totalPlan
+      regionWeekData.fact = totalFact
+      regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
 
-            Object.entries(targetTree).forEach(([key, targetConfig]) => {
-                if (key === 'turnover') return
-                let totalValue = 0
-                let totalTarget = 0
-                region.stores.forEach(store => {
-                    const storeWeekData = getStoreWeekData(store, week.id)
-                    const storeTargetConfig = storeTargets[store.id] || {}
-                    const targetPercent = storeTargetConfig[key] || 0
+      Object.entries(targetTree).forEach(([key, targetConfig]) => {
+        if (key === 'turnover') return
+        let totalValue = 0
+        let totalTarget = 0
+        region.stores.forEach(store => {
+          const storeWeekData = getStoreWeekData(store, week.id)
+          const storeTargetConfig = storeTargets[store.id] || {}
+          const targetPercent = storeTargetConfig[key] || 0
 
-                    totalValue += storeWeekData[key] || 0
-                    totalTarget += targetPercent * (storeWeekData.fact || 0)
-                })
-
-                regionWeekData[key] = totalValue
-
-                let achievementPercent = 0
-                if (totalTarget > 0) {
-                    if (targetConfig.type === 'negative') {
-                        achievementPercent = Math.min((totalTarget / totalValue) * 100, 200)
-                    } else {
-                        achievementPercent = (totalValue / totalTarget) * 100
-                    }
-                }
-
-                regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
-                regionWeekData[`${key}_target`] = totalTarget
-            })
+          totalValue += storeWeekData[key] || 0
+          totalTarget += targetPercent * (storeWeekData.fact || 0)
         })
 
-        Object.entries(targetTree).forEach(([key, targetConfig]) => {
-            if (key === 'turnover') return
-            const maxPercent = Math.max(...regions.value.map(region => {
-                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-                return regionWeekData?.[`${key}_percent`] || 0
-            }))
+        regionWeekData[key] = totalValue
 
-            regions.value.forEach(region => {
-                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-                if (!regionWeekData) return
-
-                const achievementPercent = regionWeekData[`${key}_percent`] || 0
-                let score = 0
-                if (maxPercent > 0) {
-                    score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
-                }
-                regionWeekData[`${key}_score`] = score
-            })
-        })
-
-        if (targetTree.turnover) {
-            const maxTurnoverPercent = Math.max(...regions.value.map(region => {
-                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-                return regionWeekData?.percent || 0
-            }))
-
-            regions.value.forEach(region => {
-                const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-                if (!regionWeekData) return
-
-                const turnoverPercent = regionWeekData.percent || 0
-                let turnoverScore = 0
-                if (maxTurnoverPercent > 0) {
-                    turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
-                }
-                regionWeekData.turnover_score = turnoverScore
-            })
+        let achievementPercent = 0
+        if (totalTarget > 0) {
+          if (targetConfig.type === 'negative') {
+            achievementPercent = Math.min((totalTarget / totalValue) * 100, 200)
+          } else {
+            achievementPercent = (totalValue / totalTarget) * 100
+          }
         }
 
-        regions.value.forEach(region => {
-            const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-            if (!regionWeekData) return
-
-            let totalScore = 0
-
-            Object.entries(targetTree).forEach(([key, targetConfig]) => {
-                if (key === 'turnover') {
-                    totalScore += regionWeekData.turnover_score || 0
-                } else {
-                    totalScore += regionWeekData[`${key}_score`] || 0
-                }
-            })
-
-            regionWeekData.totalScore = totalScore
-        })
+        regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
+        regionWeekData[`${key}_target`] = totalTarget
+      })
     })
+
+    Object.entries(targetTree).forEach(([key, targetConfig]) => {
+      if (key === 'turnover') return
+      const maxPercent = Math.max(...regions.value.map(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        return regionWeekData?.[`${key}_percent`] || 0
+      }))
+
+      regions.value.forEach(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        if (!regionWeekData) return
+
+        const achievementPercent = regionWeekData[`${key}_percent`] || 0
+        let score = 0
+        if (maxPercent > 0) {
+          score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
+        }
+        regionWeekData[`${key}_score`] = score
+      })
+    })
+
+    if (targetTree.turnover) {
+      const maxTurnoverPercent = Math.max(...regions.value.map(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        return regionWeekData?.percent || 0
+      }))
+
+      regions.value.forEach(region => {
+        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+        if (!regionWeekData) return
+
+        const turnoverPercent = regionWeekData.percent || 0
+        let turnoverScore = 0
+        if (maxTurnoverPercent > 0) {
+          turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+        }
+        regionWeekData.turnover_score = turnoverScore
+      })
+    }
+
+    regions.value.forEach(region => {
+      const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+      if (!regionWeekData) return
+
+      let totalScore = 0
+
+      Object.entries(targetTree).forEach(([key, targetConfig]) => {
+        if (key === 'turnover') {
+          totalScore += regionWeekData.turnover_score || 0
+        } else {
+          totalScore += regionWeekData[`${key}_score`] || 0
+        }
+      })
+
+      regionWeekData.totalScore = totalScore
+    })
+  })
 }
 
 const calculateOverallScores = (allStores) => {
@@ -1184,7 +1311,7 @@ const sortedRegions = computed(() => {
     region.overallTotalScore = totalScore
   })
 
-  
+
 
   sorted.sort((a, b) => {
     let aValue = 0
@@ -1655,13 +1782,15 @@ onMounted(() => {
     margin-bottom: 16px !important;
 
     &__refresh {
-      padding: 8px 16px !important;
+      display: flex;
+      align-items: center !important;
+      padding: 6px 10px !important;
       border: 1px solid var(--odx-border) !important;
-      background: var(--odx-surface) !important;
+      // background: var(--odx-primary) !important;
       border-radius: 6px !important;
       cursor: pointer !important;
       font-size: 14px !important;
-      font-weight: 500 !important;
+      font-weight: 400 !important;
       transition: all 0.2s ease !important;
 
       &:hover:not(:disabled) {
@@ -1728,16 +1857,17 @@ onMounted(() => {
     // background: var(--odx-surface) !important;
     border-radius: 12px !important;
     border: 1px solid var(--odx-border) !important;
-    overflow: hidden !important;
+    // overflow: hidden !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   }
 
   .odx-table {
     width: 100% !important;
-    border-collapse: separate !important;
+    // border-collapse: separate !important;
     border-spacing: 0 !important;
 
     &__header {
+
       position: sticky !important;
       top: 0 !important;
       z-index: 10 !important;
@@ -1748,7 +1878,7 @@ onMounted(() => {
     &__row {
       display: flex !important;
       width: 100% !important;
-      border-bottom: 1px solid var(--odx-border) !important;
+      // border-bottom: 1px solid var(--odx-border) !important;
       // transition: all 0.15s ease !important;
       will-change: transform !important;
       transition: all .2s ease;
@@ -1842,6 +1972,7 @@ onMounted(() => {
         font-size: 15px !important;
         font-weight: 700 !important;
         // border-bottom: 2px solid var(--odx-info) !important;
+        border-bottom: 1px solid var(--odx-border) !important;
       }
 
       &--group-header {
@@ -1906,12 +2037,12 @@ onMounted(() => {
 
       &--formatted-top {
         background-color: #d0ffea !important;
-        color: white !important;
+        // color: white !important;
       }
 
       &--formatted-excellent {
         background-color: #ebfff6 !important;
-        color: #2e7d32 !important;
+        // color: #2e7d32 !important;
       }
 
       &--formatted-good {
@@ -1921,12 +2052,12 @@ onMounted(() => {
 
       &--formatted-average {
         background-color: #fee7c5 !important;
-        color: #ea580c !important;
+        // color: #ea580c !important;
       }
 
       &--formatted-poor {
         background-color: #ffdada !important;
-        color: white !important;
+        // color: white !important;
       }
     }
 
@@ -1935,7 +2066,7 @@ onMounted(() => {
       width: 100% !important;
       overflow: hidden !important;
       transition: all .2s ease;
-        transform-origin: center;
+      transform-origin: center;
     }
 
     &__body {
@@ -1948,6 +2079,7 @@ onMounted(() => {
     width: 100% !important;
     border-right: 2px solid var(--odx-border) !important;
     overflow: hidden;
+    border-bottom: 1px solid var(--odx-border) !important;
 
     &__name {
       font-weight: 600 !important;
@@ -1983,22 +2115,23 @@ onMounted(() => {
   }
 
   .odx-sort-arrow {
+    margin-left: 5px;
     font-size: 10px !important;
     opacity: 0.6 !important;
     transition: all 0.2s ease !important;
 
     &--active {
       opacity: 1 !important;
-      color: var(--odx-primary) !important;
+      color: black !important;
       font-weight: bold !important;
     }
 
     &--desc {
-      color: var(--odx-danger) !important;
+      color: black !important;
     }
 
     &--asc {
-      color: var(--odx-success) !important;
+      color: black !important;
     }
 
     &--inactive {
@@ -2034,6 +2167,12 @@ onMounted(() => {
     }
   }
 
+  .odx-store-info {
+    &__name {
+      font-weight: 400 !important;
+    }
+  }
+
   .odx-separator {
     height: 16px !important;
     background: var(--odx-neutral) !important;
@@ -2050,7 +2189,7 @@ onMounted(() => {
       width: 100% !important;
       align-items: center !important;
       transition: all .2s ease;
-        transform-origin: center;
+      transform-origin: center;
     }
 
     &__static {
@@ -2079,7 +2218,7 @@ onMounted(() => {
   }
 
   .odx-sort-control {
-    padding: 4px !important;
+    // padding: 4px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -2088,7 +2227,7 @@ onMounted(() => {
     transition: all 0.2s ease !important;
     border: 1px solid transparent !important;
     transition: all .2s ease;
-        transform-origin: center;
+    transform-origin: center;
 
     &:hover {
       background: var(--odx-surface-hover) !important;
@@ -2097,14 +2236,69 @@ onMounted(() => {
 
     &--desc,
     &--asc {
-      background: var(--odx-primary) !important;
-      color: white !important;
-      border-color: var(--odx-primary) !important;
+      // background: var(--odx-primary) !important;
+      color: black !important;
+      // border-color: var(--odx-primary) !important;
     }
 
     &--inactive {
       opacity: 0.5 !important;
     }
+  }
+
+  .tooltip-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+  }
+
+  .tooltip-toggle:hover {
+    color: var(--text-primary);
+  }
+
+  .tooltip-toggle input[type="checkbox"] {
+    display: none;
+  }
+
+  .toggle-slider {
+    width: 36px;
+    height: 20px;
+    background: var(--border-color);
+    border-radius: 20px;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider {
+    background: red
+  }
+
+  .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider::after {
+    transform: translateX(16px);
+  }
+
+  .toggle-label {
+    user-select: none;
+    white-space: nowrap;
+    color: silver;
   }
 
   .odx-tooltip {
@@ -2122,6 +2316,7 @@ onMounted(() => {
     animation: odx-tooltipFadeIn 0.2s ease-out !important;
 
     &__header {
+      // display: flex;
       padding-bottom: 8px !important;
       border-bottom: 1px solid var(--odx-border) !important;
       margin-bottom: 8px !important;
@@ -2195,259 +2390,552 @@ onMounted(() => {
     }
   }
 
-  .odx-kpi {
-    &__toggle {
-      position: fixed !important;
-      top: 50% !important;
-      right: 0px !important;
-      z-index: 1000 !important;
-      // background: white !important;
-      border: none !important;
-      border-radius: 6px !important;
-      cursor: pointer !important;
-      transition: all 0.3s ease !important;
-      // padding: 8px !important;
-      
-      &:hover {
-        background: silver !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-        transform: translateY(-1px) !important;
+  .kpi {
+
+    .comp {
+      width: 60px;
+      height: 60px;
+      border: #2c3e50 1px solid;
+      border-radius: 6px;
+    }
+
+    .kpi-toggle-btn {
+      position: fixed;
+      padding: 1px;
+      top: 50%;
+      right: 10px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      // gap: 8px;
+      background: white;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      // box-shadow: var(--shadow-lg);
+      transition: all 0.3s ease;
+    }
+
+    .kpi-toggle-btn:hover {
+      background: #2c3e50;
+      // transform: translateY(-1px);
+      // box-shadow: var(--shadow-xl);
+    }
+
+    .kpi-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1001;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+      border-left: var(--shadow-md)
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
       }
     }
 
-    &__icon {
-      width: 60px !important;
-      height: 60px !important;
-      border: 1px solid #2c3e50 !important;
-      border-radius: 6px !important;
+    .kpi-sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 420px;
+      height: 100vh;
+      background: white;
+      box-shadow: var(--shadow-xl);
+      z-index: 1002;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 15px 0px #818181;
     }
 
-    &__overlay {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      z-index: 1001 !important;
-      background: rgba(0, 0, 0, 0.3) !important;
-      backdrop-filter: blur(4px) !important;
+    .kpi-sidebar--open {
+      transform: translateX(0);
     }
 
-    &__sidebar {
-      position: fixed !important;
-      top: 0 !important;
-      right: -420px !important;
-      width: 420px !important;
-      height: 100vh !important;
-      background: white !important;
-      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1) !important;
-      z-index: 1002 !important;
-      transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
-      display: flex !important;
-      flex-direction: column !important;
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 2px solid var(--border-color);
+      background: var(--neutral-light);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-      &--open {
-        right: 0 !important;
+    .kpi-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--border-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: var(--danger-light);
+      color: var(--danger-color);
+      transform: scale(1.1);
+    }
+
+    .kpi-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      scroll-behavior: smooth;
+    }
+
+    .kpi-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .kpi-content::-webkit-scrollbar-track {
+      background: var(--border-light);
+    }
+
+    .kpi-content::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .kpi-section {
+      margin-bottom: 20px;
+      animation: slideUp 0.6s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
-    &__header {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: space-between !important;
-      padding: 20px 24px !important;
-      border-bottom: 2px solid var(--odx-border) !important;
-      background: var(--odx-neutral) !important;
+    .kpi-section h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-      h2 {
-        margin: 0 !important;
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        color: var(--odx-text) !important;
+    .kpi-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 5px;
+    }
+
+    .kpi-card {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-card.primary {
+      background: var(--info-light);
+      border-color: var(--info-color);
+    }
+
+    .kpi-card.success {
+      background: var(--success-light);
+      border-color: var(--odx-success);
+    }
+
+    .kpi-card.warning {
+      background: var(--warning-light);
+      border-color: var(--odx-warning);
+    }
+
+    .kpi-card.danger {
+      background: var(--danger-light);
+      border-color: var(--odx-danger);
+    }
+
+    .kpi-card.info {
+      background: var(--neutral-light);
+      border-color: var(--border-color);
+    }
+
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .kpi-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .kpi-list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: var(--surface-hover);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      transition: all 0.2s ease;
+    }
+
+    .kpi-list-item:hover {
+      background: var(--surface);
+      border-color: var(--border-color);
+      transform: translateX(4px);
+    }
+
+    .kpi-list-item.rank-1 {
+      background: var(--success-light);
+      border-color: var(--success-color);
+    }
+
+    .kpi-list-item.rank-2 {
+      background: var(--warning-light);
+      border-color: var(--warning-color);
+    }
+
+    .kpi-list-item.rank-3 {
+      background: var(--info-light);
+      border-color: var(--info-color);
+    }
+
+    .rank-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: white;
+      background: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .rank-1 .rank-badge {
+      background: var(--success-color);
+    }
+
+    .rank-2 .rank-badge {
+      background: var(--warning-color);
+    }
+
+    .rank-3 .rank-badge {
+      background: var(--info-color);
+    }
+
+    .region-info,
+    .store-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .region-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid white;
+      flex-shrink: 0;
+    }
+
+    .store-region-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .region-name,
+    .store-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .store-region {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .region-score,
+    .store-score {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .problem-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .problem-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--danger-light);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--danger-color);
+    }
+
+    .issue-type {
+      font-weight: 600;
+      color: var(--danger-color);
+      font-size: 13px;
+    }
+
+    .issue-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .issue-value {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .issue-stores {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .week-comparison {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .week-stats {
+      padding: 16px;
+      background: var(--surface-hover);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .week-header {
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .week-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .week-period {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .week-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .metric-value {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    .trend-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: var(--neutral-light);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .trend-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .trend-value {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .trend-value.positive {
+      color: var(--success-color);
+    }
+
+    .trend-value.negative {
+      color: var(--danger-color);
+    }
+
+    .trend-value.stable {
+      color: var(--warning-color);
+    }
+
+    .targets-overview {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .target-item {
+      padding: 16px;
+      background: var(--surface-hover);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+    }
+
+    .target-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .target-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .target-score {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 14px;
+    }
+
+    .target-progress {
+      height: 8px;
+      background: var(--border-light);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+      border-radius: 4px;
+      transition: width 0.8s ease;
+    }
+
+    .target-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .success-stores {
+      color: var(--success-color);
+    }
+
+    .problem-stores {
+      color: var(--danger-color);
+    }
+
+    @media (max-width: 1024px) {
+      .kpi-sidebar {
+        width: 360px;
       }
     }
 
-    &__close {
-      width: 32px !important;
-      height: 32px !important;
-      border: none !important;
-      background: var(--odx-border) !important;
-      border-radius: 50% !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      color: var(--odx-text-muted) !important;
-      font-size: 16px !important;
-      transition: all 0.2s ease !important;
-
-      &:hover {
-        background: #fef2f2 !important;
-        color: var(--odx-danger) !important;
-        transform: scale(1.1) !important;
-      }
-    }
-
-    &__content {
-      flex: 1 !important;
-      overflow-y: auto !important;
-      padding: 24px !important;
-
-      &::-webkit-scrollbar {
-        width: 6px !important;
+    @media (max-width: 768px) {
+      .kpi-sidebar {
+        width: 100vw;
       }
 
-      &::-webkit-scrollbar-track {
-        background: var(--odx-border) !important;
+      .kpi-content {
+        padding: 16px;
       }
 
-      &::-webkit-scrollbar-thumb {
-        background: var(--odx-text-muted) !important;
-        border-radius: 3px !important;
-      }
-    }
-
-    &__section {
-      margin-bottom: 32px !important;
-
-      h3 {
-        margin: 0 0 16px 0 !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        color: var(--odx-text) !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-      }
-    }
-
-    &__cards {
-      display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: 12px !important;
-      margin-bottom: 16px !important;
-    }
-
-    &__card {
-      padding: 16px !important;
-      border-radius: 8px !important;
-      text-align: center !important;
-      border: 2px solid transparent !important;
-      transition: all 0.3s ease !important;
-
-      &:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+      .kpi-cards {
+        grid-template-columns: 1fr;
+        padding: 5px;
       }
 
-      &--primary {
-        background: #eef2ff !important;
-        border-color: var(--odx-info) !important;
+      .kpi-toggle-btn {
+        top: 10px;
+        right: 10px;
+        // padding: 10px 14px;
+        font-size: 13px;
       }
-
-      &--success {
-        background: #ecfdf5 !important;
-        border-color: var(--odx-success) !important;
-      }
-
-      &--warning {
-        background: #fffbeb !important;
-        border-color: var(--odx-warning) !important;
-      }
-
-      &--danger {
-        background: #fef2f2 !important;
-        border-color: var(--odx-danger) !important;
-      }
-
-      &--info {
-        background: var(--odx-neutral) !important;
-        border-color: var(--odx-border) !important;
-      }
-    }
-
-    &__value {
-      font-size: 24px !important;
-      font-weight: 700 !important;
-      color: var(--odx-text) !important;
-      margin-bottom: 4px !important;
-    }
-
-    &__label {
-      font-size: 12px !important;
-      font-weight: 500 !important;
-      color: var(--odx-text-muted) !important;
-    }
-
-    &__list {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 8px !important;
-    }
-
-    &__item {
-      display: flex !important;
-      align-items: center !important;
-      gap: 12px !important;
-      padding: 12px 16px !important;
-      background: var(--odx-surface-hover) !important;
-      border-radius: 8px !important;
-      border: 1px solid var(--odx-border) !important;
-      transition: all 0.2s ease !important;
-
-      &:hover {
-        background: var(--odx-surface) !important;
-        border-color: var(--odx-text-muted) !important;
-        transform: translateX(4px) !important;
-      }
-
-      &--rank-1 {
-        background: #ecfdf5 !important;
-        border-color: var(--odx-success) !important;
-      }
-
-      &--rank-2 {
-        background: #fffbeb !important;
-        border-color: var(--odx-warning) !important;
-      }
-
-      &--rank-3 {
-        background: #eef2ff !important;
-        border-color: var(--odx-info) !important;
-      }
-    }
-
-    &__rank {
-      width: 24px !important;
-      height: 24px !important;
-      border-radius: 50% !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      font-weight: 700 !important;
-      font-size: 12px !important;
-      color: white !important;
-      background: var(--odx-text-muted) !important;
-      flex-shrink: 0 !important;
-    }
-
-    &__item--rank-1 &__rank {
-      background: var(--odx-success) !important;
-    }
-
-    &__item--rank-2 &__rank {
-      background: var(--odx-warning) !important;
-    }
-
-    &__item--rank-3 &__rank {
-      background: var(--odx-info) !important;
-    }
-
-    &__score {
-      font-weight: 700 !important;
-      color: var(--odx-primary) !important;
-      font-size: 14px !important;
-      flex-shrink: 0 !important;
     }
   }
 
@@ -2481,7 +2969,7 @@ onMounted(() => {
 }
 
 * {
-  overflow: hidden;
+  // overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -2489,16 +2977,16 @@ onMounted(() => {
 
 .odx-table__row-enter-active,
 .odx-table__row-leave-active {
-    transition: all 0.4s ease;
+  transition: all 0.4s ease;
 }
 
 .odx-table__row-enter-from,
 .odx-table__row-leave-to {
-    opacity: 0;
-    transform: translateX(20px);
+  opacity: 0;
+  transform: translateX(20px);
 }
 
 .odx-table__row-move {
-    transition: transform 0.4s ease;
+  transition: transform 0.4s ease;
 }
 </style>
