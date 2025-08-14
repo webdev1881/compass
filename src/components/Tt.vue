@@ -350,9 +350,9 @@
         <!-- Тултип -->
         <div v-if="tooltip.visible && tooltip.data" ref="tooltipRef" class="custom-tooltip" :style="{
             left: tooltip.x + 'px',
-      top: tooltip.y + 'px',
-      opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
-    }">
+            top: tooltip.y + 'px',
+            opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
+            }">
             <div class="tooltip-header">
                 <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
                 <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
@@ -2586,7 +2586,7 @@ onMounted(() => {
     }
 
     // .table-row-move {
-        // transition: transform 0.4s ease;
+    // transition: transform 0.4s ease;
     // }
 
     .table-separator {
@@ -3852,21 +3852,17 @@ onMounted(() => {
 }
 
 .percento-good {
-  background-color: #fff3e1;
-  color: white !important;
+    background-color: #fff3e1;
+    color: white !important;
 }
 
 .percento-average {
-  background-color: #fee7c5;
-  color: white !important;
+    background-color: #fee7c5;
+    color: white !important;
 }
 
 .percento-poor {
-  background-color: #ffdada;
-  color: white !important;
+    background-color: #ffdada;
+    color: white !important;
 }
 </style>
-
-
-
-
