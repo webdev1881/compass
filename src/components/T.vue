@@ -262,7 +262,8 @@
 
               <div class="kpi-card danger odx-tip_tool ">
                 <div class="kpi-value">{{ processedData.problemStores.length }}</div>
-                <div v-if="processedData.problemStores.length" class="odx-tip_tooltext" :style="`background-color: ${selectedColor};`">
+                <div v-if="processedData.problemStores.length" class="odx-tip_tooltext"
+                  :style="`background-color: ${selectedColor};`">
                   <div v-for="val in (processedData.problemStores)" class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ val.overallTotalScore }}</div>
@@ -273,10 +274,12 @@
 
               <div class="kpi-card warning odx-tip_tool ">
                 <div class="kpi-value">{{ processedData.belowPlanStores.length }}</div>
-                <div v-if="processedData.belowPlanStores.length"  class="odx-tip_tooltext" :style="`background-color: ${selectedColor};`">
+                <div v-if="processedData.belowPlanStores.length" class="odx-tip_tooltext"
+                  :style="`background-color: ${selectedColor};`">
                   <div v-for="val in (processedData.belowPlanStores)" class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
-                    <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact)/(val.weeklyData[0].plan + val.weeklyData[1].plan)*100).toFixed(1) }}%</div>
+                    <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact) / (val.weeklyData[0].plan +
+                      val.weeklyData[1].plan)*100).toFixed(1) }}%</div>
                   </div>
                 </div>
 
@@ -361,35 +364,14 @@
       <div class="odx-tooltip__main">{{ tooltip.data.mainValue }}</div>
       <div class="odx-tooltip__details">
         <div v-for="detail in tooltip.data.details" :key="detail.label" class="odx-tooltip__detail">
-          
+
           <span class="odx-tooltip__detail-label">{{ detail.label }}</span>
           <span class="odx-tooltip__detail-value">{{ detail.value }}</span>
         </div>
       </div>
     </div>
- 
-    <!-- Тултип -->
-        <!-- <div v-if="tooltip.visible && tooltip.data" ref="tooltipRef" class="custom-tooltip" :style="{
-            left: tooltip.x + 'px',
-            top: tooltip.y + 'px',
-            opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
-            }">
-            <div class="tooltip-header">
-                <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
-                <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
-            </div>
+    <div class="space" style="height: 500px;"></div>
 
-            <div class="tooltip-main-value">
-                {{ tooltip.data.mainValue }}
-            </div>
-
-            <div class="tooltip-details">
-                <div v-for="detail in tooltip.data.details" :key="detail.label" class="tooltip-detail-row">
-                    <span class="detail-label">{{ detail.label }}:</span>
-                    <span class="detail-value">{{ detail.value }}</span>
-                </div>
-            </div>
-        </div> -->
 
   </div>
 </template>
@@ -439,7 +421,7 @@ const loadData = async () => {
     loading.value = true
     error.value = null
     const [salesResponse, targetsResponse] = await Promise.all([
-      // fetch('/com/static/data/real-data.json'),
+      // fetch('/com/static/data/output.json'),
       // fetch('/com/static/data/plans.json'),
       fetch('output.json'),
       fetch('targets.json')
@@ -465,7 +447,7 @@ const loadData = async () => {
 
     // НОВОЕ: Проверяем сохраненные данные в памяти
     const savedTargets = getSavedTargetsFromMemory()
-    
+
     salesData.value = salesDataResult
     targetsData.value = savedTargets || targetsDataResult
     dynamicTargetsData.value = targetsData.value
@@ -532,15 +514,15 @@ const handlePlansDataUpdate = (event) => {
   const newTargetsData = event.detail
 
   // console.log('Получены новые данные планов:', newTargetsData);
-  
-  
+
+
   // Обновляем данные
   targetsData.value = newTargetsData
   dynamicTargetsData.value = newTargetsData
-  
+
   // Сохраняем в память
   saveTargetsToMemory(newTargetsData)
-  
+
   // Пересчитываем все данные с новыми планами
   processData()
 }
@@ -689,9 +671,9 @@ const processedData = computed(() => {
     const scoreDiff = latestWeek.totalScore - previousWeek.totalScore
     const planDiff = latestWeek.planExecution - previousWeek.planExecution
 
-    if (scoreDiff > 0 && planDiff > 0) {
+    if (scoreDiff < 0 && planDiff < 0) {
       weeklyTrend = { type: 'positive', icon: '📈', text: 'Позитивна динаміка' }
-    } else if (scoreDiff < 0 || planDiff < 0) {
+    } else if (scoreDiff > 0) {
       weeklyTrend = { type: 'negative', icon: '📉', text: 'Негативна динаміка' }
     } else {
       weeklyTrend = { type: 'stable', icon: '➡️', text: 'Стабільні показники' }
@@ -700,71 +682,71 @@ const processedData = computed(() => {
 
   const targetsOverview = []
   if (targetsData.value.targetTree) {
-  Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-    let totalScore = 0
-    let successfulStores = 0
-    let problemStores = []
-    const storeAverages = [] // Массив для хранения средних баллов каждого магазина
+    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+      let totalScore = 0
+      let successfulStores = 0
+      let problemStores = []
+      const storeAverages = [] // Массив для хранения средних баллов каждого магазина
 
-    // Первый этап: вычисляем средний балл каждого магазина
-    allStores.forEach(store => {
-      let storeScore = 0
-      let validWeeks = 0
+      // Первый этап: вычисляем средний балл каждого магазина
+      allStores.forEach(store => {
+        let storeScore = 0
+        let validWeeks = 0
 
-      weeks.value.forEach(week => {
-        const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-        if (weekData && weekData[`${key}_score`] !== undefined) {
-          storeScore += weekData[`${key}_score`] || 0
-          validWeeks++
-        }
+        weeks.value.forEach(week => {
+          const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+          if (weekData && weekData[`${key}_score`] !== undefined) {
+            storeScore += weekData[`${key}_score`] || 0
+            validWeeks++
+          }
+        })
+
+        const averageStoreScore = validWeeks > 0 ? storeScore / validWeeks : 0
+        storeAverages.push(averageStoreScore)
+        totalScore += storeScore
       })
 
-      const averageStoreScore = validWeeks > 0 ? storeScore / validWeeks : 0
-      storeAverages.push(averageStoreScore)
-      totalScore += storeScore
+      // Второй этап: вычисляем общий средний балл всех магазинов
+      const overallAverageScore = storeAverages.length > 0
+        ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length
+        : 0
+
+      // Третий этап: определяем пороговое значение (средний балл минус 30%)
+      const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
+
+      console.log(`Метрика: ${key}`)
+      console.log(`Общий средний балл: ${overallAverageScore.toFixed(2)}`)
+      console.log(`Пороговое значение (70% от среднего): ${thresholdScore.toFixed(2)}`)
+
+      // Четвертый этап: классифицируем магазины
+      storeAverages.forEach((averageStoreScore, index) => {
+        console.log(`Магазин ${allStores[index].id}: средний балл ${averageStoreScore.toFixed(2)}`)
+
+        if (averageStoreScore >= overallAverageScore) {
+          successfulStores++ // Магазины с баллом выше или равным среднему
+        } else if (averageStoreScore < thresholdScore) {
+          problemStores++ // Магазины с баллом ниже среднего на 30% и более
+          console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`)
+        }
+        // Магазины между thresholdScore и overallAverageScore не попадают ни в одну категорию
+      })
+
+      console.log(`Успешных магазинов: ${successfulStores}`)
+      console.log(`Проблемных магазинов: ${problemStores}`)
+      console.log('---')
+
+      const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
+
+      targetsOverview.push({
+        key,
+        name: target.name,
+        maxScore: target.maxScore,
+        averageScore,
+        successfulStores,
+        problemStores
+      })
     })
-
-    // Второй этап: вычисляем общий средний балл всех магазинов
-    const overallAverageScore = storeAverages.length > 0 
-      ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length 
-      : 0
-
-    // Третий этап: определяем пороговое значение (средний балл минус 30%)
-    const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
-
-    console.log(`Метрика: ${key}`)
-    console.log(`Общий средний балл: ${overallAverageScore.toFixed(2)}`)
-    console.log(`Пороговое значение (70% от среднего): ${thresholdScore.toFixed(2)}`)
-
-    // Четвертый этап: классифицируем магазины
-    storeAverages.forEach((averageStoreScore, index) => {
-      console.log(`Магазин ${allStores[index].id}: средний балл ${averageStoreScore.toFixed(2)}`)
-      
-      if (averageStoreScore >= overallAverageScore) {
-        successfulStores++ // Магазины с баллом выше или равным среднему
-      } else if (averageStoreScore < thresholdScore) {
-        problemStores++ // Магазины с баллом ниже среднего на 30% и более
-        console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`)
-      }
-      // Магазины между thresholdScore и overallAverageScore не попадают ни в одну категорию
-    })
-
-    console.log(`Успешных магазинов: ${successfulStores}`)
-    console.log(`Проблемных магазинов: ${problemStores}`)
-    console.log('---')
-
-    const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
-
-    targetsOverview.push({
-      key,
-      name: target.name,
-      maxScore: target.maxScore,
-      averageScore,
-      successfulStores,
-      problemStores
-    })
-  })
-}
+  }
 
   return {
     totalStores,
@@ -994,7 +976,7 @@ const headerStyle = computed(() => ({
   borderSpacing: 0
 }))
 
-const changeColor = (color) => { 
+const changeColor = (color) => {
   selectedColor.value = color
   saveColor(color)
 }
@@ -1229,7 +1211,7 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       const weekData = getStoreWeekData(store, weekId)
       const currentPercent = weekData[`${key}_percent`] || 0
       let score = 0
-      
+
       if (maxPercent > 0 && currentPercent > 0) {
         score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore)
       }
@@ -2331,13 +2313,13 @@ onUnmounted(() => {
     }
   }
 
-  
+
   .odx-region-info,
   .odx-store-info {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     &__indicator {
       width: 10px;
       height: 10px;
@@ -2351,18 +2333,19 @@ onUnmounted(() => {
       color: var(--odx-text);
       font-size: 14px;
     }
-    
+
     &__region {
       font-size: 12px;
       color: var(--odx-text-muted);
       font-weight: 400;
     }
   }
-  
+
   .odx-store-info {
     &__title {
       font-weight: 400;
     }
+
     &__name {
       font-weight: 400;
     }
@@ -2467,7 +2450,7 @@ onUnmounted(() => {
     border-radius: 20px;
     position: relative;
     transition: all 0.3s ease;
-    
+
   }
 
   .toggle-slider::after {
@@ -2495,47 +2478,49 @@ onUnmounted(() => {
     user-select: none;
     white-space: nowrap;
     color: silver;
-    
+
   }
 
   .odx-tooltip {
     display: flex;
     flex-direction: column;
-        position: fixed;
-        z-index: 10000;
-        background: var(--surface);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-xl);
-        padding: 16px;
-        min-width: 290px;
-        max-width: 600px;
-        pointer-events: none;
-        font-size: 13px;
-        backdrop-filter: blur(8px);
-        animation: tooltipFadeIn 0.2s ease-out;
-        transition: opacity 0.1s ease;
-        max-height: 80vh;
-        overflow-y: auto;
+    position: fixed;
+    z-index: 10000;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 16px;
+    min-width: 290px;
+    max-width: 600px;
+    pointer-events: none;
+    font-size: 13px;
+    backdrop-filter: blur(8px);
+    animation: tooltipFadeIn 0.2s ease-out;
+    transition: opacity 0.1s ease;
+    max-height: 80vh;
+    overflow-y: auto;
 
-        &__main {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 5px 0;
-        }
+    &__main {
+      font-size: 18px;
+      font-weight: bold;
+      margin: 5px 0;
+    }
 
 
-        &::-webkit-scrollbar {
-            width: 4px;
-        }
-        &::-webkit-scrollbar-track {
-            background: var(--border-light);
-            border-radius: 2px;
-        }
-        &::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 2px;
-        }
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--border-light);
+      border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 2px;
+    }
   }
 
   @keyframes odx-tooltipFadeIn {
@@ -3156,7 +3141,7 @@ onUnmounted(() => {
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
     }
   }
- 
+
   .odx-plans-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -3204,7 +3189,7 @@ onUnmounted(() => {
 }
 
 .odx-hiden_cell {
-  font-size: 11px!important;
+  font-size: 11px !important;
 }
 
 .odx-tooltip__detail {
@@ -3213,9 +3198,9 @@ onUnmounted(() => {
 }
 
 .odx-tip_tooltext_item {
- display: flex;
- gap: 8px;
- justify-content: space-between;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
 }
 
 .odx-tip_tool {
@@ -3243,5 +3228,4 @@ onUnmounted(() => {
 .odx-tip_tool:hover .odx-tip_tooltext {
   visibility: visible;
 }
-
 </style>
