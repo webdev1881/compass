@@ -28,6 +28,14 @@
       <div class="odx-loading__progress"></div>
     </div>
 
+
+    <!-- Компонент редактора планов -->
+    <div v-if="showPlansEditor" class="odx-plans-overlay">
+      <div class="odx-plans-container">
+        <Plans @close="showPlansEditor = false" />
+      </div>
+    </div>
+
     <div v-if="error" class="odx-error">
       <div class="odx-error__icon">⚠️</div>
       <div class="odx-error__message">{{ error }}</div>
@@ -55,7 +63,7 @@
               <div class="odx-table__cell odx-table__cell--static">Регіон / Магазин</div>
               <div class="odx-table__cell odx-table__cell--group" :style="{ width: dynamicRowWidth }">
                 <div v-for="week in weeks" :key="week.id" class="odx-week">
-                  <div class="odx-week__name">{{ week.name }} ({{ week.dateRange }})</div>
+                  <div class="odx-week__name">{{ week.name }} {{ week.dateRange }}</div>
                 </div>
               </div>
             </div>
@@ -110,7 +118,7 @@
                       <div class="odx-week__columns">
                         <div v-for="indicator in availableIndicators"
                           :key="`region-${region.id}-${week.id}-${indicator.key}`"
-                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger odx-hiden_cell"
                           :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
                           @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
@@ -251,12 +259,27 @@
           <div class="kpi-section">
             <h3>⚠️ Проблемні зони</h3>
             <div class="kpi-cards">
-              <div class="kpi-card danger">
-                <div class="kpi-value">{{ processedData.problemStores }}</div>
+
+              <div class="kpi-card danger odx-tip_tool ">
+                <div class="kpi-value">{{ processedData.problemStores.length }}</div>
+                <div v-if="processedData.problemStores.length" class="odx-tip_tooltext" :style="`background-color: ${selectedColor};`">
+                  <div v-for="val in (processedData.problemStores)" class="odx-tip_tooltext_item">
+                    <div class="item">{{ val.name }}</div>
+                    <div class="item">{{ val.overallTotalScore }}</div>
+                  </div>
+                </div>
                 <div class="kpi-label">Магазинів в зоні ризику</div>
               </div>
-              <div class="kpi-card warning">
-                <div class="kpi-value">{{ processedData.belowPlanStores }}</div>
+
+              <div class="kpi-card warning odx-tip_tool ">
+                <div class="kpi-value">{{ processedData.belowPlanStores.length }}</div>
+                <div v-if="processedData.belowPlanStores.length"  class="odx-tip_tooltext" :style="`background-color: ${selectedColor};`">
+                  <div v-for="val in (processedData.belowPlanStores)" class="odx-tip_tooltext_item">
+                    <div class="item">{{ val.name }}</div>
+                    <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact)/(val.weeklyData[0].plan + val.weeklyData[1].plan)*100).toFixed(1) }}%</div>
+                  </div>
+                </div>
+
                 <div class="kpi-label">Не виконують план</div>
               </div>
             </div>
@@ -338,17 +361,42 @@
       <div class="odx-tooltip__main">{{ tooltip.data.mainValue }}</div>
       <div class="odx-tooltip__details">
         <div v-for="detail in tooltip.data.details" :key="detail.label" class="odx-tooltip__detail">
-          <span class="odx-tooltip__detail-label">{{ detail.label }}:</span>
+          
+          <span class="odx-tooltip__detail-label">{{ detail.label }}</span>
           <span class="odx-tooltip__detail-value">{{ detail.value }}</span>
         </div>
       </div>
     </div>
+ 
+    <!-- Тултип -->
+        <!-- <div v-if="tooltip.visible && tooltip.data" ref="tooltipRef" class="custom-tooltip" :style="{
+            left: tooltip.x + 'px',
+            top: tooltip.y + 'px',
+            opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1
+            }">
+            <div class="tooltip-header">
+                <div class="tooltip-title">{{ tooltip.data.entityName }}</div>
+                <div class="tooltip-subtitle">{{ tooltip.data.weekName }} • {{ tooltip.data.indicator }}</div>
+            </div>
+
+            <div class="tooltip-main-value">
+                {{ tooltip.data.mainValue }}
+            </div>
+
+            <div class="tooltip-details">
+                <div v-for="detail in tooltip.data.details" :key="detail.label" class="tooltip-detail-row">
+                    <span class="detail-label">{{ detail.label }}:</span>
+                    <span class="detail-value">{{ detail.value }}</span>
+                </div>
+            </div>
+        </div> -->
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch } from 'vue'
+import Plans from '../components/Plans.vue'
 
 const loading = ref(true)
 const error = ref(null)
@@ -361,14 +409,40 @@ const formatter = ref(false)
 const KPITopStores = ref(5)
 const isOpen = ref(false)
 const planScore = ref(0)
+const showPlansEditor = ref(false)
+const dynamicTargetsData = ref(null)
+const darkColors = ref([
+  '#1b263b', // тёмно-синий
+  '#0d1b2a', // глубокий морской
+  '#1a1a2e', // сине-фиолетовый
+  '#2c3e50', // графитовый
+  '#22333b', // угольно-зелёный
+  '#1b4332', // тёмно-зелёный
+  '#2d6a4f', // хвойный
+  '#3a0ca3', // тёмный индиго
+  '#240046', // насыщенный фиолетовый
+  '#4b1459', // тёмная слива
+  '#5a189a', // виноградный
+  '#641220', // бордово-красный
+  '#800f2f', // тёмная малина
+  '#6a040f', // вишнёвый
+  '#5c3c00', // тёмно-янтарный
+  '#4e342e', // кофейный
+  '#3e2723', // шоколадный
+  '#2b2d31'  // нейтральный тёмный
+])
+const selectedColor = ref('#1c699b')
+const isPaletteOpen = ref(false)
 
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
     const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/real-data.json'),
-      fetch('/targets.json')
+      // fetch('/com/static/data/real-data.json'),
+      // fetch('/com/static/data/plans.json'),
+      fetch('output.json'),
+      fetch('targets.json')
     ])
 
 
@@ -389,12 +463,18 @@ const loadData = async () => {
       throw new Error('Неверная структура данных целей')
     }
 
+    // НОВОЕ: Проверяем сохраненные данные в памяти
+    const savedTargets = getSavedTargetsFromMemory()
+    
     salesData.value = salesDataResult
-    targetsData.value = targetsDataResult
+    targetsData.value = savedTargets || targetsDataResult
+    dynamicTargetsData.value = targetsData.value
     regions.value = Object.values(salesDataResult.regions)
 
     initializeVisibility()
     processData()
+    getSavedColor()
+
   } catch (err) {
     console.error('Ошибка загрузки данных:', err)
     error.value = err.message || 'Ошибка загрузки данных'
@@ -404,6 +484,76 @@ const loadData = async () => {
     }, 400)
   }
 }
+
+const saveColor = (color) => {
+  try {
+    localStorage.setItem('selectedColor', color)
+  } catch (err) {
+    console.error('Ошибка сохранения цвета в localStorage:', err)
+  }
+}
+
+const getSavedColor = () => {
+  try {
+    selectedColor.value = localStorage.getItem('selectedColor') || selectedColor.value
+    return selectedColor.value
+  } catch (err) {
+    console.error('Ошибка чтения цвета из localStorage:', err)
+    return selectedColor.value // Цвет по умолчанию
+  }
+}
+
+
+
+// Функция получения сохраненных данных из localStorage
+const getSavedTargetsFromMemory = () => {
+  try {
+    const saved = localStorage.getItem('targetsData')
+    return saved ? JSON.parse(saved) : null
+  } catch (err) {
+    console.error('❌ Ошибка чтения localStorage:', err)
+    return null
+  }
+}
+
+// Функция сохранения в localStorage
+const saveTargetsToMemory = (data) => {
+  try {
+    localStorage.setItem('targetsData', JSON.stringify(data))
+    return true
+  } catch (err) {
+    console.error('Ошибка сохранения в localStorage:', err)
+    return false
+  }
+}
+
+// Слушаем изменения от компонента планов
+const handlePlansDataUpdate = (event) => {
+  const newTargetsData = event.detail
+
+  // console.log('Получены новые данные планов:', newTargetsData);
+  
+  
+  // Обновляем данные
+  targetsData.value = newTargetsData
+  dynamicTargetsData.value = newTargetsData
+  
+  // Сохраняем в память
+  saveTargetsToMemory(newTargetsData)
+  
+  // Пересчитываем все данные с новыми планами
+  processData()
+}
+
+// Переключение редактора планов
+const togglePlansEditor = () => {
+  showPlansEditor.value = !showPlansEditor.value
+}
+
+
+
+
+
 
 const togglePanel = () => { isOpen.value = !isOpen.value }
 const closePanel = () => { isOpen.value = false }
@@ -459,7 +609,8 @@ const processedData = computed(() => {
     .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
     .slice(0, KPITopStores.value)
 
-  const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.7).length
+  const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.8)
+    .sort((a, b) => (a.overallTotalScore || 0) - (b.overallTotalScore || 0))
   const belowPlanStores = allStores.filter(store => {
     let storePlan = 0
     let storeFact = 0
@@ -470,8 +621,8 @@ const processedData = computed(() => {
         storeFact += weekData.fact || 0
       }
     })
-    return storePlan > 0 && (storeFact / storePlan) < 0.95
-  }).length
+    return storePlan > 0 && (storeFact / storePlan) < 1
+  })
 
   const topIssues = []
   let summ = 0;
@@ -505,7 +656,7 @@ const processedData = computed(() => {
     })
   }
   planScore.value = summ
-  topIssues.sort((a, b) => b.totalValue - a.totalValue).splice(3)
+  topIssues.sort((a, b) => b.totalValue - a.totalValue)
 
   const weeklyComparison = weeks.value.map(week => {
     let weekTotalScore = 0
@@ -549,42 +700,71 @@ const processedData = computed(() => {
 
   const targetsOverview = []
   if (targetsData.value.targetTree) {
-    Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-      let totalScore = 0
-      let successfulStores = 0
-      let problemStores = 0
+  Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
+    let totalScore = 0
+    let successfulStores = 0
+    let problemStores = []
+    const storeAverages = [] // Массив для хранения средних баллов каждого магазина
 
-      allStores.forEach(store => {
-        let storeScore = 0
-        weeks.value.forEach(week => {
-          const weekData = store.weeklyData?.find(w => w.weekId === week.id)
-          if (weekData && weekData[`${key}_score`]) {
-            storeScore += weekData[`${key}_score`] || 0
-          }
-        })
+    // Первый этап: вычисляем средний балл каждого магазина
+    allStores.forEach(store => {
+      let storeScore = 0
+      let validWeeks = 0
 
-        totalScore += storeScore
-        const averageStoreScore = weeks.value.length > 0 ? storeScore / weeks.value.length : 0
-
-        if (averageStoreScore >= target.maxScore * 0.8) {
-          successfulStores++
-        } else if (averageStoreScore < target.maxScore * 0.5) {
-          problemStores++
+      weeks.value.forEach(week => {
+        const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+        if (weekData && weekData[`${key}_score`] !== undefined) {
+          storeScore += weekData[`${key}_score`] || 0
+          validWeeks++
         }
       })
 
-      const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
-
-      targetsOverview.push({
-        key,
-        name: target.name,
-        maxScore: target.maxScore,
-        averageScore,
-        successfulStores,
-        problemStores
-      })
+      const averageStoreScore = validWeeks > 0 ? storeScore / validWeeks : 0
+      storeAverages.push(averageStoreScore)
+      totalScore += storeScore
     })
-  }
+
+    // Второй этап: вычисляем общий средний балл всех магазинов
+    const overallAverageScore = storeAverages.length > 0 
+      ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length 
+      : 0
+
+    // Третий этап: определяем пороговое значение (средний балл минус 30%)
+    const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
+
+    console.log(`Метрика: ${key}`)
+    console.log(`Общий средний балл: ${overallAverageScore.toFixed(2)}`)
+    console.log(`Пороговое значение (70% от среднего): ${thresholdScore.toFixed(2)}`)
+
+    // Четвертый этап: классифицируем магазины
+    storeAverages.forEach((averageStoreScore, index) => {
+      console.log(`Магазин ${allStores[index].id}: средний балл ${averageStoreScore.toFixed(2)}`)
+      
+      if (averageStoreScore >= overallAverageScore) {
+        successfulStores++ // Магазины с баллом выше или равным среднему
+      } else if (averageStoreScore < thresholdScore) {
+        problemStores++ // Магазины с баллом ниже среднего на 30% и более
+        console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`)
+      }
+      // Магазины между thresholdScore и overallAverageScore не попадают ни в одну категорию
+    })
+
+    console.log(`Успешных магазинов: ${successfulStores}`)
+    console.log(`Проблемных магазинов: ${problemStores}`)
+    console.log('---')
+
+    const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
+
+    targetsOverview.push({
+      key,
+      name: target.name,
+      maxScore: target.maxScore,
+      averageScore,
+      successfulStores,
+      problemStores
+    })
+  })
+}
 
   return {
     totalStores,
@@ -794,14 +974,7 @@ const getDisplayValue = (weekData, indicator) => {
   }
 }
 
-const darkColors = ref([
-  '#2c3e50', '#34495e', '#1abc9c', '#16a085', '#27ae60', '#2ecc71',
-  '#8e44ad', '#9b59b6', '#2980b9', '#3498db', '#e74c3c', '#c0392b',
-  '#d35400', '#e67e22', '#f39c12', '#f1c40f', '#7f8c8d', '#95a5a6'
-])
 
-const selectedColor = ref('#1c699b')
-const isPaletteOpen = ref(false)
 
 const darkenColor = (color, percent = 20) => {
   const num = parseInt(color.replace("#", ""), 16)
@@ -821,12 +994,15 @@ const headerStyle = computed(() => ({
   borderSpacing: 0
 }))
 
-const changeColor = (color) => { selectedColor.value = color }
+const changeColor = (color) => { 
+  selectedColor.value = color
+  saveColor(color)
+}
 const togglePalette = () => { isPaletteOpen.value = !isPaletteOpen.value }
 const closePalette = () => { isPaletteOpen.value = false }
 
-const regionSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: 'week_1', columnKey: 'totalScore', direction: 'desc' })
+const regionSortBy = ref({ weekId: 'period_1', columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: 'period_1', columnKey: 'totalScore', direction: 'desc' })
 
 const indicatorGroups = computed(() => {
   const groups = [
@@ -1019,7 +1195,6 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
     const weekData = getStoreWeekData(store, weekId)
     const storeTargetConfig = storeTargets[store.id] || {}
     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
-    let weeklyScore = 0
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') return
@@ -1040,26 +1215,28 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       weekData[`${key}_percent`] = Math.round(achievementPercent)
       weekData[`${key}_target`] = target
     })
+  })
 
-    Object.entries(targetTree).forEach(([key, targetConfig]) => {
-      if (key === 'turnover') return
+  Object.entries(targetTree).forEach(([key, targetConfig]) => {
+    if (key === 'turnover') return
+    const maxPercent = Math.max(...allStores.map(store => {
+      const weekData = getStoreWeekData(store, weekId)
+      return weekData[`${key}_percent`] || 0
+    }))
 
-      const achievementPercent = weekData[`${key}_percent`] || 0
-      const maxPercent = Math.max(...allStores.map(s => {
-        const sWeekData = getStoreWeekData(s, weekId)
-        return sWeekData[`${key}_percent`] || 0
-      }))
-
+    // console.log(`Метрика: ${key}, Максимальный процент: ${maxPercent}, MaxScore: ${targetConfig.maxScore}`)
+    allStores.forEach(store => {
+      const weekData = getStoreWeekData(store, weekId)
+      const currentPercent = weekData[`${key}_percent`] || 0
       let score = 0
-      if (maxPercent > 0) {
-        score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
+      
+      if (maxPercent > 0 && currentPercent > 0) {
+        score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore)
       }
 
+      // console.log(`Магазин ${store.id}: текущий процент: ${currentPercent}, балл: ${score}`)
       weekData[`${key}_score`] = score
-      weeklyScore += score
     })
-
-    weekData.totalScore = weeklyScore
   })
 
   if (targetTree.turnover) {
@@ -1078,15 +1255,23 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       }
 
       weekData.turnover_score = turnoverScore
-      weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
-    })
-  } else {
-    allStores.forEach(store => {
-      const weekData = getStoreWeekData(store, weekId)
-      const turnoverScore = Math.round(weekData.percent || 0)
-      weekData.totalScore = (weekData.totalScore || 0) + turnoverScore
     })
   }
+
+  allStores.forEach(store => {
+    const weekData = getStoreWeekData(store, weekId)
+    let totalScore = 0
+
+    Object.entries(targetTree).forEach(([key, targetConfig]) => {
+      if (key === 'turnover') {
+        totalScore += weekData.turnover_score || 0
+      } else {
+        totalScore += weekData[`${key}_score`] || 0
+      }
+    })
+
+    weekData.totalScore = totalScore
+  })
 
   calculateColumnRanks(weekId, allStores)
 }
@@ -1305,7 +1490,6 @@ const sortedRegions = computed(() => {
     if (region.weeklyData) {
       region.weeklyData.forEach(weekData => {
         totalScore += weekData.totalScore || 0
-        console.log(weekData);
       })
     }
     region.overallTotalScore = totalScore
@@ -1446,18 +1630,18 @@ const getRegionData = (region, weekId, indicator) => {
   const value = getRegionIndicatorValue(region, weekId, indicator)
 
   switch (value) {
-    case 'totalScore': return value
+    case 'totalScore': return value || '-'
     case 'percent': return `${value}%`
     case 'plan':
     case 'fact': return formatNumber(value)
-    case 'turnover_score': return value
+    case 'turnover_score': return value || '-'
     default:
       if (indicator.endsWith('_percent')) {
         return `${value}%`
       } else if (indicator.endsWith('_score')) {
-        return value
+        return value || '-'
       } else {
-        return formatNumber(value)
+        return formatNumber(value) || '-'
       }
   }
 }
@@ -1568,8 +1752,16 @@ const refreshData = async () => {
 }
 
 onMounted(() => {
+  // Слушаем события изменения планов
+  window.addEventListener('plansDataUpdated', handlePlansDataUpdate)
   loadData()
 })
+
+// Очистка слушателей
+onUnmounted(() => {
+  window.removeEventListener('plansDataUpdated', handlePlansDataUpdate)
+})
+
 </script>
 
 <style lang="scss" scoped>
@@ -1586,112 +1778,112 @@ onMounted(() => {
   --odx-surface-hover: #f8fafc;
   --odx-neutral: #f1f5f9;
 
-  width: 100% !important;
-  height: 100vh !important;
-  overflow-y: auto !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: var(--odx-neutral) !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  position: relative !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+  background: var(--odx-neutral);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  box-sizing: border-box;
 
   * {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
   }
 
   .odx-palette-toggle {
-    position: fixed !important;
-    bottom: 10px !important;
-    right: 10px !important;
-    width: 20px !important;
-    height: 20px !important;
-    cursor: pointer !important;
-    z-index: 1000 !important;
-    border-radius: 4px !important;
-    transition: transform 0.2s ease !important;
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    z-index: 1000;
+    border-radius: 4px;
+    transition: transform 0.2s ease;
 
     &:hover {
-      transform: scale(1.1) !important;
+      transform: scale(1.1);
     }
 
     &--active {
-      transform: scale(1.2) !important;
+      transform: scale(1.2);
     }
   }
 
   .odx-color-palette {
-    position: fixed !important;
-    top: 0 !important;
-    right: -300px !important;
-    width: 280px !important;
-    height: 100vh !important;
-    background: var(--odx-surface) !important;
-    border-left: 1px solid var(--odx-border) !important;
-    z-index: 1001 !important;
-    transition: right 0.3s ease !important;
-    overflow-y: auto !important;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1) !important;
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    height: 100vh;
+    background: var(--odx-surface);
+    border-left: 1px solid var(--odx-border);
+    z-index: 1001;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
 
     &--open {
-      right: 0 !important;
+      right: 0;
     }
 
     &__content {
-      padding: 20px !important;
+      padding: 20px;
     }
 
     &__grid {
-      display: grid !important;
-      grid-template-columns: repeat(4, 1fr) !important;
-      gap: 12px !important;
-      margin: 20px 0 !important;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 20px 0;
     }
   }
 
   .odx-color-option {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 6px !important;
-    cursor: pointer !important;
-    border: 2px solid transparent !important;
-    transition: all 0.2s ease !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
 
     &:hover {
-      transform: scale(1.1) !important;
+      transform: scale(1.1);
     }
 
     &--selected {
-      border-color: var(--odx-text) !important;
-      box-shadow: 0 0 0 2px var(--odx-border) !important;
+      border-color: var(--odx-text);
+      box-shadow: 0 0 0 2px var(--odx-border);
     }
   }
 
   .odx-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(0, 0, 0, 0.3) !important;
-    z-index: 1000 !important;
-    cursor: pointer !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    cursor: pointer;
   }
 
   .odx-loading {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: 3px !important;
-    background: var(--odx-border) !important;
-    z-index: 2000 !important;
-    overflow: hidden !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--odx-border);
+    z-index: 2000;
+    overflow: hidden;
 
     &__progress {
-      height: 100% !important;
-      background: var(--odx-primary) !important;
-      animation: odx-loading 1.5s ease-in-out infinite !important;
+      height: 100%;
+      background: var(--odx-primary);
+      animation: odx-loading 1.5s ease-in-out infinite;
     }
   }
 
@@ -1713,50 +1905,50 @@ onMounted(() => {
   }
 
   .odx-error {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: 400px !important;
-    padding: 40px !important;
-    margin: 20px !important;
-    background: var(--odx-surface) !important;
-    border-radius: 12px !important;
-    border: 1px solid var(--odx-border) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 40px;
+    margin: 20px;
+    background: var(--odx-surface);
+    border-radius: 12px;
+    border: 1px solid var(--odx-border);
 
     &__icon {
-      font-size: 48px !important;
-      margin-bottom: 16px !important;
-      color: var(--odx-warning) !important;
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: var(--odx-warning);
     }
 
     &__message {
-      color: var(--odx-text) !important;
-      font-size: 16px !important;
-      text-align: center !important;
-      margin-bottom: 16px !important;
+      color: var(--odx-text);
+      font-size: 16px;
+      text-align: center;
+      margin-bottom: 16px;
     }
 
     &__retry {
-      padding: 12px 20px !important;
-      background: var(--odx-primary) !important;
-      color: white !important;
-      border: none !important;
-      border-radius: 6px !important;
-      cursor: pointer !important;
-      font-weight: 600 !important;
-      transition: all 0.2s ease !important;
+      padding: 12px 20px;
+      background: var(--odx-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
 
       &:hover {
-        background: #2563eb !important;
-        transform: translateY(-1px) !important;
+        background: #2563eb;
+        transform: translateY(-1px);
       }
     }
   }
 
   .odx-dashboard {
-    padding: 20px !important;
-    animation: odx-fadeIn 0.6s ease-out !important;
+    padding: 20px;
+    animation: odx-fadeIn 0.6s ease-out;
   }
 
   @keyframes odx-fadeIn {
@@ -1772,477 +1964,480 @@ onMounted(() => {
   }
 
   .odx-controls {
-    display: flex !important;
-    align-items: center !important;
-    gap: 20px !important;
-    padding: 16px 20px !important;
-    background: var(--odx-surface) !important;
-    border-radius: 8px !important;
-    border: 1px solid var(--odx-border) !important;
-    margin-bottom: 16px !important;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    background: var(--odx-surface);
+    border-radius: 8px;
+    border: 1px solid var(--odx-border);
+    margin-bottom: 16px;
 
     &__refresh {
       display: flex;
-      align-items: center !important;
-      padding: 6px 10px !important;
-      border: 1px solid var(--odx-border) !important;
-      // background: var(--odx-primary) !important;
-      border-radius: 6px !important;
-      cursor: pointer !important;
-      font-size: 14px !important;
-      font-weight: 400 !important;
-      transition: all 0.2s ease !important;
+      align-items: center;
+      padding: 6px 10px;
+      border: 1px solid var(--odx-border);
+      // background: var(--odx-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 400;
+      transition: all 0.2s ease;
 
       &:hover:not(:disabled) {
-        transform: translateY(-1px) !important;
+        transform: translateY(-1px);
       }
 
       &:disabled {
-        opacity: 0.5 !important;
-        cursor: not-allowed !important;
+        opacity: 0.5;
+        cursor: not-allowed;
       }
     }
   }
 
   .odx-toggle {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    cursor: pointer !important;
-    font-size: 14px !important;
-    color: var(--odx-text-muted) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--odx-text-muted);
 
     input[type="checkbox"] {
-      display: none !important;
+      display: none;
     }
 
     &__slider {
-      width: 36px !important;
-      height: 20px !important;
-      background: var(--odx-border) !important;
-      border-radius: 20px !important;
-      position: relative !important;
-      transition: all 0.3s ease !important;
+      width: 36px;
+      height: 20px;
+      background: var(--odx-border);
+      border-radius: 20px;
+      position: relative;
+      transition: all 0.3s ease;
 
       &::after {
-        content: '' !important;
-        position: absolute !important;
-        width: 16px !important;
-        height: 16px !important;
-        background: white !important;
-        border-radius: 50% !important;
-        top: 2px !important;
-        left: 2px !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
       }
     }
 
     input[type="checkbox"]:checked+&__slider {
-      // background: var(--odx-primary) !important;
+      // background: var(--odx-primary);
 
       &::after {
-        transform: translateX(16px) !important;
+        transform: translateX(16px);
       }
     }
 
     &__label {
-      user-select: none !important;
-      white-space: nowrap !important;
-      color: var(--odx-text-muted) !important;
+      user-select: none;
+      white-space: nowrap;
+      color: var(--odx-text-muted);
     }
   }
 
   .odx-table-container {
-    // background: var(--odx-surface) !important;
-    border-radius: 12px !important;
-    border: 1px solid var(--odx-border) !important;
-    // overflow: hidden !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    // background: var(--odx-surface);
+    border-radius: 12px;
+    border: 1px solid var(--odx-border);
+    // overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
   .odx-table {
-    width: 100% !important;
-    // border-collapse: separate !important;
-    border-spacing: 0 !important;
+    width: 100%;
+    // border-collapse: separate;
+    border-spacing: 0;
 
     &__header {
 
-      position: sticky !important;
-      top: 0 !important;
-      z-index: 10 !important;
-      // background: var(--odx-surface) !important;
-      border-bottom: 2px solid var(--odx-border) !important;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      // background: var(--odx-surface);
+      border-bottom: 2px solid var(--odx-border);
     }
 
     &__row {
-      display: flex !important;
-      width: 100% !important;
-      // border-bottom: 1px solid var(--odx-border) !important;
-      // transition: all 0.15s ease !important;
-      will-change: transform !important;
+      display: flex;
+      width: 100%;
+      // border-bottom: 1px solid var(--odx-border);
+      // transition: all 0.15s ease;
+      will-change: transform;
       transition: all .2s ease;
-      transform-origin: center !important;
+      transform-origin: center;
 
       &:hover {
-        transform: translateY(-1px) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
-        z-index: 5 !important;
-        position: relative !important;
+        transform: translateY(-1px);
+        box-shadow: 0 1px 8px #02347a80;
+        z-index: 10;
+        position: relative;
       }
 
       &--header-top,
       &--header-middle,
       &--header-bottom {
         &:hover {
-          transform: none !important;
-          box-shadow: none !important;
+          transform: none;
+          box-shadow: none;
         }
       }
 
       // &--region {
-      //   background: var(--odx-neutral) !important;
-      //   font-weight: 600 !important;
-      //   border-bottom: 2px solid var(--odx-border) !important;
+      //   background: var(--odx-neutral);
+      //   font-weight: 600;
+      //   border-bottom: 2px solid var(--odx-border);
       // }
 
       // &--store {
-      //   background: var(--odx-surface) !important;
+      //   background: var(--odx-surface);
       // }
 
       // &--top-rank {
-      //   background: #ecfdf5 !important;
-      //   border-left: 4px solid var(--odx-success) !important;
+      //   background: #ecfdf5;
+      //   border-left: 4px solid var(--odx-success);
       // }
 
       // &--mid-rank {
-      //   background: #fffbeb !important;
-      //   border-left: 4px solid var(--odx-warning) !important;
+      //   background: #fffbeb;
+      //   border-left: 4px solid var(--odx-warning);
       // }
 
       // &--low-rank {
-      //   background: #fef2f2 !important;
-      //   border-left: 4px solid var(--odx-danger) !important;
+      //   background: #fef2f2;
+      //   border-left: 4px solid var(--odx-danger);
       // }
 
       // &--region-top {
-      //   background: #ecfdf5 !important;
-      //   border-left: 6px solid var(--odx-success) !important;
+      //   background: #ecfdf5;
+      //   border-left: 6px solid var(--odx-success);
       // }
 
       // &--region-mid {
-      //   background: #fffbeb !important;
-      //   border-left: 6px solid var(--odx-warning) !important;
+      //   background: #fffbeb;
+      //   border-left: 6px solid var(--odx-warning);
       // }
 
       // &--region-low {
-      //   background: #fef2f2 !important;
-      //   border-left: 6px solid var(--odx-danger) !important;
+      //   background: #fef2f2;
+      //   border-left: 6px solid var(--odx-danger);
       // }
     }
 
     &__cell {
-      height: 32px !important;
-      padding: 6px 0px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      font-size: 13px !important;
-      border-right: 1px solid var(--odx-border) !important;
-      text-align: center !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      white-space: nowrap !important;
-      transition: transform 0.5s ease !important;
-      will-change: transform !important;
+      height: 32px;
+      padding: 6px 0px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      border-right: 1px solid var(--odx-border);
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: transform 0.5s ease;
+      will-change: transform;
 
       &--static {
-        min-width: 230px !important;
-        flex-shrink: 0 !important;
-        // background: var(--odx-neutral) !important;
-        font-weight: 600 !important;
-        border-right: 2px solid var(--odx-border) !important;
-        justify-content: flex-start !important;
-        padding-left: 16px !important;
+        min-width: 230px;
+        flex-shrink: 0;
+        // background: var(--odx-neutral);
+        font-weight: 600;
+        border-right: 2px solid var(--odx-border);
+        justify-content: flex-start;
+        padding-left: 16px;
       }
 
       &--group {
-        // background: #eef2ff !important;
-        // color: var(--odx-info) !important;
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        // border-bottom: 2px solid var(--odx-info) !important;
-        border-bottom: 1px solid var(--odx-border) !important;
+        // background: #eef2ff;
+        // color: var(--odx-info);
+        font-size: 15px;
+        font-weight: 700;
+        // border-bottom: 2px solid var(--odx-info);
+        border-bottom: 1px solid var(--odx-border);
       }
 
       &--group-header {
-        // background: var(--odx-surface) !important;
-        font-size: 13px !important;
-        // color: var(--odx-text-muted) !important;
-        cursor: pointer !important;
+        // background: var(--odx-surface);
+        font-size: 13px;
+        // color: var(--odx-text-muted);
+        cursor: pointer;
 
         &:hover {
-          background: #0d598a !important;
-          // color: white !important;
+          background: #0d598a;
+          // color: white;
         }
       }
 
       &--metric {
-        // background: var(--odx-surface) !important;
-        font-size: 12px !important;
-        // color: var(--odx-text-muted) !important;
-        cursor: pointer !important;
+        // background: var(--odx-surface);
+        font-size: 12px;
+        // color: var(--odx-text-muted);
+        cursor: pointer;
 
         &:hover {
-          background: #0d598a !important;
-          color: white !important;
+          background: #0d598a;
+          color: white;
         }
       }
 
       &--data {
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: var(--odx-text) !important;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--odx-text);
       }
 
       &--score {
-        font-weight: 700 !important;
-        color: var(--odx-primary) !important;
+        font-weight: 700;
+        color: var(--odx-primary);
       }
 
       &--percentile-top {
-        color: #2e7d32 !important;
-        font-weight: 600 !important;
+        color: #2e7d32;
+        font-weight: 600;
       }
 
       &--percentile-excellent {
-        color: #2e7d32 !important;
-        font-weight: 600 !important;
+        color: #2e7d32;
+        font-weight: 600;
       }
 
       &--percentile-good {
-        color: #f57c00 !important;
-        font-weight: 600 !important;
+        color: #f57c00;
+        font-weight: 600;
       }
 
       &--percentile-average {
-        color: #ea580c !important;
-        font-weight: 600 !important;
+        color: #ea580c;
+        font-weight: 600;
       }
 
       &--percentile-poor {
-        color: #dc2626 !important;
-        font-weight: 600 !important;
+        color: #dc2626;
+        font-weight: 600;
       }
 
       &--formatted-top {
-        background-color: #d0ffea !important;
-        // color: white !important;
+        background-color: #d0ffea;
+        // color: white;
       }
 
       &--formatted-excellent {
-        background-color: #ebfff6 !important;
-        // color: #2e7d32 !important;
+        background-color: #ebfff6;
+        // color: #2e7d32;
       }
 
       &--formatted-good {
-        background-color: #fff3e1 !important;
-        color: #f57c00 !important;
+        background-color: #fff3e1;
+        color: #f57c00;
       }
 
       &--formatted-average {
-        background-color: #fee7c5 !important;
-        // color: #ea580c !important;
+        background-color: #fee7c5;
+        // color: #ea580c;
       }
 
       &--formatted-poor {
-        background-color: #ffdada !important;
-        // color: white !important;
+        background-color: #ffdada;
+        // color: white;
       }
     }
 
     &__data {
-      display: flex !important;
-      width: 100% !important;
-      overflow: hidden !important;
+      display: flex;
+      width: 100%;
+      overflow: hidden;
       transition: all .2s ease;
       transform-origin: center;
     }
 
     &__body {
-      background: var(--odx-surface) !important;
+      background: var(--odx-surface);
     }
   }
 
   .odx-week {
-    display: flex !important;
-    width: 100% !important;
-    border-right: 2px solid var(--odx-border) !important;
+    display: flex;
+    width: 100%;
+    border-right: 2px solid var(--odx-border);
     overflow: hidden;
-    border-bottom: 1px solid var(--odx-border) !important;
+    border-bottom: 1px solid var(--odx-border);
 
     &__name {
-      font-weight: 600 !important;
-      // color: var(--odx-info) !important;
-      padding: 12px !important;
-      text-align: center !important;
-      font-size: 14px !important;
-      margin: 0 !important;
+      font-weight: 600;
+      // color: var(--odx-info);
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      margin: 0;
     }
 
     &__groups,
     &__columns {
-      width: 100% !important;
-      display: flex !important;
+      width: 100%;
+      display: flex;
     }
   }
 
   .odx-group-toggle {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    padding: 4px 0px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 4px 0px;
 
   }
 
   .odx-metric-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-    width: 100% !important;
+    width: 100%;
   }
 
   .odx-sort-arrow {
     margin-left: 5px;
-    font-size: 10px !important;
-    opacity: 0.6 !important;
-    transition: all 0.2s ease !important;
+    font-size: 10px;
+    opacity: 0.6;
+    transition: all 0.2s ease;
 
     &--active {
-      opacity: 1 !important;
-      color: black !important;
-      font-weight: bold !important;
+      opacity: 1;
+      color: black;
+      font-weight: bold;
     }
 
     &--desc {
-      color: black !important;
+      color: black;
     }
 
     &--asc {
-      color: black !important;
+      color: black;
     }
 
     &--inactive {
-      opacity: 0.3 !important;
+      opacity: 0.3;
     }
   }
 
+  
   .odx-region-info,
   .odx-store-info {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
     &__indicator {
-      width: 10px !important;
-      height: 10px !important;
-      border-radius: 50% !important;
-      flex-shrink: 0 !important;
-      border: 1px solid rgba(255, 255, 255, 0.8) !important;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.8);
     }
 
-    &__title,
     &__name {
-      font-weight: 600 !important;
-      color: var(--odx-text) !important;
-      font-size: 14px !important;
+      font-weight: 600;
+      color: var(--odx-text);
+      font-size: 14px;
     }
-
+    
     &__region {
-      font-size: 12px !important;
-      color: var(--odx-text-muted) !important;
-      font-weight: 400 !important;
+      font-size: 12px;
+      color: var(--odx-text-muted);
+      font-weight: 400;
     }
   }
-
+  
   .odx-store-info {
+    &__title {
+      font-weight: 400;
+    }
     &__name {
-      font-weight: 400 !important;
+      font-weight: 400;
     }
   }
 
   .odx-separator {
-    height: 16px !important;
-    background: var(--odx-neutral) !important;
-    border-top: 1px solid var(--odx-border) !important;
-    border-bottom: 1px solid var(--odx-border) !important;
+    height: 16px;
+    background: var(--odx-neutral);
+    border-top: 1px solid var(--odx-border);
+    border-bottom: 1px solid var(--odx-border);
   }
 
   .odx-sort-controls {
-    display: flex !important;
-    flex-direction: column !important;
+    display: flex;
+    flex-direction: column;
 
     &__row {
-      display: flex !important;
-      width: 100% !important;
-      align-items: center !important;
+      display: flex;
+      width: 100%;
+      align-items: center;
       transition: all .2s ease;
       transform-origin: center;
     }
 
     &__static {
-      min-width: 230px !important;
-      flex-shrink: 0 !important;
-      padding: 4px 8px !important;
-      font-size: 12px !important;
-      color: var(--odx-text-muted) !important;
+      min-width: 230px;
+      flex-shrink: 0;
+      padding: 4px 8px;
+      font-size: 12px;
+      color: var(--odx-text-muted);
     }
 
     &__weeks {
-      display: flex !important;
-      width: 100% !important;
+      display: flex;
+      width: 100%;
     }
   }
 
   .odx-sort-week {
-    display: flex !important;
-    width: 100% !important;
-    border-right: 1px solid var(--odx-border) !important;
+    display: flex;
+    width: 100%;
+    border-right: 1px solid var(--odx-border);
 
     &__columns {
-      width: 100% !important;
-      display: flex !important;
+      width: 100%;
+      display: flex;
     }
   }
 
   .odx-sort-control {
-    // padding: 4px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    border-radius: 4px !important;
-    transition: all 0.2s ease !important;
-    border: 1px solid transparent !important;
+    // padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
     transition: all .2s ease;
     transform-origin: center;
 
     &:hover {
-      background: var(--odx-surface-hover) !important;
-      border-color: var(--odx-border) !important;
+      background: var(--odx-surface-hover);
+      border-color: var(--odx-border);
     }
 
     &--desc,
     &--asc {
-      // background: var(--odx-primary) !important;
-      color: black !important;
-      // border-color: var(--odx-primary) !important;
+      // background: var(--odx-primary);
+      color: black;
+      // border-color: var(--odx-primary);
     }
 
     &--inactive {
-      opacity: 0.5 !important;
+      opacity: 0.5;
     }
   }
 
@@ -2268,10 +2463,11 @@ onMounted(() => {
   .toggle-slider {
     width: 36px;
     height: 20px;
-    background: var(--border-color);
+    background: silver;
     border-radius: 20px;
     position: relative;
     transition: all 0.3s ease;
+    
   }
 
   .toggle-slider::after {
@@ -2288,7 +2484,7 @@ onMounted(() => {
   }
 
   .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider {
-    background: red
+    background: red;
   }
 
   .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider::after {
@@ -2299,75 +2495,47 @@ onMounted(() => {
     user-select: none;
     white-space: nowrap;
     color: silver;
+    
   }
 
   .odx-tooltip {
-    position: fixed !important;
-    z-index: 10000 !important;
-    background: var(--odx-surface) !important;
-    border: 1px solid var(--odx-border) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
-    padding: 16px !important;
-    min-width: 250px !important;
-    max-width: 400px !important;
-    pointer-events: none !important;
-    font-size: 13px !important;
-    animation: odx-tooltipFadeIn 0.2s ease-out !important;
+    display: flex;
+    flex-direction: column;
+        position: fixed;
+        z-index: 10000;
+        background: var(--surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        padding: 16px;
+        min-width: 290px;
+        max-width: 600px;
+        pointer-events: none;
+        font-size: 13px;
+        backdrop-filter: blur(8px);
+        animation: tooltipFadeIn 0.2s ease-out;
+        transition: opacity 0.1s ease;
+        max-height: 80vh;
+        overflow-y: auto;
 
-    &__header {
-      // display: flex;
-      padding-bottom: 8px !important;
-      border-bottom: 1px solid var(--odx-border) !important;
-      margin-bottom: 8px !important;
-    }
+        &__main {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
 
-    &__title {
-      font-weight: 600 !important;
-      color: var(--odx-text) !important;
-      font-size: 14px !important;
-    }
 
-    &__subtitle {
-      font-size: 12px !important;
-      color: var(--odx-text-muted) !important;
-      margin-top: 2px !important;
-    }
-
-    &__main {
-      font-size: 18px !important;
-      font-weight: 700 !important;
-      color: var(--odx-primary) !important;
-      text-align: center !important;
-      padding: 8px !important;
-      background: #eef2ff !important;
-      border-radius: 6px !important;
-      margin-bottom: 8px !important;
-    }
-
-    &__details {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 4px !important;
-    }
-
-    &__detail {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      padding: 2px 0 !important;
-
-      &-label {
-        color: var(--odx-text-muted) !important;
-        font-size: 12px !important;
-      }
-
-      &-value {
-        font-weight: 600 !important;
-        color: var(--odx-text) !important;
-        font-size: 12px !important;
-      }
-    }
+        &::-webkit-scrollbar {
+            width: 4px;
+        }
+        &::-webkit-scrollbar-track {
+            background: var(--border-light);
+            border-radius: 2px;
+        }
+        &::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
+        }
   }
 
   @keyframes odx-tooltipFadeIn {
@@ -2383,10 +2551,10 @@ onMounted(() => {
   }
 
   .odx-tooltip-trigger {
-    cursor: help !important;
+    cursor: help;
 
     &:hover {
-      background: rgba(59, 130, 246, 0.05) !important;
+      background: rgba(59, 130, 246, 0.05);
     }
   }
 
@@ -2941,30 +3109,75 @@ onMounted(() => {
 
   @media (max-width: 1024px) {
     .odx-kpi__sidebar {
-      width: 360px !important;
+      width: 360px;
     }
   }
 
   @media (max-width: 768px) {
     .odx-kpi__sidebar {
-      width: 100vw !important;
+      width: 100vw;
     }
 
     .odx-kpi__content {
-      padding: 16px !important;
+      padding: 16px;
     }
 
     .odx-kpi__cards {
-      grid-template-columns: 1fr !important;
+      grid-template-columns: 1fr;
     }
 
     .odx-dashboard {
-      padding: 10px !important;
+      padding: 10px;
     }
 
     .odx-table__cell--static {
-      min-width: 230px !important;
+      min-width: 230px;
     }
+  }
+
+  .odx-plans-toggle {
+    position: fixed !important;
+    top: 70px !important;
+    right: 20px !important;
+    z-index: 999 !important;
+    padding: 12px 16px !important;
+    background: var(--odx-warning) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.3s ease !important;
+
+    &:hover {
+      background: #d97706 !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+    }
+  }
+ 
+  .odx-plans-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .odx-plans-container {
+    width: 95vw !important;
+    height: 95vh !important;
+    background: white !important;
+    border-radius: 12px !important;
+    overflow: auto !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
   }
 }
 
@@ -2989,4 +3202,46 @@ onMounted(() => {
 .odx-table__row-move {
   transition: transform 0.4s ease;
 }
+
+.odx-hiden_cell {
+  font-size: 11px!important;
+}
+
+.odx-tooltip__detail {
+  display: flex;
+  justify-content: space-between;
+}
+
+.odx-tip_tooltext_item {
+ display: flex;
+ gap: 8px;
+ justify-content: space-between;
+}
+
+.odx-tip_tool {
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black;
+}
+
+.odx-tip_tool .odx-tip_tooltext {
+  visibility: hidden;
+  width: max-content;
+  // background-color: black;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+
+  /* Position the tooltip */
+  position: absolute;
+  right: -10px;
+  z-index: 1;
+}
+
+.odx-tip_tool:hover .odx-tip_tooltext {
+  visibility: visible;
+}
+
 </style>
