@@ -1,5 +1,40 @@
 <template>
   <div class="odx-sales-dashboard">
+
+    <div class="period-buttons">
+      <button 
+        @click="loadData()"
+        :class="{ active: selectedPeriod === 'Місяць' }"
+        :disabled="loading || selectedPeriod === 'Місяць'"
+        class="period-btn"
+      >
+        {{ 'Місяць' }}
+      </button>
+      <button 
+        @click="loadData2()"
+        :class="{ active: selectedPeriod === 'Неділя' }"
+        :disabled="loading || selectedPeriod === 'Неділя'"
+        class="period-btn"
+      >
+        {{ 'Неділя' }}
+      </button>
+      <div class="odx-controls">
+        <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
+          Оновити
+        </div>
+        <div class="tooltip-controls">
+          <label class="tooltip-toggle">
+            <input type="checkbox" v-model="tooltipEnabled" />
+            <span class="toggle-slider" ></span>
+            <span class="toggle-label">Деталі</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+
+
+
     <img :class="{ 'odx-palette-toggle--active': isPaletteOpen }" class="odx-palette-toggle" @click="togglePalette"
       src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
       alt="Palette">
@@ -10,7 +45,7 @@
         <div class="odx-color-palette__grid">
           <div v-for="color in darkColors" :key="color" class="odx-color-option"
             :class="{ 'odx-color-option--selected': selectedColor === color }" :style="{ backgroundColor: color }"
-            @click="changeColor(color)" :title="color" />
+            @click="changeColor(color)" :title="color"/>
         </div>
         <div class="odx-format-controls">
           <label class="odx-toggle">
@@ -43,25 +78,13 @@
     </div>
 
     <div v-if="!loading && !error" class="odx-dashboard">
-      <div class="odx-controls">
-        <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
-          Оновити
-        </div>
-        <div class="tooltip-controls">
-          <label class="tooltip-toggle">
-            <input type="checkbox" v-model="tooltipEnabled" />
-            <span class="toggle-slider" :style="headerStyle"></span>
-            <span class="toggle-label">Деталі</span>
-          </label>
-        </div>
-      </div>
 
       <div class="odx-table-container">
         <div class="odx-table">
           <div class="odx-table__header" :style="headerStyle">
             <div class="odx-table__row odx-table__row--header-top">
-              <div class="odx-table__cell odx-table__cell--static">Регіон / Магазин</div>
-              <div class="odx-table__cell odx-table__cell--group" :style="{ width: dynamicRowWidth }">
+              <div class="odx-table__cell odx-table__cell--static odx_top">Регіон / Магазин</div>
+              <div class="odx-table__cell odx-table__cell--group odx_top" :style="{ width: dynamicRowWidth }">
                 <div v-for="week in weeks" :key="week.id" class="odx-week">
                   <div class="odx-week__name">{{ week.name }} {{ week.dateRange }}</div>
                 </div>
@@ -72,9 +95,9 @@
               <div class="odx-table__cell odx-table__cell--static"></div>
               <div v-for="week in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__groups">
-                  <div v-for="group in visibleGroups" :key="group.key"
+                  <div v-for="group in visibleGroups" :key="group.key"  @mouseover="hoverColor" 
                     class="odx-table__cell odx-table__cell--group-header" :style="getGroupStyle(group.key)">
-                    <div @click="toggleGroupVisibility(group.key)" class="odx-group-toggle">
+                    <div @click="toggleGroupVisibility(group.key)" class="odx-group-toggle"  @mouseover="hoverColor" >
                       <span>{{ group.label }}</span>
                     </div>
                   </div>
@@ -279,7 +302,7 @@
                   <div v-for="val in (processedData.belowPlanStores)" class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact) / (val.weeklyData[0].plan +
-                      val.weeklyData[1].plan)*100).toFixed(1) }}%</div>
+                      val.weeklyData[1].plan) * 100).toFixed(1) }}%</div>
                   </div>
                 </div>
 
@@ -387,7 +410,7 @@ const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
 const tooltipEnabled = ref(true)
-const formatter = ref(false)
+const formatter = ref(true)
 const KPITopStores = ref(5)
 const isOpen = ref(false)
 const planScore = ref(0)
@@ -413,46 +436,31 @@ const darkColors = ref([
   '#3e2723', // шоколадный
   '#2b2d31'  // нейтральный тёмный
 ])
-const selectedColor = ref('#1c699b')
+const selectedColor = ref('#e3f2fd')
 const isPaletteOpen = ref(false)
+
+const selectedPeriod = ref('Місяць')
 
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
+    selectedPeriod.value = 'Місяць'
     const [salesResponse, targetsResponse] = await Promise.all([
       // fetch('/com/static/data/output.json'),
-      // fetch('/com/static/data/plans.json'),
+      // fetch('/com/static/data/targets.json'),
       fetch('output.json'),
       fetch('targets.json')
     ])
-
-
-    if (!salesResponse.ok || !targetsResponse.ok) {
-      throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)
-    }
-
-    const [salesDataResult, targetsDataResult] = await Promise.all([
-      salesResponse.json(),
-      targetsResponse.json()
-    ])
-
-    if (!salesDataResult.weeks || !salesDataResult.regions) {
-      throw new Error('Неверная структура данных продаж')
-    }
-
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
-      throw new Error('Неверная структура данных целей')
-    }
-
-    // НОВОЕ: Проверяем сохраненные данные в памяти
+    if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
+    const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
+    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
     const savedTargets = getSavedTargetsFromMemory()
-
     salesData.value = salesDataResult
     targetsData.value = savedTargets || targetsDataResult
     dynamicTargetsData.value = targetsData.value
     regions.value = Object.values(salesDataResult.regions)
-
     initializeVisibility()
     processData()
     getSavedColor()
@@ -460,11 +468,36 @@ const loadData = async () => {
   } catch (err) {
     console.error('Ошибка загрузки данных:', err)
     error.value = err.message || 'Ошибка загрузки данных'
-  } finally {
-    setTimeout(() => {
-      loading.value = false
-    }, 400)
-  }
+  } finally {setTimeout(() => {loading.value = false}, 400)}
+}
+const loadData2 = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    selectedPeriod.value = 'Неділя'
+    const [salesResponse, targetsResponse] = await Promise.all([
+      // fetch('/com/static/data/output.json'),
+      // fetch('/com/static/data/targets.json'),
+      fetch('output.json'),
+      fetch('targets.json')
+    ])
+    if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
+    const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
+    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
+    const savedTargets = getSavedTargetsFromMemory()
+    salesData.value = salesDataResult
+    targetsData.value = savedTargets || targetsDataResult
+    dynamicTargetsData.value = targetsData.value
+    regions.value = Object.values(salesDataResult.regions)
+    initializeVisibility()
+    processData()
+    getSavedColor()
+
+  } catch (err) {
+    console.error('Ошибка загрузки данных:', err)
+    error.value = err.message || 'Ошибка загрузки данных'
+  } finally {setTimeout(() => {loading.value = false}, 400)}
 }
 
 const saveColor = (color) => {
@@ -485,9 +518,6 @@ const getSavedColor = () => {
   }
 }
 
-
-
-// Функция получения сохраненных данных из localStorage
 const getSavedTargetsFromMemory = () => {
   try {
     const saved = localStorage.getItem('targetsData')
@@ -498,7 +528,6 @@ const getSavedTargetsFromMemory = () => {
   }
 }
 
-// Функция сохранения в localStorage
 const saveTargetsToMemory = (data) => {
   try {
     localStorage.setItem('targetsData', JSON.stringify(data))
@@ -509,25 +538,17 @@ const saveTargetsToMemory = (data) => {
   }
 }
 
-// Слушаем изменения от компонента планов
 const handlePlansDataUpdate = (event) => {
   const newTargetsData = event.detail
 
-  // console.log('Получены новые данные планов:', newTargetsData);
-
-
-  // Обновляем данные
   targetsData.value = newTargetsData
   dynamicTargetsData.value = newTargetsData
 
-  // Сохраняем в память
   saveTargetsToMemory(newTargetsData)
 
-  // Пересчитываем все данные с новыми планами
   processData()
 }
 
-// Переключение редактора планов
 const togglePlansEditor = () => {
   showPlansEditor.value = !showPlansEditor.value
 }
@@ -688,7 +709,6 @@ const processedData = computed(() => {
       let problemStores = []
       const storeAverages = [] // Массив для хранения средних баллов каждого магазина
 
-      // Первый этап: вычисляем средний балл каждого магазина
       allStores.forEach(store => {
         let storeScore = 0
         let validWeeks = 0
@@ -706,19 +726,16 @@ const processedData = computed(() => {
         totalScore += storeScore
       })
 
-      // Второй этап: вычисляем общий средний балл всех магазинов
       const overallAverageScore = storeAverages.length > 0
         ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length
         : 0
 
-      // Третий этап: определяем пороговое значение (средний балл минус 30%)
       const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
 
       console.log(`Метрика: ${key}`)
       console.log(`Общий средний балл: ${overallAverageScore.toFixed(2)}`)
       console.log(`Пороговое значение (70% от среднего): ${thresholdScore.toFixed(2)}`)
 
-      // Четвертый этап: классифицируем магазины
       storeAverages.forEach((averageStoreScore, index) => {
         console.log(`Магазин ${allStores[index].id}: средний балл ${averageStoreScore.toFixed(2)}`)
 
@@ -968,11 +985,15 @@ const darkenColor = (color, percent = 20) => {
     (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
     (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1)
 }
+const hoverColor = () => {
+  return 'style="background-color: ' + darkenColor(selectedColor.value, 10) + '!important;"'
+}
 
 const headerStyle = computed(() => ({
   backgroundColor: selectedColor.value,
-  color: '#fff',
+  color: '#0f4478',
   // borderCollapse: 'separate',
+  border: '1px solid #91b6db',
   borderSpacing: 0
 }))
 
@@ -983,8 +1004,8 @@ const changeColor = (color) => {
 const togglePalette = () => { isPaletteOpen.value = !isPaletteOpen.value }
 const closePalette = () => { isPaletteOpen.value = false }
 
-const regionSortBy = ref({ weekId: 'period_1', columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: 'period_1', columnKey: 'totalScore', direction: 'desc' })
+const regionSortBy = ref({ weekId: '1', columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: '1', columnKey: 'totalScore', direction: 'desc' })
 
 const indicatorGroups = computed(() => {
   const groups = [
@@ -1119,7 +1140,7 @@ function getStyle(key) {
     willChange: 'transform',
     transformOrigin: 'left right',
     fontWeight: key === 'totalScore' ? '700' : 'normal',
-    borderRight: isVisible ? '1px solid #ddd!important' : 'none!important',
+    // borderRight: isVisible ? '1px solid #e0e0e0!important' : 'none!important',
   }
 }
 
@@ -1390,7 +1411,7 @@ const calculateOverallScores = (allStores) => {
 
 const weeks = computed(() => {
   if (!salesData.value?.weeks) return []
-  return [...salesData.value.weeks].sort((a, b) => b.id - a.id)
+  return [...salesData.value.weeks].sort((a, b) => a.id - b.id)
 })
 
 const calculateColumnRanks = (weekId, allStores) => {
@@ -1755,7 +1776,7 @@ onUnmounted(() => {
   --odx-info: #6366f1;
   --odx-text: #1e293b;
   --odx-text-muted: #64748b;
-  --odx-border: #e2e8f0;
+  --odx-border: #e0e0e0;
   --odx-surface: #ffffff;
   --odx-surface-hover: #f8fafc;
   --odx-neutral: #f1f5f9;
@@ -1949,9 +1970,9 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 16px 20px;
+    padding: 10px 20px;
     background: var(--odx-surface);
-    border-radius: 8px;
+    border-radius: 0 0 10px 10px;
     border: 1px solid var(--odx-border);
     margin-bottom: 16px;
 
@@ -2044,7 +2065,7 @@ onUnmounted(() => {
 
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 999;
       // background: var(--odx-surface);
       border-bottom: 2px solid var(--odx-border);
     }
@@ -2074,45 +2095,6 @@ onUnmounted(() => {
         }
       }
 
-      // &--region {
-      //   background: var(--odx-neutral);
-      //   font-weight: 600;
-      //   border-bottom: 2px solid var(--odx-border);
-      // }
-
-      // &--store {
-      //   background: var(--odx-surface);
-      // }
-
-      // &--top-rank {
-      //   background: #ecfdf5;
-      //   border-left: 4px solid var(--odx-success);
-      // }
-
-      // &--mid-rank {
-      //   background: #fffbeb;
-      //   border-left: 4px solid var(--odx-warning);
-      // }
-
-      // &--low-rank {
-      //   background: #fef2f2;
-      //   border-left: 4px solid var(--odx-danger);
-      // }
-
-      // &--region-top {
-      //   background: #ecfdf5;
-      //   border-left: 6px solid var(--odx-success);
-      // }
-
-      // &--region-mid {
-      //   background: #fffbeb;
-      //   border-left: 6px solid var(--odx-warning);
-      // }
-
-      // &--region-low {
-      //   background: #fef2f2;
-      //   border-left: 6px solid var(--odx-danger);
-      // }
     }
 
     &__cell {
@@ -2122,7 +2104,7 @@ onUnmounted(() => {
       align-items: center;
       justify-content: center;
       font-size: 14px;
-      border-right: 1px solid var(--odx-border);
+      // border-right: 1px solid #91b6db;
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2133,42 +2115,35 @@ onUnmounted(() => {
       &--static {
         min-width: 230px;
         flex-shrink: 0;
-        // background: var(--odx-neutral);
         font-weight: 600;
-        border-right: 2px solid var(--odx-border);
+        border-right: 2px solid #91b6db;
         justify-content: flex-start;
         padding-left: 16px;
+
       }
 
       &--group {
-        // background: #eef2ff;
-        // color: var(--odx-info);
         font-size: 15px;
         font-weight: 700;
-        // border-bottom: 2px solid var(--odx-info);
-        border-bottom: 1px solid var(--odx-border);
+        border-bottom: 1px solid #91b6db;
+
       }
 
       &--group-header {
-        // background: var(--odx-surface);
         font-size: 13px;
-        // color: var(--odx-text-muted);
         cursor: pointer;
-
+        border-right: 1px solid #91b6db;
         &:hover {
-          background: #0d598a;
-          // color: white;
+          background-color: rgba(0, 0, 0, 0.2);
         }
       }
 
       &--metric {
-        // background: var(--odx-surface);
         font-size: 12px;
-        // color: var(--odx-text-muted);
         cursor: pointer;
-
+        border-right: 1px solid #91b6db;
         &:hover {
-          background: #0d598a;
+          background-color: rgba(0, 0, 0, 0.2);
           color: white;
         }
       }
@@ -2251,17 +2226,21 @@ onUnmounted(() => {
   .odx-week {
     display: flex;
     width: 100%;
-    border-right: 2px solid var(--odx-border);
+    border-right: 2px solid #91b6db;
     overflow: hidden;
     border-bottom: 1px solid var(--odx-border);
 
     &__name {
       font-weight: 600;
       // color: var(--odx-info);
-      padding: 12px;
+      padding: 17px;
       text-align: center;
       font-size: 14px;
       margin: 0;
+    }
+
+    &__groups {
+      border-bottom: 1px solid #91b6db;
     }
 
     &__groups,
@@ -2467,7 +2446,7 @@ onUnmounted(() => {
   }
 
   .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider {
-    background: red;
+    background: #003268;
   }
 
   .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider::after {
@@ -3188,9 +3167,9 @@ onUnmounted(() => {
   transition: transform 0.4s ease;
 }
 
-.odx-hiden_cell {
-  font-size: 11px !important;
-}
+// .odx-hiden_cell {
+//   font-size: 11px !important;
+// }
 
 .odx-tooltip__detail {
   display: flex;
@@ -3218,7 +3197,6 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 12px;
-
   /* Position the tooltip */
   position: absolute;
   right: -10px;
@@ -3227,5 +3205,45 @@ onUnmounted(() => {
 
 .odx-tip_tool:hover .odx-tip_tooltext {
   visibility: visible;
+}
+
+.odx_top {
+  height: 50px!important;
+}
+
+.period-buttons {
+  display: flex;
+  padding: 0 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.period-btn {
+  padding: 10px 10px;
+  border: 2px solid #007bff;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 0 0 10px 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  height: 55px;
+  width: 75px;
+}
+
+.period-btn:hover:not(:disabled) {
+  background: #0063cc;
+  color: white;
+}
+
+.period-btn.active {
+  background: #003268;
+  border: #003268;
+  color: white;
+}
+
+.period-btn:disabled {
+  // opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
