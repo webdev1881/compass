@@ -1,24 +1,25 @@
 <template>
   <div class="odx-sales-dashboard">
 
-    <div class="period-buttons">
-      <button 
-        @click="loadData()"
-        :class="{ active: selectedPeriod === 'Місяць' }"
-        :disabled="loading || selectedPeriod === 'Місяць'"
-        class="period-btn"
-      >
-        {{ 'Місяць' }}
-      </button>
-      <button 
-        @click="loadData2()"
-        :class="{ active: selectedPeriod === 'Неділя' }"
-        :disabled="loading || selectedPeriod === 'Неділя'"
-        class="period-btn"
-      >
-        {{ 'Неділя' }}
-      </button>
-      <div class="odx-controls">
+    <div class="odx-controls">
+        <div class="period-buttons">
+          <button 
+            @click="loadData()"
+            :class="{ active: selectedPeriod === 'Місяць' }"
+            :disabled="loading || selectedPeriod === 'Місяць'"
+            class="period-btn"
+          >
+            {{ 'Місяць' }}
+          </button>
+          <button 
+            @click="loadData2()"
+            :class="{ active: selectedPeriod === 'Неділя' }"
+            :disabled="loading || selectedPeriod === 'Неділя'"
+            class="period-btn"
+          >
+            {{ 'Неділя' }}
+          </button>
+        </div>
         <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
           Оновити
         </div>
@@ -30,7 +31,6 @@
           </label>
         </div>
       </div>
-    </div>
 
 
 
@@ -63,8 +63,6 @@
       <div class="odx-loading__progress"></div>
     </div>
 
-
-    <!-- Компонент редактора планов -->
     <div v-if="showPlansEditor" class="odx-plans-overlay">
       <div class="odx-plans-container">
         <Plans @close="showPlansEditor = false" />
@@ -95,8 +93,10 @@
               <div class="odx-table__cell odx-table__cell--static"></div>
               <div v-for="week in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__groups">
-                  <div v-for="group in visibleGroups" :key="group.key"  @mouseover="hoverColor" 
-                    class="odx-table__cell odx-table__cell--group-header" :style="getGroupStyle(group.key)">
+                  <div v-for="(group, index) in visibleGroups" :key="group.key"  @mouseover="hoverColor" 
+                    class="odx-table__cell odx-table__cell--group-header" :style="getGroupStyle(group.key)"
+                     :class="{odx_right: index === visibleGroups.length - 1 }"
+                    >
                     <div @click="toggleGroupVisibility(group.key)" class="odx-group-toggle"  @mouseover="hoverColor" >
                       <span>{{ group.label }}</span>
                     </div>
@@ -107,9 +107,10 @@
 
             <div class="odx-table__row odx-table__row--header-bottom">
               <div class="odx-table__cell odx-table__cell--static"></div>
-              <div v-for="week in weeks" :key="week.id" class="odx-week">
+              <div v-for="(week, index) in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__columns">
-                  <div v-for="indicator in availableIndicators" :key="indicator.key"
+                  <div v-for="(indicator, index) in availableIndicators" :key="indicator.key"
+                     :class="{odx_right: index === availableIndicators.length - 1 }"
                     class="odx-table__cell odx-table__cell--metric" :style="getStyle(indicator.key)"
                     @click="handleRegionSort(week.id, indicator.key)">
                     <div class="odx-metric-header">
@@ -141,7 +142,7 @@
                       <div class="odx-week__columns">
                         <div v-for="indicator in availableIndicators"
                           :key="`region-${region.id}-${week.id}-${indicator.key}`"
-                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger odx-hiden_cell"
+                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger "
                           :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
                           @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
@@ -199,6 +200,7 @@
                           :style="getStyle(indicator.key)"
                           @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                          <!-- {{ indicator }} -->
                           {{ getStoreData(store, week.id, indicator.key) }}
                         </div>
                       </div>
@@ -219,7 +221,7 @@
       <div v-if="isOpen" class="kpi-overlay" @click="closePanel"></div>
       <div class="kpi-sidebar" :class="{ 'kpi-sidebar--open': isOpen }">
         <div class="kpi-header">
-          <h2>📊 Ключові показники</h2>
+          <h2>📊 Ключові показники (сума періодів)</h2>
           <button @click="closePanel" class="close-btn" title="Закрыть">✕</button>
         </div>
 
@@ -400,7 +402,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch, Transition } from 'vue'
 import Plans from '../components/Plans.vue'
 
 const loading = ref(true)
@@ -435,7 +437,7 @@ const darkColors = ref([
   '#4e342e', // кофейный
   '#3e2723', // шоколадный
   '#2b2d31'  // нейтральный тёмный
-])
+]) 
 const selectedColor = ref('#e3f2fd')
 const isPaletteOpen = ref(false)
 
@@ -447,10 +449,10 @@ const loadData = async () => {
     error.value = null
     selectedPeriod.value = 'Місяць'
     const [salesResponse, targetsResponse] = await Promise.all([
-      // fetch('/com/static/data/output.json'),
-      // fetch('/com/static/data/targets.json'),
-      fetch('output.json'),
-      fetch('targets.json')
+      fetch('/com/static/data/output.json'),
+      fetch('/com/static/data/targets.json'),
+      // fetch('output.json'),
+      // fetch('targets.json')
     ])
     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
@@ -476,10 +478,10 @@ const loadData2 = async () => {
     error.value = null
     selectedPeriod.value = 'Неділя'
     const [salesResponse, targetsResponse] = await Promise.all([
-      // fetch('/com/static/data/output.json'),
-      // fetch('/com/static/data/targets.json'),
-      fetch('output.json'),
-      fetch('targets.json')
+      fetch('/com/static/data/output.json'),
+      fetch('/com/static/data/targets.json'),
+      // fetch('output.json'),
+      // fetch('targets.json')
     ])
     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
@@ -1136,24 +1138,26 @@ function getStyle(key) {
 
   return {
     width,
-    transform: isVisible ? 'scaleX(1)' : 'scaleX(0)',
-    willChange: 'transform',
+    transform: isVisible ? 'width:105%' : 'width:0%',
+    // willChange: 'transform',
+    // transition: 'width 0.3s',
     transformOrigin: 'left right',
     fontWeight: key === 'totalScore' ? '700' : 'normal',
-    // borderRight: isVisible ? '1px solid #e0e0e0!important' : 'none!important',
+    borderRight: isVisible ? '1px solid #e0e0e0!important' : 'none!important',
   }
 }
 
 function getGroupStyle(groupKey) {
   const group = visibleGroups.value.find(g => g.key === groupKey)
-  if (!group) return { width: '0%', transform: 'scaleX(0)' }
+  if (!group) return { width: '0%', transform: 'width:0%' }
 
   const total = visibleIndicators.value.length
   const groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
 
   return {
     width: groupWidth,
-    transform: group.visibleCount > 0 ? 'scaleX(1)' : 'scaleX(0)',
+    transform: group.visibleCount > 0 ? 'width:100%' : 'width:0%',
+    transition: 'width 0.2s',
     willChange: 'transform',
     transformOrigin: 'left right',
     background: group.visibleCount > 1 ? darkenColor(selectedColor.value, 13) : '',
@@ -1695,8 +1699,7 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
 
   if (rank > 0 && totalItems > 0) {
     const percentile = (rank / totalItems) * 100
-    if (indicator.endsWith('_score') || indicator === 'totalScore' ||
-      indicator.endsWith('_percent') || indicator === 'percent') {
+    if (indicator.endsWith('_score') || indicator === 'totalScore') {
 
       if (percentile <= 20) {
         classes.push('odx-table__cell--percentile-top')
@@ -1714,6 +1717,23 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
         classes.push('odx-table__cell--percentile-poor')
         if (formatter.value) { classes.push('odx-table__cell--formatted-poor') }
       }
+    } 
+    if (
+      indicator.endsWith('_percent') || indicator === 'percent') {
+
+      if (percentile <= 20) {
+        classes.push('odx-table__cell--percentile-top')
+      } else if (percentile <= 40) {
+        classes.push('odx-table__cell--percentile-excellent')
+      } else if (percentile <= 60) {
+        classes.push('odx-table__cell--percentile-good')
+      } else if (percentile <= 80) {
+        classes.push('odx-table__cell--percentile-average')
+      } else {
+        classes.push('odx-table__cell--percentile-poor')
+      }
+    }else {
+      classes.push('odx-small')
     }
   }
 
@@ -1880,7 +1900,7 @@ onUnmounted(() => {
     right: 0;
     height: 3px;
     background: var(--odx-border);
-    z-index: 2000;
+    z-index: 2111;
     overflow: hidden;
 
     &__progress {
@@ -1970,11 +1990,11 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 20px;
-    padding: 10px 20px;
-    background: var(--odx-surface);
-    border-radius: 0 0 10px 10px;
-    border: 1px solid var(--odx-border);
-    margin-bottom: 16px;
+    padding: -1px 20px;
+    // background: var(--odx-surface);
+    // border-radius: 0 0 10px 10px;
+    // border: 1px solid var(--odx-border);
+    margin-top: -1px;
 
     &__refresh {
       display: flex;
@@ -2183,6 +2203,7 @@ onUnmounted(() => {
         color: #dc2626;
         font-weight: 600;
       }
+      
 
       &--formatted-top {
         background-color: #d0ffea;
@@ -2235,7 +2256,7 @@ onUnmounted(() => {
       // color: var(--odx-info);
       padding: 17px;
       text-align: center;
-      font-size: 14px;
+      font-size: 18px;
       margin: 0;
     }
 
@@ -2263,15 +2284,19 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-
+    
     width: 100%;
+  }
+  .odx_right {
+    // background-color: red;
+    border-right: none! important;
   }
 
   .odx-sort-arrow {
     margin-left: 5px;
     font-size: 10px;
     opacity: 0.6;
-    transition: all 0.2s ease;
+    // transition: all 0.2s ease;
 
     &--active {
       opacity: 1;
@@ -2399,7 +2424,7 @@ onUnmounted(() => {
     }
 
     &--inactive {
-      opacity: 0.5;
+      opacity: 0;
     }
   }
 
@@ -2479,6 +2504,7 @@ onUnmounted(() => {
     transition: opacity 0.1s ease;
     max-height: 80vh;
     overflow-y: auto;
+    border: 1px solid rgb(69, 54, 79);
 
     &__main {
       font-size: 18px;
@@ -3213,26 +3239,26 @@ onUnmounted(() => {
 
 .period-buttons {
   display: flex;
-  padding: 0 20px;
-  margin-bottom: 20px;
+  padding: 0 14px;
+  // margin-bottom: 20px;
   flex-wrap: wrap;
 }
 
 .period-btn {
-  padding: 10px 10px;
-  border: 2px solid #007bff;
-  background: #007bff;
+  padding: 6px;
+  border: 2px solid #949ea7;
+  background: #949ea7;
   color: white;
   cursor: pointer;
   border-radius: 0 0 10px 10px;
   font-weight: 500;
   transition: all 0.3s ease;
-  height: 55px;
+  height: 35px;
   width: 75px;
 }
 
 .period-btn:hover:not(:disabled) {
-  background: #0063cc;
+  opacity: 0.8;
   color: white;
 }
 
@@ -3246,4 +3272,10 @@ onUnmounted(() => {
   // opacity: 0.6;
   cursor: not-allowed;
 }
+
+// .odx-small {
+//   background-color: red;
+//   font-size: clamp(6px, 0.8vw, 12px);
+//   font-weight: 600;
+// }
 </style>
