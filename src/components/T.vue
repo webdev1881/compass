@@ -30,10 +30,10 @@
             <span class="toggle-label">Деталі</span>
           </label>
         </div>
+        <a href="#q">
+          <div class="odx_q">?</div>
+        </a>
       </div>
-
-
-
 
     <img :class="{ 'odx-palette-toggle--active': isPaletteOpen }" class="odx-palette-toggle" @click="togglePalette"
       src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
@@ -212,6 +212,251 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div id="q" class="presentation">
+
+        <h2>Опис (коротко)</h2>
+
+        <h3>Типи показників</h3>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Тип показника</th>
+                        <th>Логіка розрахунку</th>
+                        <th>Приклади</th>
+                        <th>Масштабованість</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Positive (позитивні)</strong></td>
+                        <td>Більше значення = кращий результат<br>
+                            Процент = (факт / ціль) × 100</td>
+                        <td>Продажі, сервіс, дисципліна</td>
+                        <td>Необмежена кількість показників</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Negative (негативні)</strong></td>
+                        <td>Менше значення = кращий результат<br>
+                            Процент = (ціль / факт) × 100</td>
+                        <td>Втрати, Нестачі, ФОП, відємні залишки</td>
+                        <td>Автоматичне додавання нових типів</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="info-block" style="margin-bottom: 15px;">
+            <div class="info-title">Масштабованість показників / обмеження</div>
+            <ul>
+                <li>Додавання нових показників через налаштування</li>
+                <li>Автоматичне створення груп показників</li>
+                <li>Підтримка необмеженої кількості регіонів, магазинів та періодів</li>
+                <li>Обмеження несумірних значеннь (заглушка) = 200%</li>
+            </ul>
+        </div>
+
+        <h3>Система балів та рангів</h3>
+
+        <div class="formula-box">
+            Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (макс. бал по
+            показнику)
+        </div>
+
+        <div class="two-column">
+            <div class="info-block">
+                <div class="info-title">Принципи розрахунку</div>
+                <ul>
+                    <li>Бали розраховуються відносно найкращого результату</li>
+                    <li>Максимальний бал (maxScore) задається для кожного показника</li>
+                    <li>Адаптивність до різних діапазонів значень</li>
+                    <li>Ранги по окремим показникам</li>
+                </ul>
+            </div>
+
+            <div class="info-block">
+                <div class="info-title">Незалежність від періодів</div>
+                <ul>
+                    <li>Групування базується на логіці коефіцієнтів</li>
+                    <li>Показники порівнюються відносно, не абсолютно</li>
+                    <li>Система працює з будь-якою кількістю періодів</li>
+                    <li>Історичні дані не впливають на поточні розрахунки</li>
+                    <li>Обмеження: замалі періоди</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="table-container">
+            Приклади:
+            <table>
+                <thead>
+                    <tr>
+                        <th>Показник</th>
+                        <th>maxScore</th>
+                        <th>Тип</th>
+                        <th>Логіка розрахунку балів</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Оборот</td>
+                        <td>100</td>
+                        <td>Positive</td>
+                        <td>Найвищий % виконання плану отримує 100 балів</td>
+                    </tr>
+                    <tr>
+                        <td>Втрати</td>
+                        <td>20</td>
+                        <td>Negative</td>
+                        <td>Найменші втрати отримують 20 балів</td>
+                    </tr>
+                    <tr>
+                        <td>Недостачі</td>
+                        <td>20</td>
+                        <td>Negative</td>
+                        <td>Найменші недостачі отримують 20 балів</td>
+                    </tr>
+                    <tr>
+                        <td>ФОП</td>
+                        <td>15</td>
+                        <td>Negative</td>
+                        <td>Найменші ФОП отримують 15 балів</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Інтерактивні підказки (проміжні обчислення)</h3>
+        <h4>Кнопка "Деталі" активує курсор при наведенні на табличні дані</h4>
+
+        <div class="metrics-table">
+            <div class="metric-group">
+                <div class="metric-group-header">Базові розрахунки</div>
+                <div class="metric-group-content">
+                    <div class="metric-item">
+                        <div class="metric-name">План показника</div>
+                        <div class="metric-desc">% від факту × факт</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">% виконання</div>
+                        <div class="metric-desc">залежить від типу показника</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">Бал показника</div>
+                        <div class="metric-desc">(% поточний / % максимальний) × maxScore</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-group">
+                <div class="metric-group-header">Ранжування</div>
+                <div class="metric-group-content">
+                    <div class="metric-item">
+                        <div class="metric-name">Ранг у колонці</div>
+                        <div class="metric-desc">позиція серед усіх об'єктів</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">Процентиль</div>
+                        <div class="metric-desc">(ранг / загальна кількість) × 100</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">Загальний рейтинг</div>
+                        <div class="metric-desc">сума балів усіх показників</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="metric-group">
+                <div class="metric-group-header">Інформація в підказках</div>
+                <div class="metric-group-content">
+                    <div class="metric-item">
+                        <div class="metric-name">Розрахункові дані</div>
+                        <div class="metric-desc">план, факт, цілі, проценти</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">Бали та ранги</div>
+                        <div class="metric-desc">поточні та максимальні значення</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">Контекст групи</div>
+                        <div class="metric-desc">тільки показники поточної групи</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Умовне форматування (5 кольрів ранжування)</h3>
+
+        <div class="table-container">
+            <table class="ranking-table">
+                <thead>
+                    <tr>
+                        <th>Процентиль</th>
+                        <th>Опис категорії</th>
+                        <th>Колір фону</th>
+                        <th>Застосування</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="rank-1">
+                        <td>81-100%</td>
+                        <td>Топ-рівень (найкращі 20%)</td>
+                        <td>Зелений градієнт</td>
+                        <td>localstorage, spaindexdb</td>
+                    </tr>
+                    <tr class="rank-2">
+                        <td>61-80%</td>
+                        <td>Відмінний рівень</td>
+                        <td>Світло-зелений</td>
+                        <td>localstorage, spaindexdb</td>
+                    </tr>
+                    <tr class="rank-3">
+                        <td>41-60%</td>
+                        <td>Хороший рівень</td>
+                        <td>Жовтий/помаранчевий</td>
+                        <td>localstorage, spa_indexDB</td>
+                    </tr>
+                    <tr class="rank-4">
+                        <td>21-40%</td>
+                        <td>Середній рівень</td>
+                        <td>Помаранчевий</td>
+                        <td>localstorage, spaindexdb</td>
+                    </tr>
+                    <tr class="rank-5">
+                        <td>≤ 20%</td>
+                        <td>Низький рівень (потребує уваги)</td>
+                        <td>Червоний градієнт</td>
+                        <td>localstorage, spaindexdb</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="two-column">
+            <div class="info-block">
+                <div class="info-title">Автоматизація</div>
+                <ul>
+                    <li>Автоматичні сповіщення при оновленні даних</li>
+                    <li>Форматування застосовується миттєво</li>
+                    <li>Немає необхідності в ручних налаштуваннях (окрім заповнення планових показників)</li>
+                    <li>Розрахунки адаптуються до змін в структурі даних</li>
+                </ul>
+            </div>
+            <div class="info-block">
+                <div class="info-title">Feauters</div>
+                <ul>
+                    <li>Процентилі налаштовуються в ODOO</li>
+                    <li>Зберіання в Ексель</li>
+                    <li>Ранжування градієнтне</li>
+                    <li>Підтримка різних стилів для різних типів показників</li>
+                </ul>
+            </div>
+
+        </div>
+
     </div>
 
     <div class="kpi">
@@ -442,6 +687,8 @@ const selectedColor = ref('#e3f2fd')
 const isPaletteOpen = ref(false)
 
 const selectedPeriod = ref('Місяць')
+const STORAGE_KEY_LIMIT = 'dashboardLimit'
+const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200)
 
 const loadData = async () => {
   try {
@@ -449,15 +696,15 @@ const loadData = async () => {
     error.value = null
     selectedPeriod.value = 'Місяць'
     const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/com/static/data/output.json'),
-      fetch('/com/static/data/targets.json'),
-      // fetch('output.json'),
-      // fetch('targets.json')
+      // fetch('/com/static/data/output.json'),
+      // fetch('/com/static/data/targets.json'),
+      fetch('output.json'),
+      fetch('targets.json')
     ])
     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
+    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Невірна структура даних продаж')}
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Невірна структура даних Цілей')}
     const savedTargets = getSavedTargetsFromMemory()
     salesData.value = salesDataResult
     targetsData.value = savedTargets || targetsDataResult
@@ -468,8 +715,8 @@ const loadData = async () => {
     getSavedColor()
 
   } catch (err) {
-    console.error('Ошибка загрузки данных:', err)
-    error.value = err.message || 'Ошибка загрузки данных'
+    console.error('помилка  даных:', err)
+    error.value = err.message || 'помилка  даных'
   } finally {setTimeout(() => {loading.value = false}, 400)}
 }
 const loadData2 = async () => {
@@ -734,25 +981,15 @@ const processedData = computed(() => {
 
       const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
 
-      console.log(`Метрика: ${key}`)
-      console.log(`Общий средний балл: ${overallAverageScore.toFixed(2)}`)
-      console.log(`Пороговое значение (70% от среднего): ${thresholdScore.toFixed(2)}`)
-
       storeAverages.forEach((averageStoreScore, index) => {
-        console.log(`Магазин ${allStores[index].id}: средний балл ${averageStoreScore.toFixed(2)}`)
 
         if (averageStoreScore >= overallAverageScore) {
-          successfulStores++ // Магазины с баллом выше или равным среднему
+          successfulStores++
         } else if (averageStoreScore < thresholdScore) {
-          problemStores++ // Магазины с баллом ниже среднего на 30% и более
+          problemStores++
           console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`)
         }
-        // Магазины между thresholdScore и overallAverageScore не попадают ни в одну категорию
       })
-
-      console.log(`Успешных магазинов: ${successfulStores}`)
-      console.log(`Проблемных магазинов: ${problemStores}`)
-      console.log('---')
 
       const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
 
@@ -892,13 +1129,13 @@ const getTooltipData = (entity, weekId, indicator, type) => {
         { label: 'План', value: formatNumber(weekData.plan || 0) },
         {
           label: 'Факт',
-          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% от плана)`
+          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% від плану)`
         },
-        { label: 'Процент обороту', value: `${weekData.percent || 0}%` }
+        { label: 'Процент обороту', value: `${weekData.percent || 0}%` },
       )
 
       if (weekData.turnover_score !== undefined) {
-        const maxScore = targetsData.value?.targetTree?.turnover?.maxScore || 100
+        const maxScore = targetsData.value?.targetTree?.turnover?.maxScore
         result.details.push({
           label: `Бал за оборот (з ${maxScore})`,
           value: weekData.turnover_score || 0
@@ -931,6 +1168,7 @@ const getTooltipData = (entity, weekId, indicator, type) => {
             value: `${formatNumber(factValue)}`
           },
           { label: `Процент виконання`, value: `${percent}%` },
+          { label: `Реальний Процент`, value: `${((planValue / value) * 100 ).toFixed(0)}%` },
           {
             label: `Бал (з ${target.maxScore})`,
             value: `${score} / ${target.maxScore}`
@@ -1209,11 +1447,12 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       const targetPercent = storeTargetConfig[key] || 0
       const actualValue = weekData[key] || 0
       const target = targetPercent * weekData.fact
+
       let achievementPercent = 0
 
       if (target > 0) {
         if (targetConfig.type === 'negative') {
-          achievementPercent = Math.min((target / actualValue) * 100, 200)
+          achievementPercent = Math.min((target / actualValue) * 100, limit.value)
         } else {
           achievementPercent = (actualValue / target) * 100
         }
@@ -1231,7 +1470,6 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
       return weekData[`${key}_percent`] || 0
     }))
 
-    // console.log(`Метрика: ${key}, Максимальный процент: ${maxPercent}, MaxScore: ${targetConfig.maxScore}`)
     allStores.forEach(store => {
       const weekData = getStoreWeekData(store, weekId)
       const currentPercent = weekData[`${key}_percent`] || 0
@@ -1241,7 +1479,6 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
         score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore)
       }
 
-      // console.log(`Магазин ${store.id}: текущий процент: ${currentPercent}, балл: ${score}`)
       weekData[`${key}_score`] = score
     })
   })
@@ -1328,7 +1565,7 @@ const calculateRegionMetrics = () => {
         let achievementPercent = 0
         if (totalTarget > 0) {
           if (targetConfig.type === 'negative') {
-            achievementPercent = Math.min((totalTarget / totalValue) * 100, 200)
+            achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
           } else {
             achievementPercent = (totalValue / totalTarget) * 100
           }
@@ -1777,6 +2014,9 @@ const refreshData = async () => {
 onMounted(() => {
   // Слушаем события изменения планов
   window.addEventListener('plansDataUpdated', handlePlansDataUpdate)
+  window.addEventListener('dashboard-limit-changed', e => {
+    limit.value = e.detail
+  })
   loadData()
 })
 
@@ -2544,7 +2784,7 @@ onUnmounted(() => {
     cursor: help;
 
     &:hover {
-      background: rgba(59, 130, 246, 0.05);
+      // background: rgba(59, 130, 246, 0.05);
     }
   }
 
@@ -3218,7 +3458,7 @@ onUnmounted(() => {
   visibility: hidden;
   width: max-content;
   // background-color: black;
-  color: #fff;
+  // color: #fff;
   text-align: center;
   border-radius: 6px;
   padding: 5px 8px;
@@ -3226,6 +3466,7 @@ onUnmounted(() => {
   /* Position the tooltip */
   position: absolute;
   right: -10px;
+  bottom: -50%;
   z-index: 1;
 }
 
@@ -3273,9 +3514,246 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
+.odx_q {
+  position: absolute;
+  right: 40px;
+  top: 5px;
+  font-size: larger;
+  background: #003268;
+  color: white;
+  padding: 0 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
 // .odx-small {
 //   background-color: red;
 //   font-size: clamp(6px, 0.8vw, 12px);
 //   font-weight: 600;
 // }
+
+.presentation {
+    max-width: 1300px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 3rem;
+
+    h1 {
+        font-size: 2.2rem;
+        color: #1e293b;
+        text-align: center;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #64748b;
+        margin-bottom: 3rem;
+        font-size: 1.1rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        color: #334155;
+        margin: 2.5rem 0 1.5rem 0;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .table-container {
+        margin: 1.5rem 0;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border: 1px solid #e2e8f0;
+    }
+
+    th,
+    td {
+        padding: 12px 16px;
+        text-align: left;
+        border: 1px solid #e2e8f0;
+        vertical-align: top;
+    }
+
+    th {
+        background: #f1f5f9;
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.95rem;
+    }
+
+    td {
+        font-size: 0.9rem;
+        color: #475569;
+    }
+
+    .formula-box {
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        padding: 1.5rem;
+        border-radius: 6px;
+        margin: 1.5rem 0;
+        text-align: center;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 15px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .metrics-table {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    .metric-group {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .metric-group-header {
+        background: #f1f5f9;
+        padding: 12px 16px;
+        font-weight: 600;
+        color: #334155;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .metric-group-content {
+        padding: 16px;
+    }
+
+    .metric-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .metric-item:last-child {
+        border-bottom: none;
+    }
+
+    .metric-name {
+        font-weight: 500;
+        color: #334155;
+    }
+
+    .metric-desc {
+        color: #64748b;
+        font-size: 0.85rem;
+        text-align: right;
+    }
+
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin: 1.5rem 0;
+    }
+
+    .info-block {
+        background: #f8fafc;
+        padding: 1.5rem;
+        border-radius: 6px;
+        border-left: 4px solid #64748b;
+    }
+
+    .info-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #334155;
+    }
+
+    ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    li {
+        padding: 0.3rem 0;
+        color: #475569;
+        position: relative;
+        padding-left: 1.5rem;
+    }
+
+    li::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: #64748b;
+        font-weight: bold;
+    }
+
+    .ranking-table {
+        margin: 1rem 0;
+    }
+
+    .ranking-table th {
+        background: #334155;
+        color: white;
+    }
+
+    .ranking-table .rank-1 {
+        background: #f0fdf4;
+    }
+
+    .ranking-table .rank-2 {
+        background: #fefce8;
+    }
+
+    .ranking-table .rank-3 {
+        background: #fff7ed;
+    }
+
+    .ranking-table .rank-4 {
+        background: #fef2f2;
+    }
+
+    .ranking-table .rank-5 {
+        background: #f5dddd;
+    }
+
+    @media (max-width: 1024px) {
+        .two-column {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .metrics-table {
+            grid-template-columns: 1fr;
+        }
+
+        .presentation {
+            padding: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding: 1rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+        }
+
+        .presentation {
+            padding: 1rem;
+        }
+    }
+}
+
 </style>

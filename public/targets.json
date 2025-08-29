@@ -29,7 +29,7 @@
   "storeTargets": {
     "store_1": {
       "losses": 0.0128,
-      "shortages": 0.0015990000000000002,
+      "shortages": 0.0016,
       "fop": 0.05,
       "shiftRemainder": 0.002,
       "unprocessed": 0,
@@ -37,7 +37,7 @@
     },
     "store_2": {
       "losses": 0.0115,
-      "shortages": 0.001066,
+      "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0103,
       "unprocessed": 0,
@@ -61,31 +61,31 @@
     },
     "store_5": {
       "losses": 0.0134,
-      "shortages": 0.0031980000000000003,
+      "shortages": 0.0032,
       "fop": 0.05,
-      "shiftRemainder": 0.0039000000000000003,
+      "shiftRemainder": 0.0039,
       "unprocessed": 0,
       "store": "001 Днепр (РУЛЬКА)"
     },
     "store_6": {
       "losses": 0.0005,
-      "shortages": 0.001066,
+      "shortages": 0.0011,
       "fop": 0.05,
-      "shiftRemainder": 0.011000000000000001,
+      "shiftRemainder": 0.011,
       "unprocessed": 0,
       "store": "108 Киев (РУЛЬКА)"
     },
     "store_7": {
       "losses": 0.0092,
-      "shortages": 0.0026650000000000003,
+      "shortages": 0.0027,
       "fop": 0.05,
       "shiftRemainder": 0.0046,
       "unprocessed": 0,
       "store": "199 Первомайский (РУЛЬКА)"
     },
     "store_8": {
-      "losses": 0.009000000000000001,
-      "shortages": 0.0015990000000000002,
+      "losses": 0.009,
+      "shortages": 0.0016,
       "fop": 0.05,
       "shiftRemainder": 0.0042,
       "unprocessed": 0,
@@ -93,31 +93,31 @@
     },
     "store_9": {
       "losses": 0.0058,
-      "shortages": 0.001066,
+      "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0049,
       "unprocessed": 0,
       "store": "220 Ольшаны (РУЛЬКА)"
     },
     "store_10": {
-      "losses": 0.0068000000000000005,
-      "shortages": 0.001066,
+      "losses": 0.0068,
+      "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0032,
       "unprocessed": 0,
       "store": "222 Лозовая (РУЛЬКА)"
     },
     "store_11": {
-      "losses": 0.0068000000000000005,
-      "shortages": 0.001066,
+      "losses": 0.0068,
+      "shortages": 0.0011,
       "fop": 0.05,
-      "shiftRemainder": 0.0039000000000000003,
+      "shiftRemainder": 0.0039,
       "unprocessed": 0,
       "store": "229 Красноград (РУЛЬКА)"
     },
     "store_12": {
       "losses": 0.0031,
-      "shortages": 0.001066,
+      "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0013,
       "unprocessed": 0,
@@ -125,7 +125,7 @@
     },
     "store_13": {
       "losses": 0.0097,
-      "shortages": 0.0031980000000000003,
+      "shortages": 0.0032,
       "fop": 0.05,
       "shiftRemainder": 0.0123,
       "unprocessed": 0,
@@ -133,7 +133,7 @@
     },
     "store_14": {
       "losses": 0.0042,
-      "shortages": 0.002132,
+      "shortages": 0.0021,
       "fop": 0.05,
       "shiftRemainder": 0.001,
       "unprocessed": 0,
@@ -141,15 +141,15 @@
     },
     "store_15": {
       "losses": 0.0075,
-      "shortages": 0.0026650000000000003,
+      "shortages": 0.0027,
       "fop": 0.05,
-      "shiftRemainder": 0.0028000000000000004,
+      "shiftRemainder": 0.0028,
       "unprocessed": 0,
       "store": "267 Пересичное (РУЛЬКА)"
     },
     "store_16": {
-      "losses": 0.008100000000000001,
-      "shortages": 0.0015990000000000002,
+      "losses": 0.0081,
+      "shortages": 0.0016,
       "fop": 0.05,
       "shiftRemainder": 0.0155,
       "unprocessed": 0,
@@ -157,9 +157,9 @@
     },
     "store_17": {
       "losses": 0.0069,
-      "shortages": 0.0031980000000000003,
+      "shortages": 0.0032,
       "fop": 0.05,
-      "shiftRemainder": 0.012199999999999999,
+      "shiftRemainder": 0.0122,
       "unprocessed": 0,
       "store": "282 Максимовка (ЩЕДРИК)"
     }
