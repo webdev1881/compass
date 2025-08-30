@@ -1,16 +1,36 @@
 <template>
   <div class="plans-editor">
     <div class="plans-header">
-      <h2>Редагування Цільових Показників</h2>
-      <div class="plans-actions">
-        <button @click="resetToDefaults" class="btn btn-secondary">
-          Скинути
-        </button>
+      <div class="header_title">
+        <h2>Редагування Цільових Показників</h2>
         <button @click="saveChanges" class="btn btn-primary" :disabled="!hasChanges">
           Зберегти
         </button>
       </div>
+      <div class="plans-actions">
+        <button @click="resetToDefaults" class="btn btn-secondary">
+          Скинути
+        </button>
+        <!-- <button @click="downloadTemplate" class="btn btn-info">
+          Шаблон Excel
+        </button> -->
+        <label class="btn btn-upload">
+          Завантажити з Excel
+          <input type="file" ref="fileInput" @change="handleFileUpload" accept=".xlsx,.xls" style="display: none;">
+        </label>
+      </div>
     </div>
+
+    <div class="period-selector">
+  <label>
+    <input type="radio" v-model="currentPeriod" value="month" @change="loadData">
+    Планы на два месяца
+  </label>
+  <label>
+    <input type="radio" v-model="currentPeriod" value="week" @change="loadData">
+    Планы на две недели
+  </label>
+</div>
 
     <div v-if="loading" class="loading">
       <div class="loading-spinner"></div>
@@ -24,16 +44,11 @@
     </div>
 
     <div v-else class="plans-content">
-      <!-- Загальні налаштування показників -->
       <div class="plans-section">
-        <h3>📊 Налаштування основних балів</h3>
+        <h3>Налаштування основних балів</h3>
         <div class="targets-grid">
-          <div 
-            v-for="(target, key) in targetsData.targetTree" 
-            :key="key" 
-            class="target-card"
-            :class="{ 'target-negative': target.type === 'negative' }"
-          >
+          <div v-for="(target, key) in targetsData.targetTree" :key="key" class="target-card"
+            :class="{ 'target-negative': target.type === 'negative' }">
             <div class="target-header">
               <h4>{{ target.name }}</h4>
               <span class="target-type">
@@ -42,30 +57,20 @@
             </div>
             <div class="target-score">
               <label>Максимальний бал:</label>
-              <input 
-                type="number" 
-                v-model.number="targetsData.targetTree[key].maxScore"
-                @input="markAsChanged"
-                min="1"
-                max="200"
-                class="score-input"
-              >
+              <input type="number" v-model.number="targetsData.targetTree[key].maxScore" @input="markAsChanged" min="1"
+                max="200" class="score-input">
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Налаштування за магазинами -->
       <div class="plans-section">
         <h3>Цільові Показники по Магазинам</h3>
-        
+
         <div class="filters">
-          <input 
-            type="text" 
-            v-model="searchStore" 
-            placeholder="🔍 Пошук магазину..."
-            class="search-input"
-          >
+          <img src="../assets/icons/srch.png" alt="" class="inp_search">
+          <!-- <img src="../../../icons/srch.png" alt="" class="inp_search"> -->
+          <input type="text" v-model="searchStore" placeholder="Пошук магазину..." class="search-input">
           <select v-model="selectedTarget" class="target-filter">
             <option value="">Всі показники</option>
             <option v-for="(target, key) in targetsData.targetTree" :key="key" :value="key">
@@ -78,38 +83,22 @@
           <div class="table-header">
             <div class="store-name">Магазин</div>
             <div v-for="(target, key) in filteredObj" :key="key" class="target-column">
-              <!-- {{ target.name }} -->
               {{ target.name }}
               <small>({{ target.type === 'negative' ? 'мін.' : 'макс.' }})</small>
             </div>
           </div>
 
-          <div 
-            v-for="(storeTargets, storeId) in filteredStores" 
-            :key="storeId" 
-            class="table-row"
-          >
+          <div v-for="(storeTargets, storeId) in filteredStores" :key="storeId" class="table-row">
             <div class="store-name">
               <div class="store-info">
                 <span class="store-id">ID: {{ storeId }}</span>
                 <span class="store-full-name">{{ getStoreName(storeId) }}</span>
               </div>
             </div>
-            <div 
-              v-for="(target, key) in filteredObj" 
-              :key="key" 
-              class="target-value"
-            >
-              <input 
-                type="number" 
-                v-model.number="targetsData.storeTargets[storeId][key]"
-                @input="markAsChanged"
-                :step="getInputStep(key)"
-                :min="0"
-                :max="1"
-                class="target-input"
-                :class="{ 'negative-target': target.type === 'negative' }"
-              >
+            <div v-for="(target, key) in filteredObj" :key="key" class="target-value">
+              <input type="number" v-model.number="targetsData.storeTargets[storeId][key]" @input="markAsChanged"
+                :step="getInputStep(key)" :min="0" :max="1" class="target-input"
+                :class="{ 'negative-target': target.type === 'negative' }">
               <span class="target-percent">
                 {{ (targetsData.storeTargets[storeId][key] * 100).toFixed(3) }}%
               </span>
@@ -128,14 +117,8 @@
               <div v-for="(target, key) in filteredObj" :key="key" class="bulk-input">
                 <label>{{ target.name }}:</label>
                 <div class="input-group">
-                  <input 
-                    type="number" 
-                    v-model.number="bulkValues[key]"
-                    :step="getInputStep(key)"
-                    :min="0"
-                    :max="1"
-                    class="bulk-value-input"
-                  >
+                  <input type="number" v-model.number="bulkValues[key]" :step="getInputStep(key)" :min="0" :max="1"
+                    class="bulk-value-input">
                   <button @click="applyBulkValue(key)" class="btn btn-small">
                     Застосувати
                   </button>
@@ -145,16 +128,16 @@
           </div>
 
           <div class="action-group">
-            <h4>Статистика:</h4>
+            <h4>Загальні:</h4>
             <div class="stats">
               <div class="stat-item">
-                <span class="stat-label">Всього магазинів:</span>
-                <span class="stat-value">{{ Object.keys(targetsData.storeTargets).length }}</span>
+                <span class="stat-label">% заглушка:</span>
+                <div class="bulk-input zaglushka">
+                  <input type="number" v-model.number="limit" :step="getZagStep()" @input="markAsChanged"
+                    @change="saveLimit" :min="100" :max="1000" class="bulk-value-input">
+                </div>
               </div>
-              <div class="stat-item">
-                <span class="stat-label">Показників:</span>
-                <span class="stat-value">{{ Object.keys(targetsData.targetTree).length }}</span>
-              </div>
+
               <div class="stat-item">
                 <span class="stat-label">Змін:</span>
                 <span class="stat-value" :class="{ 'has-changes': hasChanges }">
@@ -167,15 +150,30 @@
       </div>
     </div>
 
-    <!-- Модальне вікно підтвердження -->
-    <div v-if="showConfirmModal" class="modal-overlay" @click="cancelReset">
-      <div class="modal" @click.stop>
-        <h3>🔄 Повернутися до налаштувань за замовчуванням</h3>
-        <p>Ви впевнені, що хочете скинути всі зміни і повернутися до налаштувань за замовчуванням?</p>
-        <div class="modal-actions">
+    <div v-if="showConfirmModal" class="odx_modal-overlay" @click="cancelReset">
+      <div class="odx_modal" @click.stop>
+        <h3>Повернутися до налаштувань за замовчуванням</h3>
+        <p>Ви впевнені, що хочете скинути всі зміни і повернутися до
+          налаштувань за замовчуванням?</p>
+        <div class="odx_modal-actions">
           <button @click="cancelReset" class="btn btn-secondary">Скасувати</button>
           <button @click="confirmReset" class="btn btn-danger">Скинути</button>
         </div>
+      </div>
+    </div>
+
+    <div v-if="showUploadModal" class="odx_modal-overlay">
+      <div class="odx_modal upload-odx_modal" @click.stop>
+        <h3>Завантаження Excel файлу</h3>
+        <div class="upload-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
+          </div>
+          <div class="progress-text">
+            {{ uploadProgress }}% завершено
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -183,9 +181,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import * as XLSX from 'xlsx'
 
 const emit = defineEmits(['close'])
-
 
 const loading = ref(true)
 const error = ref(null)
@@ -199,67 +197,59 @@ const searchStore = ref('')
 const selectedTarget = ref('')
 const bulkValues = ref({})
 const showConfirmModal = ref(false)
+const fileInput = ref(null)
+const uploadProgress = ref(0)
+const showUploadModal = ref(false)
+const STORAGE_KEY_LIMIT = 'dashboardLimit'
+const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200)
 
-// const getStoreName = (storeId) => {
-//   const storeNames = targetsData.value || {}
-//   //  {
-//   //   '1': '1089 Киев (РУЛЬКА)',
-//   //   '2': '001 Днепр (РУЛЬКА)',
-//   //   '3': '102 БЦ (РУЛЬКА)',
-//   //   '4': '101 БЦ (ЩЕДРИК)',
-//   //   '5': '240 Богодухов (РУЛЬКА)',
-//   //   '6': '230 Чугуев (РУЛЬКА)',
-//   //   '7': '222 Лозовая (РУЛЬКА)',
-//   //   '8': '220 Ольшаны (РУЛЬКА)',
-//   //   '9': '267 Пересичное (РУЛЬКА)',
-//   //   '10': '229 Красноград (РУЛЬКА)',
-//   //   '11': '199 Первомайский (РУЛЬКА)',
-//   //   '12': '235 Харьков (РУЛЬКА)',
-//   //   '13': '282 Максимовка (ЩЕДРИК)',
-//   //   '14': '271 Горького (ЩЕДРИК)',
-//   //   '15': '210 Люботин (ЩЕДРИК)',
-//   //   '16': '100 БЦ (РУЛЬКА)'
-//   // }
-//   console.log(`🔍 Получаем имя магазина для ID: ${targetsData.value}`);
-  
-//   return storeNames[storeId] || `Магазин ${storeNames[storeId]?.store}`
-// }
+const STORAGE_KEY_MONTH = 'targetsData_month'
+const STORAGE_KEY_WEEK = 'targetsData_week'
+const getCurrentStorageKey = () => {
+  return currentPeriod.value === 'month' ? STORAGE_KEY_MONTH : STORAGE_KEY_WEEK
+}
+
+const getCurrentTargetsFile = () => {
+  return currentPeriod.value === 'month' ?
+    'targets_month.json' :
+    'targets_week.json'
+  // '/com/static/data/targets_week.json'
+}
+
+const currentPeriod = ref('month') // 'month' или 'week'
 
 const filteredObj = computed(() => {
   return Object.fromEntries(
-    Object.entries(targetsData.value.targetTree).slice(1) // убираем первый
+    Object.entries(targetsData.value.targetTree).slice(1)
   )
 })
 
-
-
+function saveLimit() {
+  localStorage.setItem(STORAGE_KEY_LIMIT, limit.value)
+  const event = new CustomEvent('dashboard-limit-changed', { detail: limit.value })
+  window.dispatchEvent(event)
+}
 
 const getStoreName = (storeId) => {
-  // Получаем объект с данными магазинов из storeTargets
   const storeTargets = targetsData.value?.storeTargets || {}
-  
-  console.log(`🔍 Получаем имя магазина для ID: ${storeTargets[storeId]}`);
-  
-  // Если структура данных содержит название магазина напрямую по ключу
+
   if (typeof storeTargets[storeId] === 'string') {
     return storeTargets[storeId]
   }
-  
-  // Если структура данных содержит объект с полем name или аналогичным
+
   if (typeof storeTargets[storeId] === 'object') {
     const store = storeTargets[storeId]
     return store?.store || store?.store || store?.store || `Магазин ${storeTargets[storeId]}`
   }
-  
-  // Возвращаем дефолтное значение, если данные не найдены
+
   return `Магазин ${storeTargets[storeId]}`
 }
 
-
-
-
 const getInputStep = (targetKey) => {
   return targetKey === 'unprocessed' ? 1 : 0.1
+}
+const getZagStep = () => {
+  return 50
 }
 
 const filteredTargets = computed(() => {
@@ -275,12 +265,12 @@ const filteredStores = computed(() => {
   if (!searchStore.value) {
     return targetsData.value.storeTargets
   }
-  
+
   const filtered = {}
   Object.keys(targetsData.value.storeTargets).forEach(storeId => {
     const storeName = getStoreName(storeId)
     if (storeName.toLowerCase().includes(searchStore.value.toLowerCase()) ||
-        storeId.includes(searchStore.value)) {
+      storeId.includes(searchStore.value)) {
       filtered[storeId] = targetsData.value.storeTargets[storeId]
     }
   })
@@ -289,125 +279,177 @@ const filteredStores = computed(() => {
 
 const STORAGE_KEY = 'targetsData'
 
+// const loadData = async () => {
+//   try {
+//     loading.value = true
+//     error.value = null
+
+//     const savedData = getSavedData()
+
+//     if (savedData) {
+//       targetsData.value = savedData
+//     } else {
+//       const response = await fetch('targets.json')
+//       if (!response.ok) {
+//         throw new Error(`ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸: ${response.status}`)
+//       }
+
+//       const defaultData = await response.json()
+//       targetsData.value = defaultData
+
+//       saveData(defaultData)
+//     }
+
+//     originalData.value = JSON.parse(JSON.stringify(targetsData.value))
+
+//     initBulkValues()
+
+//   } catch (err) {
+//     console.error('âŒ ÐŸÐ¾Ð¼Ð¸Ð»ÐºÐ°:', err)
+//     error.value = err.message || 'ÐŸÐ¾Ð¼Ð¸Ð»ÐºÐ° Ð·Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶ÐµÐ½Ð½Ñ Ð´Ð°Ð½Ð¸Ñ…'
+//   } finally {
+//     loading.value = false
+//   }
+// }
+
+// const getSavedData = () => {
+//   try {
+//     const saved = localStorage.getItem(STORAGE_KEY)
+//     return saved ? JSON.parse(saved) : null
+//   } catch (err) {
+//     console.error('âŒ ÐžÑˆÐ¸Ð±ÐºÐ° Ñ‡Ñ‚ÐµÐ½Ð¸Ñ localStorage:', err)
+//     return null
+//   }
+// }
+
+// const saveData = (data) => {
+//   try {
+//     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+//     console.log('âœ“ Ð² localStorage')
+//     return true
+//   } catch (err) {
+//     console.error('âŒ ÐŸÐ¾Ð¼Ð¸Ð»ÐºÐ° Ð² localStorage:', err)
+//     return false
+//   }
+// }
+
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
 
     const savedData = getSavedData()
-    
+
     if (savedData) {
       targetsData.value = savedData
-      console.log('✓ Загружены сохраненные данные из localStorage')
     } else {
-      // Загружаем данные по умолчанию из targets.json
-      const response = await fetch('/com/static/data/targets.json')
+      const response = await fetch(getCurrentTargetsFile())
       if (!response.ok) {
         throw new Error(`Ошибка загрузки: ${response.status}`)
       }
-      
+
       const defaultData = await response.json()
       targetsData.value = defaultData
-      
-      // Сохраняем в localStorage как базовые настройки
+
       saveData(defaultData)
-      console.log('✓ Загружены данные по умолчанию из targets.json')
     }
 
-    // Сохраняем копию оригинальных данных
     originalData.value = JSON.parse(JSON.stringify(targetsData.value))
-    
-    // Инициализируем значения для массовых изменений
     initBulkValues()
-    
+
   } catch (err) {
-    console.error('❌ Ошибка загрузки данных:', err)
-    error.value = err.message || 'Ошибка загрузки данных'
+    console.error('⚠ Помилка:', err)
+    error.value = err.message || 'Помилка завантаження даних'
   } finally {
     loading.value = false
   }
 }
 
-// Работа с localStorage
 const getSavedData = () => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = localStorage.getItem(getCurrentStorageKey())
     return saved ? JSON.parse(saved) : null
   } catch (err) {
-    console.error('❌ Ошибка чтения localStorage:', err)
+    console.error('⚠ Ошибка чтения localStorage:', err)
     return null
   }
 }
 
 const saveData = (data) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    console.log('✓ Данные сохранены в localStorage')
+    localStorage.setItem(getCurrentStorageKey(), JSON.stringify(data))
+    console.log('✓ в localStorage')
     return true
   } catch (err) {
-    console.error('❌ Ошибка сохранения в localStorage:', err)
+    console.error('⚠ Помилка в localStorage:', err)
     return false
   }
 }
 
-// Инициализация значений для массовых изменений
 const initBulkValues = () => {
   Object.keys(targetsData.value.targetTree).forEach(key => {
     bulkValues.value[key] = 0.0
   })
 }
 
-// Отметка об изменениях
 const markAsChanged = () => {
   hasChanges.value = true
 }
 
-// Применение массового значения
 const applyBulkValue = (targetKey) => {
   const value = bulkValues.value[targetKey]
   if (value === undefined || value === null) return
 
+  console.log( 'applyBulkValue', targetKey, value )
+
   Object.keys(targetsData.value.storeTargets).forEach(storeId => {
     targetsData.value.storeTargets[storeId][targetKey] = value
   })
-  
+
+
   markAsChanged()
-  console.log(`✓ Применено значение ${value} для ${targetKey} ко всем магазинам`)
+  console.log(`âœ“ ÐŸÑ€Ð¸Ð¼ÐµÐ½ÐµÐ½Ð¾ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ ${value} Ð´Ð»Ñ ${targetKey} ÐºÐ¾ Ð²ÑÐµÐ¼ Ð¼Ð°Ð³Ð°Ð·Ð¸Ð½Ð°Ð¼`)
 }
 
-// Сохранение изменений
 const saveChanges = () => {
   if (!hasChanges.value) return
 
   const success = saveData(targetsData.value)
-  
+
   if (success) {
     hasChanges.value = false
-    
-    // Отправляем событие об обновлении данных
+
     emitDataUpdate()
-    
-    console.log('✅ Изменения сохранены успешно')
-    
-    // Показываем уведомление
-    showNotification('Зміни збережено!', 'success')
+
+    showNotification('Ð—Ð¼Ñ–Ð½Ð¸ Ð·Ð±ÐµÑ€ÐµÐ³ÐµÐ½Ð¾!', 'success')
   } else {
-    showNotification('Помилка!', 'error')
+    showNotification('ÐŸÐ¾Ð¼Ð¸Ð»ÐºÐ°!', 'error')
   }
 }
 
-// Отправка события об обновлении данных
-const emitDataUpdate = () => {
-  // Создаем событие для Dashboard компонента
-  const event = new CustomEvent('plansDataUpdated', {
-    detail: targetsData.value
-  })
-  window.dispatchEvent(event)
-  
-  console.log('📡 Отправлено событие обновления данных')
+const getCurrentDashboardPeriod = () => {
+  return currentPeriod.value === 'month' ? 'Два місяці' : 'Два тижні'
 }
 
-// Сброс к настройкам по умолчанию
+// Обновите emitDataUpdate для передачи правильного периода
+const emitDataUpdate = () => {
+  console.log('📊 Plans data being sent:', {
+    targetTree: Object.keys(targetsData.value.targetTree),
+    storeTargets: Object.keys(targetsData.value.storeTargets),
+    sampleStoreTarget: Object.entries(targetsData.value.storeTargets)[0]
+  })
+  
+  const event = new CustomEvent('plansDataUpdated', {
+    detail: { 
+      data: targetsData.value, 
+      period: currentPeriod.value,
+      dashboardPeriod: getCurrentDashboardPeriod()
+    }
+  })
+  window.dispatchEvent(event)
+  console.log('оновлення')
+}
+
 const resetToDefaults = () => {
   showConfirmModal.value = true
 }
@@ -416,31 +458,24 @@ const confirmReset = async () => {
   try {
     loading.value = true
     showConfirmModal.value = false
-    
-    // Удаляем данные из localStorage
-    localStorage.removeItem(STORAGE_KEY)
-    
-    // Загружаем оригинальные данные
-    const response = await fetch('/com/static/data/targets.json')
+
+    localStorage.removeItem(getCurrentStorageKey())
+
+    const response = await fetch(getCurrentTargetsFile())
     const defaultData = await response.json()
-    
+
     targetsData.value = defaultData
     originalData.value = JSON.parse(JSON.stringify(defaultData))
     hasChanges.value = false
-    
-    // Сохраняем как новые базовые настройки
+
     saveData(defaultData)
-    
-    // Уведомляем Dashboard об изменениях
     emitDataUpdate()
-    
-    console.log('🔄 Данные сброшены к настройкам по умолчанию')
-    showNotification('Данные сброшены к настройкам по умолчанию', 'info')
-    
+
+    showNotification('Дані оновлені за замовчуванням', 'info')
+
   } catch (err) {
-    console.error('❌ Ошибка сброса данных:', err)
-    error.value = 'Ошибка сброса данных'
-    showNotification('Ошибка сброса данных!', 'error')
+    console.error('', err)
+    showNotification('Помилка онавлення!', 'error')
   } finally {
     loading.value = false
   }
@@ -450,9 +485,7 @@ const cancelReset = () => {
   showConfirmModal.value = false
 }
 
-// Показ уведомлений
 const showNotification = (message, type = 'info') => {
-  // Простая реализация уведомлений
   const notification = document.createElement('div')
   notification.className = `notification notification-${type}`
   notification.textContent = message
@@ -468,15 +501,336 @@ const showNotification = (message, type = 'info') => {
     animation: slideInRight 0.3s ease;
     background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
   `
-  
+
   document.body.appendChild(notification)
-  
+
   setTimeout(() => {
     notification.remove()
   }, 3000)
 }
 
-// Отслеживание изменений с клавиатуры
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+
+  try {
+    showUploadModal.value = true
+    uploadProgress.value = 0
+
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+      throw new Error('Формат файлу .xlsx або .xls')
+    }
+
+    uploadProgress.value = 20
+
+    const arrayBuffer = await file.arrayBuffer()
+    uploadProgress.value = 40
+
+
+    const workbook = XLSX.read(arrayBuffer, {
+      type: 'array',
+      cellDates: true,
+      cellNF: true,
+      cellText: false
+    })
+
+    uploadProgress.value = 60
+
+    const parsedData = parseExcelData(workbook)
+    uploadProgress.value = 80
+
+    const validatedData = validateExcelData(parsedData)
+    uploadProgress.value = 90
+
+    await applyExcelData(validatedData)
+    uploadProgress.value = 100
+
+    showNotification('success!', 'success')
+
+  } catch (error) {
+    console.error('Помилка Excel файлу:', error)
+    showNotification(`Помилка: ${error.message}`, 'error')
+  } finally {
+
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+
+    setTimeout(() => {
+      showUploadModal.value = false
+      uploadProgress.value = 0
+    }, 1000)
+  }
+}
+
+const parseExcelData = (workbook) => {
+  const result = {
+    targetTree: {},
+    storeTargets: {}
+  }
+
+  if (workbook.SheetNames.includes('Бали')) {
+    const settingsSheet = workbook.Sheets['Бали']
+    const settingsData = XLSX.utils.sheet_to_json(settingsSheet, { header: 1 })
+
+    for (let i = 1; i < settingsData.length; i++) {
+      const row = settingsData[i]
+      if (row[0] && row[1] && row[2] && row[3]) {
+        const key = row[0].toString() // Оставляем ключ как есть
+        result.targetTree[key] = {
+          name: row[1],
+          maxScore: Number(row[2]) || 100,
+          type: row[3].toString().toLowerCase() === 'negative' ? 'negative' : 'positive'
+        }
+      }
+    }
+  }
+
+  if (workbook.SheetNames.includes('Цілі')) {
+    const targetsSheet = workbook.Sheets['Цілі']
+    const targetsData = XLSX.utils.sheet_to_json(targetsSheet, { header: 1 })
+
+    if (targetsData.length < 2) {
+      throw new Error('Список "Цілі" пустий або некоректний')
+    }
+
+    const headers = targetsData[0]
+    console.log('ðŸ” Заголовки Excel:', headers)
+
+    const nameToKeyMapping = {
+      'Описання': 'losses',
+      'Недостачі': 'shortages',
+      'ФОП': 'fop',
+      'Повернення': 'shiftRemainder',
+      'Непровед.': 'unprocessed',
+      'Непровед. списання': 'unprocessed'
+    }
+
+    const targetKeys = []
+    for (let j = 1; j < headers.length - 1; j++) {
+      const headerName = headers[j]
+      if (headerName) {
+        let key = null
+        for (const [name, keyValue] of Object.entries(nameToKeyMapping)) {
+          if (headerName.includes(name)) {
+            key = keyValue
+            break
+          }
+        }
+
+        if (!key) {
+          for (const [treeKey, treeValue] of Object.entries(targetsData.value.targetTree)) {
+            if (headerName.includes(treeValue.name) || treeValue.name.includes(headerName)) {
+              key = treeKey
+              break
+            }
+          }
+        }
+
+        if (key) {
+          targetKeys.push(key)
+        } else {
+          console.warn(`âš ï¸ Не знайдено ключ для колонки: ${headerName}`)
+        }
+      }
+    }
+
+    console.log('ðŸ”‘ Ключі показників:', targetKeys)
+
+    for (let i = 1; i < targetsData.length; i++) {
+      const row = targetsData[i]
+      if (row[0]) {
+        const storeId = row[0].toString()
+        const storeName = row[row.length - 1] // Остання колонка - назва
+
+        result.storeTargets[storeId] = {
+          store: storeName || `Магазин ${storeId}`
+        }
+
+        for (let j = 0; j < targetKeys.length; j++) {
+          const key = targetKeys[j]
+          const value = Number(row[j + 1])
+          if (!isNaN(value)) {
+            result.storeTargets[storeId][key] = value
+          } else {
+            console.warn(`âš ï¸ Некоректне значення для магазину ${storeId}, показник ${key}: ${row[j + 1]}`)
+          }
+        }
+      }
+    }
+  }
+
+  console.log('ðŸ“‹ Парсинг завершено:', {
+    targetTree: Object.keys(result.targetTree).length,
+    storeTargets: Object.keys(result.storeTargets).length
+  })
+
+  return result
+}
+
+const validateExcelData = (data) => {
+  const errors = []
+  const warnings = []
+
+  console.log('ðŸ” Починаємо валідацію даних...')
+
+  if (data.targetTree && Object.keys(data.targetTree).length > 0) {
+    Object.keys(data.targetTree).forEach(key => {
+      const target = data.targetTree[key]
+      if (!target.name) {
+        errors.push(`Відсутнє ім'я для показника: ${key}`)
+      }
+      if (typeof target.maxScore !== 'number' || target.maxScore < 1 || target.maxScore > 500) {
+        errors.push(`Некоректний максимальний бал для ${key}: ${target.maxScore} (повинен бути 1-500)`)
+      }
+      if (!['positive', 'negative'].includes(target.type)) {
+        errors.push(`Некоректний тип показника ${key}: ${target.type} (повинен бути positive або negative)`)
+      }
+    })
+    console.log(`âœ… Перевірено налаштування ${Object.keys(data.targetTree).length} показників`)
+  }
+
+  if (!data.storeTargets || Object.keys(data.storeTargets).length === 0) {
+    errors.push('Не знайдено цілі по магазинам в листі "Цілі по магазинам"')
+  } else {
+    Object.keys(data.storeTargets).forEach(storeId => {
+      const storeData = data.storeTargets[storeId]
+
+      Object.keys(storeData).forEach(targetKey => {
+        if (targetKey === 'store') return
+
+        const value = storeData[targetKey]
+
+        if (typeof value !== 'number' || isNaN(value)) {
+          errors.push(`Не числове значення для магазину ${storeId}, показник ${targetKey}: "${value}"`)
+          return
+        }
+
+        const maxValue = targetKey === 'unprocessed' ? 10 : 1
+        if (value < 0) {
+          errors.push(`Від'ємне значення для магазину ${storeId}, показник ${targetKey}: ${value}`)
+        } else if (value > maxValue) {
+          if (value > maxValue * 10) {
+            errors.push(`Занадто велике значення для магазину ${storeId}, показник ${targetKey}: ${value} (максимум: ${maxValue * 10})`)
+          } else {
+            warnings.push(`Більше значення для магазину ${storeId}, показник ${targetKey}: ${value} (зазвичай до ${maxValue})`)
+          }
+        }
+      })
+    })
+
+    console.log(`âœ… Перевірено дані ${Object.keys(data.storeTargets).length} магазинів`)
+  }
+
+  if (warnings.length > 0) {
+    console.warn('âš ï¸ Попередження:')
+    warnings.forEach(warning => console.warn(warning))
+  }
+
+  if (errors.length > 0) {
+    const errorMessage = 'Помилки валідації:\n' + errors.join('\n')
+    if (warnings.length > 0) {
+      errorMessage += '\n\nПопередження:\n' + warnings.join('\n')
+    }
+    throw new Error(errorMessage)
+  }
+
+  console.log('âœ… Валідація завершена успішно')
+  return data
+}
+
+const applyExcelData = async (data) => {
+  const backup = JSON.parse(JSON.stringify(targetsData.value))
+
+  try {
+    console.log('ðŸ’¾ Застосовуємо дані з Excel...')
+    console.log('ðŸ“„ Нові дані:', data)
+
+    if (data.targetTree && Object.keys(data.targetTree).length > 0) {
+      Object.assign(targetsData.value.targetTree, data.targetTree)
+      console.log('âœ… Оновлені налаштування показників')
+    }
+
+    if (data.storeTargets && Object.keys(data.storeTargets).length > 0) {
+      console.log('ðŸ¢ Старі магазини:', Object.keys(targetsData.value.storeTargets))
+      console.log('ðŸ¢ Нові магазини:', Object.keys(data.storeTargets))
+
+      targetsData.value.storeTargets = { ...data.storeTargets }
+
+      console.log('âœ… Магазини повністю замінені')
+      console.log('ðŸ¢ Результат:', Object.keys(targetsData.value.storeTargets))
+    }
+
+    initBulkValues()
+
+    markAsChanged()
+
+    emitDataUpdate()
+
+    console.log('âœ… Дані з Excel успішно застосовані')
+  } catch (error) {
+    console.error('âŒ Помилка при застосуванні даних:', error)
+    targetsData.value = backup
+    throw error
+  }
+}
+
+const downloadTemplate = () => {
+  try {
+    const workbook = XLSX.utils.book_new()
+
+    const settingsData = [['Ключ', 'Назва', 'Макс. балл', 'Тип', 'Описання']]
+
+    Object.keys(targetsData.value.targetTree).forEach(key => {
+      const target = targetsData.value.targetTree[key]
+      settingsData.push([
+        key,
+        target.name,
+        target.maxScore,
+        target.type,
+        `Показник: ${target.name}`
+      ])
+    })
+
+    const settingsSheet = XLSX.utils.aoa_to_sheet(settingsData)
+    XLSX.utils.book_append_sheet(workbook, settingsSheet, 'Налаштування показників')
+
+    const currentStores = targetsData.value.storeTargets
+    const storeIds = Object.keys(currentStores)
+
+    const indicators = Object.keys(targetsData.value.targetTree)
+      .filter(key => key !== 'turnover')
+
+    const targetsHeaders = ['ID Магазину', ...indicators.map(key => targetsData.value.targetTree[key].name), 'Назва магазину']
+    const targetsData_array = [targetsHeaders]
+
+    storeIds.forEach(storeId => {
+      const storeData = currentStores[storeId]
+      const row = [
+        storeId,
+        ...indicators.map(key => storeData[key] || 0),
+        storeData.store || `Магазин ${storeId}`
+      ]
+      targetsData_array.push(row)
+    })
+
+    const targetsSheet = XLSX.utils.aoa_to_sheet(targetsData_array)
+    XLSX.utils.book_append_sheet(workbook, targetsSheet, 'Цілі по магазинам')
+
+    const fileName = `Шаблон_планів_SMK_${new Date().toISOString().slice(0, 10)}.xlsx`
+    XLSX.writeFile(workbook, fileName)
+
+    console.log(`ðŸ“¥ Шаблон Excel скачаний: ${fileName} (${storeIds.length} магазинів)`)
+    showNotification(`Шаблон Excel скачаний! ${storeIds.length} магазинів`, 'info')
+
+  } catch (error) {
+    console.error('âŒ Помилка створення шаблону:', error)
+    showNotification('Помилка створення шаблону!', 'error')
+  }
+}
+
+
 const handleKeydown = (event) => {
   if (event.ctrlKey && event.key === 's') {
     event.preventDefault()
@@ -487,7 +841,6 @@ const handleKeydown = (event) => {
   }
 }
 
-// Lifecycle hooks
 onMounted(() => {
   loadData()
   document.addEventListener('keydown', handleKeydown)
@@ -498,7 +851,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .plans-editor {
   width: 100%;
   height: 100vh;
@@ -533,7 +886,7 @@ onUnmounted(() => {
 }
 
 .btn {
-  padding: 8px 16px;
+  padding: 4px 10px;
   border: 1px solid transparent;
   border-radius: 6px;
   font-weight: 600;
@@ -586,14 +939,38 @@ onUnmounted(() => {
   color: #475569;
 }
 
+.btn-info {
+  background: #06b6d4;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #0891b2;
+  transform: translateY(-1px);
+}
+
+.btn-upload {
+  background: #10b981;
+  color: white;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-upload:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
 .btn-small {
   padding: 4px 8px;
   font-size: 12px;
-  background-color: #2563eb ;
+  background-color: #2563eb;
   color: #d1d5db;
 }
 
-.loading, .error {
+.loading,
+.error {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -613,8 +990,13 @@ onUnmounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .error {
@@ -655,7 +1037,7 @@ onUnmounted(() => {
 
 .target-card {
   min-width: 190px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #3b82f6;
   border-radius: 8px;
   padding: 16px;
   background: #f8fafc;
@@ -663,7 +1045,7 @@ onUnmounted(() => {
 }
 
 .target-card:hover {
-  border-color: #3b82f6;
+  border-color: #2a5fb4;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
 }
 
@@ -677,7 +1059,6 @@ onUnmounted(() => {
 }
 
 .target-header {
-  /* display: flex; */
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
@@ -731,7 +1112,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
-.search-input, .target-filter {
+.search-input,
+.target-filter {
   padding: 8px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -739,7 +1121,8 @@ onUnmounted(() => {
   min-width: 200px;
 }
 
-.search-input:focus, .target-filter:focus {
+.search-input:focus,
+.target-filter:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -751,7 +1134,8 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.table-header, .table-row {
+.table-header,
+.table-row {
   display: grid;
   grid-template-columns: 250px repeat(auto-fit, minmax(120px, 1fr));
   gap: 1px;
@@ -764,7 +1148,8 @@ onUnmounted(() => {
   color: #374151;
 }
 
-.table-header > div, .table-row > div {
+.table-header>div,
+.table-row>div {
   padding: 12px;
   background: white;
   display: flex;
@@ -930,7 +1315,7 @@ onUnmounted(() => {
   color: #f59e0b !important;
 }
 
-.modal-overlay {
+.odx_modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -944,7 +1329,7 @@ onUnmounted(() => {
   backdrop-filter: blur(4px);
 }
 
-.modal {
+.odx_modal {
   background: white;
   border-radius: 12px;
   padding: 24px;
@@ -953,20 +1338,20 @@ onUnmounted(() => {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
-.modal h3 {
+.odx_modal h3 {
   margin: 0 0 16px 0;
   color: #1e293b;
   font-size: 18px;
   font-weight: 600;
 }
 
-.modal p {
+.odx_modal p {
   margin: 0 0 20px 0;
   color: #64748b;
   line-height: 1.5;
 }
 
-.modal-actions {
+.odx_modal-actions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -983,7 +1368,8 @@ onUnmounted(() => {
     justify-content: center;
   }
 
-  .table-header, .table-row {
+  .table-header,
+  .table-row {
     grid-template-columns: 200px repeat(auto-fit, minmax(100px, 1fr));
   }
 
@@ -991,14 +1377,46 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .filters {
-    flex-direction: column;
-  }
 
-  .search-input, .target-filter {
+  .search-input,
+  .target-filter {
     min-width: auto;
     width: 100%;
   }
+
+  .search-input,
+  .target-filter {
+    min-width: auto;
+    width: 100%;
+    padding-left: 15px;
+  }
+}
+
+.filters {
+  flex-direction: column;
+  position: relative;
+}
+
+.target-filter {
+  min-width: auto;
+  width: 100%;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position-x: 100%;
+  background-position-y: 7px;
+}
+
+.search-input {
+  padding-left: 45px;
+}
+
+.inp_search {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  height: 35px;
+  width: 35px;
+  /* padding-left: 10px; */
 }
 
 @keyframes slideInRight {
@@ -1006,9 +1424,155 @@ onUnmounted(() => {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+/* ==== EXCEL UPLOAD STYLES ==== */
+
+.upload-odx_modal {
+  max-width: 500px;
+  min-height: 300px;
+}
+
+.upload-progress {
+  margin: 20px 0;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.progress-text {
+  text-align: center;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 16px;
+}
+
+.upload-stages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+  opacity: 0.5;
+}
+
+.stage-active {
+  background: #f0f9ff;
+  border-color: #3b82f6;
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.stage-icon {
+  font-size: 18px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.stage span:last-child {
+  font-weight: 600;
+  color: #374151;
+}
+
+.stage-active span:last-child {
+  color: #1e40af;
+}
+
+/* Адаптивність для мобільних */
+@media (max-width: 480px) {
+  .upload-odx_modal {
+    max-width: 95%;
+    margin: 20px;
+  }
+
+  .stage {
+    padding: 8px 12px;
+  }
+
+  .stage-icon {
+    font-size: 16px;
+  }
+
+  .stage span:last-child {
+    font-size: 14px;
+  }
+
+}
+
+.header_title {
+  display: flex;
+  gap: 8px;
+}
+
+.period-selector {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  
+  input[type="radio"] {
+    margin: 0;
   }
 }
 </style>

@@ -5,19 +5,19 @@
         <div class="period-buttons">
           <button 
             @click="loadData()"
-            :class="{ active: selectedPeriod === 'Місяць' }"
-            :disabled="loading || selectedPeriod === 'Місяць'"
+            :class="{ active: selectedPeriod === 'Два місяці' }"
+            :disabled="loading || selectedPeriod === 'Два місяці'"
             class="period-btn"
           >
-            {{ 'Місяць' }}
+            {{ 'Два місяці' }}
           </button>
           <button 
             @click="loadData2()"
-            :class="{ active: selectedPeriod === 'Неділя' }"
-            :disabled="loading || selectedPeriod === 'Неділя'"
+            :class="{ active: selectedPeriod === 'Два тижні' }"
+            :disabled="loading || selectedPeriod === 'Два тижні'"
             class="period-btn"
           >
-            {{ 'Неділя' }}
+            {{ 'Два тижні' }}
           </button>
         </div>
         <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
@@ -107,7 +107,7 @@
 
             <div class="odx-table__row odx-table__row--header-bottom">
               <div class="odx-table__cell odx-table__cell--static"></div>
-              <div v-for="(week, index) in weeks" :key="week.id" class="odx-week">
+              <div v-for="(week) in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__columns">
                   <div v-for="(indicator, index) in availableIndicators" :key="indicator.key"
                      :class="{odx_right: index === availableIndicators.length - 1 }"
@@ -212,252 +212,252 @@
           </div>
         </div>
       </div>
+      <!-- <div id="q" class="presentation">
+
+          <h2>Опис (коротко)</h2>
+
+          <h3>Типи показників</h3>
+
+          <div class="table-container">
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Тип показника</th>
+                          <th>Логіка розрахунку</th>
+                          <th>Приклади</th>
+                          <th>Масштабованість</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                          <td><strong>Positive (позитивні)</strong></td>
+                          <td>Більше значення = кращий результат<br>
+                              Процент = (факт / ціль) × 100</td>
+                          <td>Продажі, сервіс, дисципліна</td>
+                          <td>Необмежена кількість показників</td>
+                      </tr>
+                      <tr>
+                          <td><strong>Negative (негативні)</strong></td>
+                          <td>Менше значення = кращий результат<br>
+                              Процент = (ціль / факт) × 100</td>
+                          <td>Втрати, Нестачі, ФОП, відємні залишки</td>
+                          <td>Автоматичне додавання нових типів</td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+
+          <div class="info-block" style="margin-bottom: 15px;">
+              <div class="info-title">Масштабованість показників / обмеження</div>
+              <ul>
+                  <li>Додавання нових показників через налаштування</li>
+                  <li>Автоматичне створення груп показників</li>
+                  <li>Підтримка необмеженої кількості регіонів, магазинів та періодів</li>
+                  <li>Обмеження несумірних значеннь (заглушка) = 200%</li>
+              </ul>
+          </div>
+
+          <h3>Система балів та рангів</h3>
+
+          <div class="formula-box">
+              Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (макс. бал по
+              показнику)
+          </div>
+
+          <div class="two-column">
+              <div class="info-block">
+                  <div class="info-title">Принципи розрахунку</div>
+                  <ul>
+                      <li>Бали розраховуються відносно найкращого результату</li>
+                      <li>Максимальний бал (maxScore) задається для кожного показника</li>
+                      <li>Адаптивність до різних діапазонів значень</li>
+                      <li>Ранги по окремим показникам</li>
+                  </ul>
+              </div>
+
+              <div class="info-block">
+                  <div class="info-title">Незалежність від періодів</div>
+                  <ul>
+                      <li>Групування базується на логіці коефіцієнтів</li>
+                      <li>Показники порівнюються відносно, не абсолютно</li>
+                      <li>Система працює з будь-якою кількістю періодів</li>
+                      <li>Історичні дані не впливають на поточні розрахунки</li>
+                      <li>Обмеження: замалі періоди</li>
+                  </ul>
+              </div>
+          </div>
+
+          <div class="table-container">
+              Приклади:
+              <table>
+                  <thead>
+                      <tr>
+                          <th>Показник</th>
+                          <th>maxScore</th>
+                          <th>Тип</th>
+                          <th>Логіка розрахунку балів</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                          <td>Оборот</td>
+                          <td>100</td>
+                          <td>Positive</td>
+                          <td>Найвищий % виконання плану отримує 100 балів</td>
+                      </tr>
+                      <tr>
+                          <td>Втрати</td>
+                          <td>20</td>
+                          <td>Negative</td>
+                          <td>Найменші втрати отримують 20 балів</td>
+                      </tr>
+                      <tr>
+                          <td>Недостачі</td>
+                          <td>20</td>
+                          <td>Negative</td>
+                          <td>Найменші недостачі отримують 20 балів</td>
+                      </tr>
+                      <tr>
+                          <td>ФОП</td>
+                          <td>15</td>
+                          <td>Negative</td>
+                          <td>Найменші ФОП отримують 15 балів</td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+
+          <h3>Інтерактивні підказки (проміжні обчислення)</h3>
+          <h4>Кнопка "Деталі" активує курсор при наведенні на табличні дані</h4>
+
+          <div class="metrics-table">
+              <div class="metric-group">
+                  <div class="metric-group-header">Базові розрахунки</div>
+                  <div class="metric-group-content">
+                      <div class="metric-item">
+                          <div class="metric-name">План показника</div>
+                          <div class="metric-desc">% від факту × факт</div>
+                      </div>
+                      <div class="metric-item">
+                          <div class="metric-name">% виконання</div>
+                          <div class="metric-desc">залежить від типу показника</div>
+                      </div>
+                      <div class="metric-item">
+                          <div class="metric-name">Бал показника</div>
+                          <div class="metric-desc">(% поточний / % максимальний) × maxScore</div>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="metric-group">
+                  <div class="metric-group-header">Ранжування</div>
+                  <div class="metric-group-content">
+                      <div class="metric-item">
+                          <div class="metric-name">Ранг у колонці</div>
+                          <div class="metric-desc">позиція серед усіх об'єктів</div>
+                      </div>
+                      <div class="metric-item">
+                          <div class="metric-name">Процентиль</div>
+                          <div class="metric-desc">(ранг / загальна кількість) × 100</div>
+                      </div>
+                      <div class="metric-item">
+                          <div class="metric-name">Загальний рейтинг</div>
+                          <div class="metric-desc">сума балів усіх показників</div>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="metric-group">
+                  <div class="metric-group-header">Інформація в підказках</div>
+                  <div class="metric-group-content">
+                      <div class="metric-item">
+                          <div class="metric-name">Розрахункові дані</div>
+                          <div class="metric-desc">план, факт, цілі, проценти</div>
+                      </div>
+                      <div class="metric-item">
+                          <div class="metric-name">Бали та ранги</div>
+                          <div class="metric-desc">поточні та максимальні значення</div>
+                      </div>
+                      <div class="metric-item">
+                          <div class="metric-name">Контекст групи</div>
+                          <div class="metric-desc">тільки показники поточної групи</div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          <h3>Умовне форматування (5 кольрів ранжування)</h3>
+
+          <div class="table-container">
+              <table class="ranking-table">
+                  <thead>
+                      <tr>
+                          <th>Процентиль</th>
+                          <th>Опис категорії</th>
+                          <th>Колір фону</th>
+                          <th>Застосування</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr class="rank-1">
+                          <td>81-100%</td>
+                          <td>Топ-рівень (найкращі 20%)</td>
+                          <td>Зелений градієнт</td>
+                          <td>localstorage, spaindexdb</td>
+                      </tr>
+                      <tr class="rank-2">
+                          <td>61-80%</td>
+                          <td>Відмінний рівень</td>
+                          <td>Світло-зелений</td>
+                          <td>localstorage, spaindexdb</td>
+                      </tr>
+                      <tr class="rank-3">
+                          <td>41-60%</td>
+                          <td>Хороший рівень</td>
+                          <td>Жовтий/помаранчевий</td>
+                          <td>localstorage, spa_indexDB</td>
+                      </tr>
+                      <tr class="rank-4">
+                          <td>21-40%</td>
+                          <td>Середній рівень</td>
+                          <td>Помаранчевий</td>
+                          <td>localstorage, spaindexdb</td>
+                      </tr>
+                      <tr class="rank-5">
+                          <td>≤ 20%</td>
+                          <td>Низький рівень (потребує уваги)</td>
+                          <td>Червоний градієнт</td>
+                          <td>localstorage, spaindexdb</td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+
+          <div class="two-column">
+              <div class="info-block">
+                  <div class="info-title">Автоматизація</div>
+                  <ul>
+                      <li>Автоматичні сповіщення при оновленні даних</li>
+                      <li>Форматування застосовується миттєво</li>
+                      <li>Немає необхідності в ручних налаштуваннях (окрім заповнення планових показників)</li>
+                      <li>Розрахунки адаптуються до змін в структурі даних</li>
+                  </ul>
+              </div>
+              <div class="info-block">
+                  <div class="info-title">Feauters</div>
+                  <ul>
+                      <li>Процентилі налаштовуються в ODOO</li>
+                      <li>Зберіання в Ексель</li>
+                      <li>Ранжування градієнтне</li>
+                      <li>Підтримка різних стилів для різних типів показників</li>
+                  </ul>
+              </div>
+
+          </div>
+
+      </div> -->
     </div>
 
-    <div id="q" class="presentation">
-
-        <h2>Опис (коротко)</h2>
-
-        <h3>Типи показників</h3>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Тип показника</th>
-                        <th>Логіка розрахунку</th>
-                        <th>Приклади</th>
-                        <th>Масштабованість</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Positive (позитивні)</strong></td>
-                        <td>Більше значення = кращий результат<br>
-                            Процент = (факт / ціль) × 100</td>
-                        <td>Продажі, сервіс, дисципліна</td>
-                        <td>Необмежена кількість показників</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Negative (негативні)</strong></td>
-                        <td>Менше значення = кращий результат<br>
-                            Процент = (ціль / факт) × 100</td>
-                        <td>Втрати, Нестачі, ФОП, відємні залишки</td>
-                        <td>Автоматичне додавання нових типів</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="info-block" style="margin-bottom: 15px;">
-            <div class="info-title">Масштабованість показників / обмеження</div>
-            <ul>
-                <li>Додавання нових показників через налаштування</li>
-                <li>Автоматичне створення груп показників</li>
-                <li>Підтримка необмеженої кількості регіонів, магазинів та періодів</li>
-                <li>Обмеження несумірних значеннь (заглушка) = 200%</li>
-            </ul>
-        </div>
-
-        <h3>Система балів та рангів</h3>
-
-        <div class="formula-box">
-            Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (макс. бал по
-            показнику)
-        </div>
-
-        <div class="two-column">
-            <div class="info-block">
-                <div class="info-title">Принципи розрахунку</div>
-                <ul>
-                    <li>Бали розраховуються відносно найкращого результату</li>
-                    <li>Максимальний бал (maxScore) задається для кожного показника</li>
-                    <li>Адаптивність до різних діапазонів значень</li>
-                    <li>Ранги по окремим показникам</li>
-                </ul>
-            </div>
-
-            <div class="info-block">
-                <div class="info-title">Незалежність від періодів</div>
-                <ul>
-                    <li>Групування базується на логіці коефіцієнтів</li>
-                    <li>Показники порівнюються відносно, не абсолютно</li>
-                    <li>Система працює з будь-якою кількістю періодів</li>
-                    <li>Історичні дані не впливають на поточні розрахунки</li>
-                    <li>Обмеження: замалі періоди</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="table-container">
-            Приклади:
-            <table>
-                <thead>
-                    <tr>
-                        <th>Показник</th>
-                        <th>maxScore</th>
-                        <th>Тип</th>
-                        <th>Логіка розрахунку балів</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Оборот</td>
-                        <td>100</td>
-                        <td>Positive</td>
-                        <td>Найвищий % виконання плану отримує 100 балів</td>
-                    </tr>
-                    <tr>
-                        <td>Втрати</td>
-                        <td>20</td>
-                        <td>Negative</td>
-                        <td>Найменші втрати отримують 20 балів</td>
-                    </tr>
-                    <tr>
-                        <td>Недостачі</td>
-                        <td>20</td>
-                        <td>Negative</td>
-                        <td>Найменші недостачі отримують 20 балів</td>
-                    </tr>
-                    <tr>
-                        <td>ФОП</td>
-                        <td>15</td>
-                        <td>Negative</td>
-                        <td>Найменші ФОП отримують 15 балів</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <h3>Інтерактивні підказки (проміжні обчислення)</h3>
-        <h4>Кнопка "Деталі" активує курсор при наведенні на табличні дані</h4>
-
-        <div class="metrics-table">
-            <div class="metric-group">
-                <div class="metric-group-header">Базові розрахунки</div>
-                <div class="metric-group-content">
-                    <div class="metric-item">
-                        <div class="metric-name">План показника</div>
-                        <div class="metric-desc">% від факту × факт</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">% виконання</div>
-                        <div class="metric-desc">залежить від типу показника</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Бал показника</div>
-                        <div class="metric-desc">(% поточний / % максимальний) × maxScore</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="metric-group">
-                <div class="metric-group-header">Ранжування</div>
-                <div class="metric-group-content">
-                    <div class="metric-item">
-                        <div class="metric-name">Ранг у колонці</div>
-                        <div class="metric-desc">позиція серед усіх об'єктів</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Процентиль</div>
-                        <div class="metric-desc">(ранг / загальна кількість) × 100</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Загальний рейтинг</div>
-                        <div class="metric-desc">сума балів усіх показників</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="metric-group">
-                <div class="metric-group-header">Інформація в підказках</div>
-                <div class="metric-group-content">
-                    <div class="metric-item">
-                        <div class="metric-name">Розрахункові дані</div>
-                        <div class="metric-desc">план, факт, цілі, проценти</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Бали та ранги</div>
-                        <div class="metric-desc">поточні та максимальні значення</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Контекст групи</div>
-                        <div class="metric-desc">тільки показники поточної групи</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <h3>Умовне форматування (5 кольрів ранжування)</h3>
-
-        <div class="table-container">
-            <table class="ranking-table">
-                <thead>
-                    <tr>
-                        <th>Процентиль</th>
-                        <th>Опис категорії</th>
-                        <th>Колір фону</th>
-                        <th>Застосування</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="rank-1">
-                        <td>81-100%</td>
-                        <td>Топ-рівень (найкращі 20%)</td>
-                        <td>Зелений градієнт</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                    <tr class="rank-2">
-                        <td>61-80%</td>
-                        <td>Відмінний рівень</td>
-                        <td>Світло-зелений</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                    <tr class="rank-3">
-                        <td>41-60%</td>
-                        <td>Хороший рівень</td>
-                        <td>Жовтий/помаранчевий</td>
-                        <td>localstorage, spa_indexDB</td>
-                    </tr>
-                    <tr class="rank-4">
-                        <td>21-40%</td>
-                        <td>Середній рівень</td>
-                        <td>Помаранчевий</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                    <tr class="rank-5">
-                        <td>≤ 20%</td>
-                        <td>Низький рівень (потребує уваги)</td>
-                        <td>Червоний градієнт</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="two-column">
-            <div class="info-block">
-                <div class="info-title">Автоматизація</div>
-                <ul>
-                    <li>Автоматичні сповіщення при оновленні даних</li>
-                    <li>Форматування застосовується миттєво</li>
-                    <li>Немає необхідності в ручних налаштуваннях (окрім заповнення планових показників)</li>
-                    <li>Розрахунки адаптуються до змін в структурі даних</li>
-                </ul>
-            </div>
-            <div class="info-block">
-                <div class="info-title">Feauters</div>
-                <ul>
-                    <li>Процентилі налаштовуються в ODOO</li>
-                    <li>Зберіання в Ексель</li>
-                    <li>Ранжування градієнтне</li>
-                    <li>Підтримка різних стилів для різних типів показників</li>
-                </ul>
-            </div>
-
-        </div>
-
-    </div>
 
     <div class="kpi">
       <div v-if="!isOpen" @click="togglePanel" class="kpi-toggle-btn" title="Открыть панель КПИ">
@@ -649,6 +649,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch, Transition } from 'vue'
 import Plans from '../components/Plans.vue'
+import { convertDailyDataToWeekly, getDateRangeForPeriod, getDateRangeDebugInfo } from '../utils/dataAdapter.js'
 
 const loading = ref(true)
 const error = ref(null)
@@ -657,7 +658,7 @@ const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
 const tooltipEnabled = ref(true)
-const formatter = ref(true)
+const formatter = ref(false)
 const KPITopStores = ref(5)
 const isOpen = ref(false)
 const planScore = ref(0)
@@ -686,26 +687,82 @@ const darkColors = ref([
 const selectedColor = ref('#e3f2fd')
 const isPaletteOpen = ref(false)
 
-const selectedPeriod = ref('Місяць')
+const selectedPeriod = ref('Два місяці')
 const STORAGE_KEY_LIMIT = 'dashboardLimit'
 const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200)
+
+// const loadData = async () => {
+//   try {
+//     loading.value = true
+//     error.value = null
+//     selectedPeriod.value = 'Місяць'
+//     const [salesResponse, targetsResponse] = await Promise.all([
+//       // fetch('/com/static/data/output.json'),
+//       // fetch('/com/static/data/targets.json'),
+//       fetch('output.json'),
+//       fetch('targets.json')
+//     ])
+//     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
+//     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
+//     if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Невірна структура даних продаж')}
+//     if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Невірна структура даних Цілей')}
+//     const savedTargets = getSavedTargetsFromMemory()
+//     salesData.value = salesDataResult
+//     targetsData.value = savedTargets || targetsDataResult
+//     dynamicTargetsData.value = targetsData.value
+//     regions.value = Object.values(salesDataResult.regions)
+//     initializeVisibility()
+//     processData()
+//     getSavedColor()
+
+//   } catch (err) {
+//     console.error('помилка  даных:', err)
+//     error.value = err.message || 'помилка  даных'
+//   } finally {setTimeout(() => {loading.value = false}, 400)}
+// }
 
 const loadData = async () => {
   try {
     loading.value = true
     error.value = null
-    selectedPeriod.value = 'Місяць'
-    const [salesResponse, targetsResponse] = await Promise.all([
-      // fetch('/com/static/data/output.json'),
-      // fetch('/com/static/data/targets.json'),
-      fetch('output.json'),
-      fetch('targets.json')
+    selectedPeriod.value = 'Два місяці'
+    
+    // const dateRange = getDateRangeForPeriod('Два місяці')
+    const dateRange = getDateRangeDebugInfo('Два місяці')
+
+    
+    const [targetsResponse, dailyResponse] = await Promise.all([
+      fetch('targets_month.json'),
+      fetch('https://odoo.smkft.space/get_compass_data_by_day', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dateRange)
+      })
     ])
-    if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
-    const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Невірна структура даних продаж')}
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Невірна структура даних Цілей')}
-    const savedTargets = getSavedTargetsFromMemory()
+    
+    if (!targetsResponse.ok || !dailyResponse.ok) {
+      throw new Error(`HTTP error! status: ${targetsResponse.status || dailyResponse.status}`)
+    }
+    
+    const [targetsDataResult, dailyDataResult] = await Promise.all([
+      targetsResponse.json(),
+      dailyResponse.json()
+    ])
+    
+    console.log( targetsDataResult )
+    // Конвертируем новый формат в старый
+    const salesDataResult = convertDailyDataToWeekly(dailyDataResult, 'Два місяці')
+    
+    if (!salesDataResult.weeks || !salesDataResult.regions) {
+      throw new Error('Невірна структура даних продажів')
+    }
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
+      throw new Error('Невірна структура даних цілей')
+    }
+    
+    const savedTargets = getSavedTargetsFromMemory('month')
     salesData.value = salesDataResult
     targetsData.value = savedTargets || targetsDataResult
     dynamicTargetsData.value = targetsData.value
@@ -715,26 +772,83 @@ const loadData = async () => {
     getSavedColor()
 
   } catch (err) {
-    console.error('помилка  даных:', err)
-    error.value = err.message || 'помилка  даных'
-  } finally {setTimeout(() => {loading.value = false}, 400)}
+    console.error('помилка завантаження даних:', err)
+    error.value = err.message || 'помилка завантаження даних'
+  } finally {
+    setTimeout(() => { loading.value = false }, 400)
+  }
 }
+
+
+// const loadData2 = async () => {
+//   try {
+//     loading.value = true
+//     error.value = null
+//     selectedPeriod.value = 'Неділя'
+//     const [salesResponse, targetsResponse] = await Promise.all([
+//       // fetch('/com/static/data/output.json'),
+//       // fetch('/com/static/data/targets.json'),
+//       fetch('output.json'),
+//       fetch('targets.json')
+//     ])
+//     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
+//     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
+//     if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
+//     if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
+//     const savedTargets = getSavedTargetsFromMemory()
+//     salesData.value = salesDataResult
+//     targetsData.value = savedTargets || targetsDataResult
+//     dynamicTargetsData.value = targetsData.value
+//     regions.value = Object.values(salesDataResult.regions)
+//     initializeVisibility()
+//     processData()
+//     getSavedColor()
+
+//   } catch (err) {
+//     console.error('Ошибка загрузки данных:', err)
+//     error.value = err.message || 'Ошибка загрузки данных'
+//   } finally {setTimeout(() => {loading.value = false}, 400)}
+// }
+
 const loadData2 = async () => {
   try {
     loading.value = true
     error.value = null
-    selectedPeriod.value = 'Неділя'
-    const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/com/static/data/output.json'),
-      fetch('/com/static/data/targets.json'),
-      // fetch('output.json'),
-      // fetch('targets.json')
+    selectedPeriod.value = 'Два тижні'
+    
+    const dateRange = getDateRangeForPeriod('Два тижні')
+    
+    const [targetsResponse, dailyResponse] = await Promise.all([
+      fetch('targets_week.json'),
+      fetch('https://odoo.smkft.space/get_compass_data_by_day', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dateRange)
+      })
     ])
-    if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
-    const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
-    const savedTargets = getSavedTargetsFromMemory()
+    
+    if (!targetsResponse.ok || !dailyResponse.ok) {
+      throw new Error(`HTTP error! status: ${targetsResponse.status || dailyResponse.status}`)
+    }
+    
+    const [targetsDataResult, dailyDataResult] = await Promise.all([
+      targetsResponse.json(),
+      dailyResponse.json()
+    ])
+    
+    // Конвертируем новый формат в старый
+    const salesDataResult = convertDailyDataToWeekly(dailyDataResult, 'Два тижні')
+    
+    if (!salesDataResult.weeks || !salesDataResult.regions) {
+      throw new Error('Невірна структура даних продажів')
+    }
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
+      throw new Error('Невірна структура даних цілей')
+    }
+    
+    const savedTargets = getSavedTargetsFromMemory('week')
     salesData.value = salesDataResult
     targetsData.value = savedTargets || targetsDataResult
     dynamicTargetsData.value = targetsData.value
@@ -744,9 +858,11 @@ const loadData2 = async () => {
     getSavedColor()
 
   } catch (err) {
-    console.error('Ошибка загрузки данных:', err)
-    error.value = err.message || 'Ошибка загрузки данных'
-  } finally {setTimeout(() => {loading.value = false}, 400)}
+    console.error('помилка завантаження даних:', err)
+    error.value = err.message || 'помилка завантаження даних'
+  } finally {
+    setTimeout(() => { loading.value = false }, 400)
+  }
 }
 
 const saveColor = (color) => {
@@ -767,19 +883,19 @@ const getSavedColor = () => {
   }
 }
 
-const getSavedTargetsFromMemory = () => {
+const getSavedTargetsFromMemory = (period) => {
   try {
-    const saved = localStorage.getItem('targetsData')
+    const saved = localStorage.getItem(`targetsData_${period}`)
     return saved ? JSON.parse(saved) : null
   } catch (err) {
-    console.error('❌ Ошибка чтения localStorage:', err)
+    console.error('⚠ Ошибка чтения localStorage:', err)
     return null
   }
 }
 
-const saveTargetsToMemory = (data) => {
+const saveTargetsToMemory = (data, period) => {
   try {
-    localStorage.setItem('targetsData', JSON.stringify(data))
+    localStorage.setItem(`targetsData_${period}`, JSON.stringify(data))
     return true
   } catch (err) {
     console.error('Ошибка сохранения в localStorage:', err)
@@ -787,15 +903,24 @@ const saveTargetsToMemory = (data) => {
   }
 }
 
+
 const handlePlansDataUpdate = (event) => {
-  const newTargetsData = event.detail
+  const newTargetsData = event.detail.data || event.detail
 
-  targetsData.value = newTargetsData
-  dynamicTargetsData.value = newTargetsData
+  if (newTargetsData && newTargetsData.targetTree && newTargetsData.storeTargets) {
+    targetsData.value = {
+      targetTree: { ...newTargetsData.targetTree },
+      storeTargets: { ...newTargetsData.storeTargets }
+    }
+    dynamicTargetsData.value = targetsData.value
 
-  saveTargetsToMemory(newTargetsData)
+    const period = event.detail.period === 'month' ? 'month' : 'week'
+    saveTargetsToMemory(targetsData.value, period)
 
-  processData()
+    processData()
+  } else {
+    console.error('❌ Неверная структура данных от Plans.vue:', newTargetsData)
+  }
 }
 
 const togglePlansEditor = () => {
@@ -987,7 +1112,6 @@ const processedData = computed(() => {
           successfulStores++
         } else if (averageStoreScore < thresholdScore) {
           problemStores++
-          console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`)
         }
       })
 
@@ -1244,8 +1368,8 @@ const changeColor = (color) => {
 const togglePalette = () => { isPaletteOpen.value = !isPaletteOpen.value }
 const closePalette = () => { isPaletteOpen.value = false }
 
-const regionSortBy = ref({ weekId: '1', columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: '1', columnKey: 'totalScore', direction: 'desc' })
+const regionSortBy = ref({ weekId: null, columnKey: 'totalScore', direction: 'desc' })
+const storeSortBy = ref({ weekId: null, columnKey: 'totalScore', direction: 'desc' })
 
 const indicatorGroups = computed(() => {
   const groups = [
@@ -1402,6 +1526,74 @@ function getGroupStyle(groupKey) {
   }
 }
 
+// const processData = () => {
+//   if (!regions.value || !salesData.value || !targetsData.value) return
+
+//   regions.value.forEach(region => {
+//     if (region.stores) {
+//       region.stores.forEach(store => {
+//         store.regionId = region.id
+//         store.regionName = region.name
+//         store.regionColor = region.color
+//       })
+//     }
+//   })
+
+//   const allStores = []
+//   regions.value.forEach(region => {
+//     if (region.stores) {
+//       region.stores.forEach(store => {
+//         allStores.push(store)
+//       })
+//     }
+//   })
+
+//   salesData.value.weeks.forEach(week => {
+//     calculateWeeklyMetrics(week.id, allStores)
+//   })
+
+//   calculateRegionMetrics()
+//   calculateRegionColumnRanks()
+//   calculateOverallScores(allStores)
+// }
+
+// Добавьте эту функцию в начало script секции
+const findStoreTargetConfig = (storeTargets, storeId) => {
+  if (!storeTargets || typeof storeTargets !== 'object' || Array.isArray(storeTargets)) {
+    console.error('❌ storeTargets не является объектом:', storeTargets)
+    return {}
+  }
+
+  const idWithoutPrefix = storeId.replace('store_', '')
+  if (storeTargets[idWithoutPrefix]) {
+    return storeTargets[idWithoutPrefix]
+  }
+
+  if (storeTargets[storeId]) {
+    return storeTargets[storeId]
+  }
+
+  return {}
+}
+
+
+
+const initializeSorting = () => {
+  if (weeks.value && weeks.value.length > 0) {
+    const firstWeekId = weeks.value[0].id
+    
+    // Обновляем сортировку только если weekId не установлен или недоступен
+    if (!regionSortBy.value.weekId || !weeks.value.find(w => w.id === regionSortBy.value.weekId)) {
+      regionSortBy.value.weekId = firstWeekId
+    }
+    
+    if (!storeSortBy.value.weekId || !weeks.value.find(w => w.id === storeSortBy.value.weekId)) {
+      storeSortBy.value.weekId = firstWeekId
+    }
+  }
+}
+
+// Обновите функцию processData, добавив вызов инициализации
 const processData = () => {
   if (!regions.value || !salesData.value || !targetsData.value) return
 
@@ -1431,14 +1623,139 @@ const processData = () => {
   calculateRegionMetrics()
   calculateRegionColumnRanks()
   calculateOverallScores(allStores)
+  
+  // Добавьте инициализацию сортировки после обработки данных
+  initializeSorting()
 }
+
+// const calculateWeeklyMetrics = (weekId, allStores) => {
+//   const { targetTree, storeTargets } = targetsData.value
+
+//   allStores.forEach(store => {
+//     const weekData = getStoreWeekData(store, weekId)
+//     // console.log( 'store', store )
+//     // console.log( 'storeTargets', storeTargets )
+//     // console.log( 'storeTargets', storeTargets[store?.id] )
+//     const storeTargetConfig = storeTargets[store?.id] || {}
+//     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
+
+//     Object.entries(targetTree).forEach(([key, targetConfig]) => {
+//       if (key === 'turnover') return
+
+//       const targetPercent = storeTargetConfig[key] || 0
+//       const actualValue = weekData[key] || 0
+//       const target = targetPercent * weekData.fact
+
+//       let achievementPercent = 0
+
+//       if (target > 0) {
+//         if (targetConfig.type === 'negative') {
+//           achievementPercent = Math.min((target / actualValue) * 100, limit.value)
+//         } else {
+//           achievementPercent = (actualValue / target) * 100
+//         }
+//       }
+
+//       weekData[`${key}_percent`] = Math.round(achievementPercent)
+//       weekData[`${key}_target`] = target
+//     })
+//   })
+
+//   Object.entries(targetTree).forEach(([key, targetConfig]) => {
+//     if (key === 'turnover') return
+//     const maxPercent = Math.max(...allStores.map(store => {
+//       const weekData = getStoreWeekData(store, weekId)
+//       return weekData[`${key}_percent`] || 0
+//     }))
+
+//     allStores.forEach(store => {
+//       const weekData = getStoreWeekData(store, weekId)
+//       const currentPercent = weekData[`${key}_percent`] || 0
+//       let score = 0
+
+//       if (maxPercent > 0 && currentPercent > 0) {
+//         score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore)
+//       }
+
+//       weekData[`${key}_score`] = score
+//     })
+//   })
+
+//   if (targetTree.turnover) {
+//     const maxTurnoverPercent = Math.max(...allStores.map(store => {
+//       const weekData = getStoreWeekData(store, weekId)
+//       return weekData.percent || 0
+//     }))
+
+//     allStores.forEach(store => {
+//       const weekData = getStoreWeekData(store, weekId)
+//       const turnoverPercent = weekData.percent || 0
+//       let turnoverScore = 0
+
+//       if (maxTurnoverPercent > 0) {
+//         turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+//       }
+
+//       weekData.turnover_score = turnoverScore
+//     })
+//   }
+
+//   allStores.forEach(store => {
+//     const weekData = getStoreWeekData(store, weekId)
+//     let totalScore = 0
+
+//     Object.entries(targetTree).forEach(([key, targetConfig]) => {
+//       if (key === 'turnover') {
+//         totalScore += weekData.turnover_score || 0
+//       } else {
+//         totalScore += weekData[`${key}_score`] || 0
+//       }
+//     })
+
+//     weekData.totalScore = totalScore
+//   })
+
+//   calculateColumnRanks(weekId, allStores)
+// }
 
 const calculateWeeklyMetrics = (weekId, allStores) => {
   const { targetTree, storeTargets } = targetsData.value
 
+  // ОТЛАДКА: проверим структуру данных
+  // console.log('🔍 Debug calculateWeeklyMetrics:', {
+  //   'targetsData.value': targetsData.value,
+  //   'targetTree type': typeof targetTree,
+  //   'storeTargets type': typeof storeTargets,
+  //   'storeTargets keys': Object.keys(storeTargets || {}),
+  //   'is storeTargets array': Array.isArray(storeTargets),
+  //   'sample store': storeTargets ? storeTargets['719'] || storeTargets['544'] : 'not found'
+  // })
+
   allStores.forEach(store => {
     const weekData = getStoreWeekData(store, weekId)
-    const storeTargetConfig = storeTargets[store.id] || {}
+    
+    // ИСПРАВЛЕНИЕ: изменить const на let
+    let storeTargetConfig = {}
+    
+    // Сначала пробуем ID без префикса (719)
+    const storeIdWithoutPrefix = store.id.replace('store_', '')
+    if (storeTargets && typeof storeTargets === 'object' && !Array.isArray(storeTargets)) {
+      // Сначала пробуем ID без префикса (719)
+      const storeIdWithoutPrefix = store.id.replace('store_', '')
+      if (storeTargets[storeIdWithoutPrefix]) {
+        storeTargetConfig = storeTargets[storeIdWithoutPrefix]
+      }
+      // Если не нашли, пробуем с префиксом (store_719)  
+      else if (storeTargets[store.id]) {
+        storeTargetConfig = storeTargets[store.id]
+      }
+      else {
+        console.warn(`⚠️ Не найдена конфигурация для магазина: ${store.id} (${store.name})`)
+      }
+    } else {
+      console.error('❌ storeTargets не является объектом:', storeTargets)
+    }
+    
     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
@@ -1523,6 +1840,7 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 const calculateRegionMetrics = () => {
   if (!regions.value || !salesData.value || !targetsData.value) return
   const { targetTree, storeTargets } = targetsData.value
+  
   salesData.value.weeks.forEach(week => {
     regions.value.forEach(region => {
       if (!region.stores) return
@@ -1535,6 +1853,7 @@ const calculateRegionMetrics = () => {
         regionWeekData = { weekId: week.id }
         region.weeklyData.push(regionWeekData)
       }
+      
       let totalPlan = 0
       let totalFact = 0
       region.stores.forEach(store => {
@@ -1551,9 +1870,22 @@ const calculateRegionMetrics = () => {
         if (key === 'turnover') return
         let totalValue = 0
         let totalTarget = 0
+        
         region.stores.forEach(store => {
           const storeWeekData = getStoreWeekData(store, week.id)
-          const storeTargetConfig = storeTargets[store.id] || {}
+          
+          // ИСПРАВЛЕНИЕ: изменить const на let
+          let storeTargetConfig = findStoreTargetConfig(storeTargets, store.id)
+          const storeIdWithoutPrefix = store.id.replace('store_', '')
+          
+          if (storeTargets[storeIdWithoutPrefix]) {
+            storeTargetConfig = storeTargets[storeIdWithoutPrefix]
+          } else if (storeTargets[store.id]) {
+            storeTargetConfig = storeTargets[store.id]
+          } else {
+            storeTargetConfig = {}
+          }
+          
           const targetPercent = storeTargetConfig[key] || 0
 
           totalValue += storeWeekData[key] || 0
@@ -1576,6 +1908,7 @@ const calculateRegionMetrics = () => {
       })
     })
 
+    // Остальная логика остается без изменений...
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') return
       const maxPercent = Math.max(...regions.value.map(region => {
@@ -1633,6 +1966,128 @@ const calculateRegionMetrics = () => {
     })
   })
 }
+
+// const calculateRegionMetrics = () => {
+//   if (!regions.value || !salesData.value || !targetsData.value) return
+//   const { targetTree, storeTargets } = targetsData.value
+  
+//   salesData.value.weeks.forEach(week => {
+//     regions.value.forEach(region => {
+//       if (!region.stores) return
+//       if (!region.weeklyData) {
+//         region.weeklyData = []
+//       }
+
+//       let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
+//       if (!regionWeekData) {
+//         regionWeekData = { weekId: week.id }
+//         region.weeklyData.push(regionWeekData)
+//       }
+      
+//       let totalPlan = 0
+//       let totalFact = 0
+//       region.stores.forEach(store => {
+//         const storeWeekData = getStoreWeekData(store, week.id)
+//         totalPlan += storeWeekData.plan || 0
+//         totalFact += storeWeekData.fact || 0
+//       })
+
+//       regionWeekData.plan = totalPlan
+//       regionWeekData.fact = totalFact
+//       regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
+
+//       Object.entries(targetTree).forEach(([key, targetConfig]) => {
+//         if (key === 'turnover') return
+//         let totalValue = 0
+//         let totalTarget = 0
+        
+//         region.stores.forEach(store => {
+//           const storeWeekData = getStoreWeekData(store, week.id)
+          
+//           // ИСПРАВЛЕНИЕ: убираем префикс "store_" для поиска в targets
+//           const storeIdForTargets = store.id.replace('store_', '')
+//           const storeTargetConfig = storeTargets[storeIdForTargets] || {}
+          
+//           const targetPercent = storeTargetConfig[key] || 0
+
+//           totalValue += storeWeekData[key] || 0
+//           totalTarget += targetPercent * (storeWeekData.fact || 0)
+//         })
+
+//         regionWeekData[key] = totalValue
+
+//         let achievementPercent = 0
+//         if (totalTarget > 0) {
+//           if (targetConfig.type === 'negative') {
+//             achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
+//           } else {
+//             achievementPercent = (totalValue / totalTarget) * 100
+//           }
+//         }
+
+//         regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
+//         regionWeekData[`${key}_target`] = totalTarget
+//       })
+//     })
+
+//     // Остальная логика без изменений...
+//     Object.entries(targetTree).forEach(([key, targetConfig]) => {
+//       if (key === 'turnover') return
+//       const maxPercent = Math.max(...regions.value.map(region => {
+//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+//         return regionWeekData?.[`${key}_percent`] || 0
+//       }))
+
+//       regions.value.forEach(region => {
+//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+//         if (!regionWeekData) return
+
+//         const achievementPercent = regionWeekData[`${key}_percent`] || 0
+//         let score = 0
+//         if (maxPercent > 0) {
+//           score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
+//         }
+//         regionWeekData[`${key}_score`] = score
+//       })
+//     })
+
+//     if (targetTree.turnover) {
+//       const maxTurnoverPercent = Math.max(...regions.value.map(region => {
+//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+//         return regionWeekData?.percent || 0
+//       }))
+
+//       regions.value.forEach(region => {
+//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+//         if (!regionWeekData) return
+
+//         const turnoverPercent = regionWeekData.percent || 0
+//         let turnoverScore = 0
+//         if (maxTurnoverPercent > 0) {
+//           turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+//         }
+//         regionWeekData.turnover_score = turnoverScore
+//       })
+//     }
+
+//     regions.value.forEach(region => {
+//       const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+//       if (!regionWeekData) return
+
+//       let totalScore = 0
+
+//       Object.entries(targetTree).forEach(([key, targetConfig]) => {
+//         if (key === 'turnover') {
+//           totalScore += regionWeekData.turnover_score || 0
+//         } else {
+//           totalScore += regionWeekData[`${key}_score`] || 0
+//         }
+//       })
+
+//       regionWeekData.totalScore = totalScore
+//     })
+//   })
+// }
 
 const calculateOverallScores = (allStores) => {
   allStores.forEach(store => {
@@ -1725,6 +2180,46 @@ const getRegionIndicatorValue = (region, weekId, indicator) => {
   return regionWeekData[indicator] || 0
 }
 
+// const sortedRegions = computed(() => {
+//   if (!regions.value) return []
+//   let sorted = [...regions.value]
+
+//   sorted.forEach(region => {
+//     let totalScore = 0
+//     if (region.weeklyData) {
+//       region.weeklyData.forEach(weekData => {
+//         totalScore += weekData.totalScore || 0
+//       })
+//     }
+//     region.overallTotalScore = totalScore
+//   })
+
+
+
+//   sorted.sort((a, b) => {
+//     let aValue = 0
+//     let bValue = 0
+
+//     if (regionSortBy.value.columnKey === 'totalScore') {
+//       // aValue = a.overallTotalScore
+//       // bValue = b.overallTotalScore
+//       aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+//       bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+//     } else {
+//       aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+//       bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+//     }
+
+//     return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
+//   })
+
+//   // sorted.forEach((region, index) => {
+//   //   region.regionRank = index + 1
+//   // })
+
+//   return sorted
+// })
+
 const sortedRegions = computed(() => {
   if (!regions.value) return []
   let sorted = [...regions.value]
@@ -1739,32 +2234,61 @@ const sortedRegions = computed(() => {
     region.overallTotalScore = totalScore
   })
 
-
+  // Проверяем, что weekId существует в данных
+  const validWeekId = regionSortBy.value.weekId && weeks.value.find(w => w.id === regionSortBy.value.weekId) 
+    ? regionSortBy.value.weekId 
+    : (weeks.value[0]?.id || '1')
 
   sorted.sort((a, b) => {
     let aValue = 0
     let bValue = 0
 
     if (regionSortBy.value.columnKey === 'totalScore') {
-      // aValue = a.overallTotalScore
-      // bValue = b.overallTotalScore
-      aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-      bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+      aValue = getRegionIndicatorValue(a, validWeekId, regionSortBy.value.columnKey)
+      bValue = getRegionIndicatorValue(b, validWeekId, regionSortBy.value.columnKey)
     } else {
-      aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-      bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+      aValue = getRegionIndicatorValue(a, validWeekId, regionSortBy.value.columnKey)
+      bValue = getRegionIndicatorValue(b, validWeekId, regionSortBy.value.columnKey)
     }
 
     return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
   })
 
-  // sorted.forEach((region, index) => {
-  //   region.regionRank = index + 1
-  // })
+  sorted.forEach((region, index) => {
+    region.regionRank = index + 1
+  })
 
   return sorted
 })
 
+// const allStores = computed(() => {
+//   const stores = []
+
+//   regions.value.forEach(region => {
+//     if (region.stores) {
+//       region.stores.forEach(store => {
+//         stores.push({
+//           ...store,
+//           regionId: region.id,
+//           regionName: region.name,
+//           regionColor: region.color
+//         })
+//       })
+//     }
+//   })
+
+//   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
+//     stores.sort((a, b) => {
+//       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+//       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+//       return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
+//     })
+//   } else if (sortByTotalScore.value) {
+//     stores.sort((a, b) => (b.overallTotalScore) - (a.overallTotalScore))
+//   }
+
+//   return stores
+// })
 const allStores = computed(() => {
   const stores = []
 
@@ -1782,13 +2306,18 @@ const allStores = computed(() => {
   })
 
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
+    // Проверяем, что weekId существует в данных
+    const validWeekId = weeks.value.find(w => w.id === storeSortBy.value.weekId) 
+      ? storeSortBy.value.weekId 
+      : (weeks.value[0]?.id || '1')
+    
     stores.sort((a, b) => {
-      let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-      let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
+      let aValue = getStoreSortValue(a, validWeekId, storeSortBy.value.columnKey)
+      let bValue = getStoreSortValue(b, validWeekId, storeSortBy.value.columnKey)
       return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
     })
   } else if (sortByTotalScore.value) {
-    stores.sort((a, b) => (b.overallTotalScore) - (a.overallTotalScore))
+    stores.sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
   }
 
   return stores
