@@ -27,7 +27,7 @@
     }
   },
   "storeTargets": {
-    "544": {
+    "store_1": {
       "losses": 0.0128,
       "shortages": 0.0016,
       "fop": 0.05,
@@ -35,7 +35,7 @@
       "unprocessed": 0,
       "store": "100 БЦ (РУЛЬКА)"
     },
-    "547": {
+    "store_2": {
       "losses": 0.0115,
       "shortages": 0.0011,
       "fop": 0.05,
@@ -43,7 +43,7 @@
       "unprocessed": 0,
       "store": "101 БЦ (ЩЕДРИК)"
     },
-    "548": {
+    "store_3": {
       "losses": 0.0077,
       "shortages": 0.0019,
       "fop": 0.05,
@@ -51,7 +51,7 @@
       "unprocessed": 0,
       "store": "102 БЦ (РУЛЬКА)"
     },
-    "552": {
+    "store_4": {
       "losses": 0.0077,
       "shortages": 0.0019,
       "fop": 0.05,
@@ -59,7 +59,7 @@
       "unprocessed": 0,
       "store": "87 БЦ (ЩЕДРИК) Грушевского"
     },
-    "555": {
+    "store_5": {
       "losses": 0.0134,
       "shortages": 0.0032,
       "fop": 0.05,
@@ -67,7 +67,7 @@
       "unprocessed": 0,
       "store": "001 Днепр (РУЛЬКА)"
     },
-    "559": {
+    "store_6": {
       "losses": 0.0005,
       "shortages": 0.0011,
       "fop": 0.05,
@@ -75,7 +75,7 @@
       "unprocessed": 0,
       "store": "108 Киев (РУЛЬКА)"
     },
-    "565": {
+    "store_7": {
       "losses": 0.0092,
       "shortages": 0.0027,
       "fop": 0.05,
@@ -83,7 +83,7 @@
       "unprocessed": 0,
       "store": "199 Первомайский (РУЛЬКА)"
     },
-    "569": {
+    "store_8": {
       "losses": 0.009,
       "shortages": 0.0016,
       "fop": 0.05,
@@ -91,7 +91,7 @@
       "unprocessed": 0,
       "store": "210 Люботин (ЩЕДРИК)"
     },
-    "719": {
+    "store_9": {
       "losses": 0.0058,
       "shortages": 0.0011,
       "fop": 0.05,
@@ -99,7 +99,7 @@
       "unprocessed": 0,
       "store": "220 Ольшаны (РУЛЬКА)"
     },
-    "741": {
+    "store_10": {
       "losses": 0.0068,
       "shortages": 0.0011,
       "fop": 0.05,
@@ -107,7 +107,7 @@
       "unprocessed": 0,
       "store": "222 Лозовая (РУЛЬКА)"
     },
-    "752": {
+    "store_11": {
       "losses": 0.0068,
       "shortages": 0.0011,
       "fop": 0.05,

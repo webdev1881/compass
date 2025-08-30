@@ -1,51 +1,99 @@
 <template>
   <div class="odx-sales-dashboard">
-
     <div class="odx-controls">
-        <div class="period-buttons">
-          <button 
-            @click="loadData()"
-            :class="{ active: selectedPeriod === 'Місяць' }"
-            :disabled="loading || selectedPeriod === 'Місяць'"
-            class="period-btn"
-          >
-            {{ 'Місяць' }}
-          </button>
-          <button 
-            @click="loadData2()"
-            :class="{ active: selectedPeriod === 'Неділя' }"
-            :disabled="loading || selectedPeriod === 'Неділя'"
-            class="period-btn"
-          >
-            {{ 'Неділя' }}
-          </button>
-        </div>
-        <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
-          Оновити
-        </div>
-        <div class="tooltip-controls">
-          <label class="tooltip-toggle">
-            <input type="checkbox" v-model="tooltipEnabled" />
-            <span class="toggle-slider" ></span>
-            <span class="toggle-label">Деталі</span>
-          </label>
-        </div>
-        <a href="#q">
-          <div class="odx_q">?</div>
-        </a>
+      <div class="period-buttons">
+        <button
+          @click="loadMonthlyData()"
+          :class="{ active: selectedPeriod === 'Мiсяцi' }"
+          :disabled="loading || selectedPeriod === 'Мiсяцi'"
+          class="period-btn"
+        >
+          Мiсяцi
+        </button>
+        <button
+          @click="loadData()"
+          :class="{ active: selectedPeriod === 'Недiлi' }"
+          :disabled="loading || selectedPeriod === 'Недiлi'"
+          class="period-btn"
+        >
+          Недiлi
+        </button>
+
       </div>
 
-    <img :class="{ 'odx-palette-toggle--active': isPaletteOpen }" class="odx-palette-toggle" @click="togglePalette"
+      {{ sortedId }}
+      {{ regionSortBy }}
+
+      
+      <!-- <div class="data-info" v-if="transformStats && !loading">
+        <div class="data-stats">
+          <span class="mode-indicator" :class="{ 'mode-monthly': isMonthlyMode }">
+            {{ isMonthlyMode ? "" : "" }}
+            {{ transformStats.type === "monthly" ? "Мiсячний" : "Недiльний" }} режим
+          </span>
+        </div>
+      </div> -->
+
+      <div
+        :style="headerStyle"
+        class="odx-controls__refresh"
+        @click="refreshData"
+        :disabled="loading"
+      >
+        Оновити
+      </div>
+      <div class="tooltip-controls">
+        <label class="tooltip-toggle">
+          <input type="checkbox" v-model="tooltipEnabled" />
+          <span class="toggle-slider"></span>
+          <span class="toggle-label">Підказки</span>
+        </label>
+      </div>
+
+      
+
+      
+      <!-- <div class="data-info" v-if="transformStats && !loading">
+        <small class="data-stats">
+          {{ transformStats.regions }} регионiв | {{ transformStats.stores }} магазинiв
+        </small>
+      </div> -->
+
+      
+      <div
+        :style="headerStyle"
+        class="odx-controls__export"
+        @click="exportDataToCSV"
+        :disabled="loading"
+      >
+        📁 {{ isMonthlyMode ? "Мiсячний CSV" : "Недiльний CSV" }}
+      </div>
+
+
+      <div @click="scrollToSection('target-section')" class="odx_q">?</div>
+    </div>
+
+    <img
+      :class="{ 'odx-palette-toggle--active': isPaletteOpen }"
+      class="odx-palette-toggle"
+      @click="togglePalette"
       src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
-      alt="Palette">
+      alt="Palette"
+    />
 
     <div class="odx-color-palette" :class="{ 'odx-color-palette--open': isPaletteOpen }">
       <div class="odx-color-palette__content">
         <h3>Палітра:</h3>
         <div class="odx-color-palette__grid">
-          <div v-for="color in darkColors" :key="color" class="odx-color-option"
-            :class="{ 'odx-color-option--selected': selectedColor === color }" :style="{ backgroundColor: color }"
-            @click="changeColor(color)" :title="color"/>
+          <div
+            v-for="color in darkColors"
+            :key="color"
+            class="odx-color-option"
+            :class="{ 'odx-color-option--selected': selectedColor === color }"
+            :style="{ backgroundColor: color }"
+            @click="changeColor(color)"
+            :title="color"
+          />
         </div>
         <div class="odx-format-controls">
           <label class="odx-toggle">
@@ -76,15 +124,22 @@
     </div>
 
     <div v-if="!loading && !error" class="odx-dashboard">
-
       <div class="odx-table-container">
         <div class="odx-table">
           <div class="odx-table__header" :style="headerStyle">
             <div class="odx-table__row odx-table__row--header-top">
-              <div class="odx-table__cell odx-table__cell--static odx_top">Регіон / Магазин</div>
-              <div class="odx-table__cell odx-table__cell--group odx_top" :style="{ width: dynamicRowWidth }">
+              <div class="odx-table__cell odx-table__cell--static odx_top">
+                Регіон / Магазин
+              </div>
+              <div
+                class="odx-table__cell odx-table__cell--group odx_top"
+                :style="{ width: dynamicRowWidth }"
+              >
                 <div v-for="week in weeks" :key="week.id" class="odx-week">
-                  <div class="odx-week__name">{{ week.name }} {{ week.dateRange }}</div>
+                  <div class="odx-week__name">
+                    <div class="w_name">{{ week.name }}</div>
+                    <div class="m_name">{{ week.dateRange }}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -93,11 +148,19 @@
               <div class="odx-table__cell odx-table__cell--static"></div>
               <div v-for="week in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__groups">
-                  <div v-for="(group, index) in visibleGroups" :key="group.key"  @mouseover="hoverColor" 
-                    class="odx-table__cell odx-table__cell--group-header" :style="getGroupStyle(group.key)"
-                     :class="{odx_right: index === visibleGroups.length - 1 }"
+                  <div
+                    v-for="(group, index) in visibleGroups"
+                    :key="group.key"
+                    @mouseover="hoverColor"
+                    class="odx-table__cell odx-table__cell--group-header"
+                    :style="getGroupStyle(group.key)"
+                    :class="{ odx_right: index === visibleGroups.length - 1 }"
+                  >
+                    <div
+                      @click="toggleGroupVisibility(group.key)"
+                      class="odx-group-toggle"
+                      @mouseover="hoverColor"
                     >
-                    <div @click="toggleGroupVisibility(group.key)" class="odx-group-toggle"  @mouseover="hoverColor" >
                       <span>{{ group.label }}</span>
                     </div>
                   </div>
@@ -109,13 +172,20 @@
               <div class="odx-table__cell odx-table__cell--static"></div>
               <div v-for="(week, index) in weeks" :key="week.id" class="odx-week">
                 <div class="odx-week__columns">
-                  <div v-for="(indicator, index) in availableIndicators" :key="indicator.key"
-                     :class="{odx_right: index === availableIndicators.length - 1 }"
-                    class="odx-table__cell odx-table__cell--metric" :style="getStyle(indicator.key)"
-                    @click="handleRegionSort(week.id, indicator.key)">
+                  <div
+                    v-for="(indicator, index) in availableIndicators"
+                    :key="indicator.key"
+                    :class="{ odx_right: index === availableIndicators.length - 1 }"
+                    class="odx-table__cell odx-table__cell--metric"
+                    :style="getStyle(indicator.key)"
+                    @click="handleRegionSort(week.id, indicator.key)"
+                  >
                     <div class="odx-metric-header">
                       <span v-html="getIndicatorHeader(indicator)"></span>
-                      <span class="odx-sort-arrow" :class="getSortArrowClass(week.id, indicator.key)">
+                      <span
+                        class="odx-sort-arrow"
+                        :class="getSortArrowClass(week.id, indicator.key)"
+                      >
                         {{ getSortIcon(week.id, indicator.key) }}
                       </span>
                     </div>
@@ -128,26 +198,38 @@
           <div class="odx-table__body">
             <div class="odx-regions">
               <transition-group name="table-row" tag="div">
-
-                <div v-for="region in sortedRegions" :key="`region-${region.id}`"
-                  class="odx-table__row odx-table__row--region" :class="getRegionRowClass(region.regionRank)">
+                <div
+                  v-for="region in sortedRegions"
+                  :key="`region-${region.id}`"
+                  class="odx-table__row odx-table__row--region"
+                  :class="getRegionRowClass(region.regionRank)"
+                >
                   <div class="odx-table__cell odx-table__cell--static">
                     <div class="odx-region-info">
-                      <div class="odx-region-info__indicator" :style="{ backgroundColor: region.color }"></div>
+                      <div
+                        class="odx-region-info__indicator"
+                        :style="{ backgroundColor: region.color }"
+                      ></div>
                       <span class="odx-region-info__title">{{ region.name }}</span>
                     </div>
                   </div>
                   <div class="odx-table__data">
                     <div v-for="week in weeks" :key="week.id" class="odx-week">
                       <div class="odx-week__columns">
-                        <div v-for="indicator in availableIndicators"
+                        <div
+                          v-for="indicator in availableIndicators"
                           :key="`region-${region.id}-${week.id}-${indicator.key}`"
-                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger "
-                          :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
-                          @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
-                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+                          :class="getRegionCellClass(indicator.key, region, week.id)"
+                          :style="getStyle(indicator.key)"
+                          @mouseenter="
+                            showTooltip($event, region, 'region', week.id, indicator.key)
+                          "
+                          @mouseleave="hideTooltip"
+                          @mousemove="updateTooltipPosition"
+                        >
                           {{ getRegionData(region, week.id, indicator.key) }}
-                          <!-- | {{ region.overallTotalScore }} -->
+                          
                         </div>
                       </div>
                     </div>
@@ -163,11 +245,18 @@
                   <div class="odx-sort-controls__weeks">
                     <div v-for="week in weeks" :key="week.id" class="odx-sort-week">
                       <div class="odx-sort-week__columns">
-                        <div v-for="indicator in availableIndicators" :key="`sort-${week.id}-${indicator.key}`"
-                          class="odx-sort-control" :class="getStoreSortArrowClass(week.id, indicator.key)"
+                        <div
+                          v-for="indicator in availableIndicators"
+                          :key="`sort-${week.id}-${indicator.key}`"
+                          class="odx-sort-control"
+                          :class="getStoreSortArrowClass(week.id, indicator.key)"
                           :style="getStyle(indicator.key)"
-                          :title="`Сортировать магазины по ${indicator.label.replace(/<br>/g, ' ')} (${week.name})`"
-                          @click="handleStoreSort(week.id, indicator.key)">
+                          :title="`Сортировать магазины по ${indicator.label.replace(
+                            /<br>/g,
+                            ' '
+                          )} (${week.name})`"
+                          @click="handleStoreSort(week.id, indicator.key)"
+                        >
                           <span class="odx-sort-arrow">
                             {{ getStoreSortIcon(week.id, indicator.key) }}
                           </span>
@@ -181,26 +270,44 @@
 
             <div class="odx-stores">
               <transition-group name="table-row" tag="div">
-
-                <div v-for="store in allStores" :key="`store-${store.id}`" class="odx-table__row odx-table__row--store"
-                  :class="getStoreRowClass(store.overallRank)">
+                <div
+                  v-for="store in allStores"
+                  :key="`store-${store.id}`"
+                  class="odx-table__row odx-table__row--store"
+                  :class="getStoreRowClass(store.overallRank)"
+                >
                   <div class="odx-table__cell odx-table__cell--static">
                     <div class="odx-store-info">
-                      <div class="odx-store-info__indicator" :style="{ backgroundColor: store.regionColor }"></div>
+                      <div
+                        class="odx-store-info__indicator"
+                        :style="{ backgroundColor: store.regionColor }"
+                      ></div>
                       <span class="odx-store-info__title">{{ store.name }}</span>
                     </div>
                   </div>
                   <div class="odx-table__data">
                     <div v-for="week in weeks" :key="week.id" class="odx-week">
                       <div class="odx-week__columns">
-                        <div v-for="indicator in availableIndicators"
+                        <div
+                          v-for="indicator in availableIndicators"
                           :key="`store-${store.id}-${week.id}-${indicator.key}`"
                           class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
-                          :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id), false), indicator.key]"
+                          :class="[
+                            getCellClass(
+                              indicator.key,
+                              getStoreWeekData(store, week.id),
+                              false
+                            ),
+                            indicator.key,
+                          ]"
                           :style="getStyle(indicator.key)"
-                          @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
-                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-                          <!-- {{ indicator }} -->
+                          @mouseenter="
+                            showTooltip($event, store, 'store', week.id, indicator.key)
+                          "
+                          @mouseleave="hideTooltip"
+                          @mousemove="updateTooltipPosition"
+                        >
+                          
                           {{ getStoreData(store, week.id, indicator.key) }}
                         </div>
                       </div>
@@ -212,256 +319,264 @@
           </div>
         </div>
       </div>
-    </div>
+      <div class="space" style="height: 500px"></div>
 
-    <div id="q" class="presentation">
-
-        <h2>Опис (коротко)</h2>
-
+      
+      <div id="target-section" class="presentation">
         <h3>Типи показників</h3>
-
         <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Тип показника</th>
-                        <th>Логіка розрахунку</th>
-                        <th>Приклади</th>
-                        <th>Масштабованість</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Positive (позитивні)</strong></td>
-                        <td>Більше значення = кращий результат<br>
-                            Процент = (факт / ціль) × 100</td>
-                        <td>Продажі, сервіс, дисципліна</td>
-                        <td>Необмежена кількість показників</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Negative (негативні)</strong></td>
-                        <td>Менше значення = кращий результат<br>
-                            Процент = (ціль / факт) × 100</td>
-                        <td>Втрати, Нестачі, ФОП, відємні залишки</td>
-                        <td>Автоматичне додавання нових типів</td>
-                    </tr>
-                </tbody>
-            </table>
+          <table>
+            <thead>
+              <tr>
+                <th>Тип показника</th>
+                <th>Логіка розрахунку</th>
+                <th>Приклади</th>
+                <th>Масштабованість</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Positive (позитивні)</strong></td>
+                <td>
+                  Більше значення = кращий результат<br />
+                  Процент = (факт / ціль) × 100
+                </td>
+                <td>Продажі, сервіс, дисципліна</td>
+                <td>Необмежена кількість показників</td>
+              </tr>
+              <tr>
+                <td><strong>Negative (негативні)</strong></td>
+                <td>
+                  Менше значення = кращий результат<br />
+                  Процент = (ціль / факт) × 100
+                </td>
+                <td>Втрати, Нестачі, ФОП, відємні залишки</td>
+                <td>Автоматичне додавання нових типів</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div class="info-block" style="margin-bottom: 15px;">
-            <div class="info-title">Масштабованість показників / обмеження</div>
-            <ul>
-                <li>Додавання нових показників через налаштування</li>
-                <li>Автоматичне створення груп показників</li>
-                <li>Підтримка необмеженої кількості регіонів, магазинів та періодів</li>
-                <li>Обмеження несумірних значеннь (заглушка) = 200%</li>
-            </ul>
+        <div class="info-block" style="margin-bottom: 15px">
+          <div class="info-title">Масштабованість показників / обмеження</div>
+          <ul>
+            <li>Додавання нових показників через налаштування</li>
+            <li>Автоматичне створення груп показників</li>
+            <li>Підтримка необмеженої кількості регіонів, магазинів та періодів</li>
+            <li>Обмеження несумірних значеннь (заглушка) = 200%</li>
+          </ul>
         </div>
 
         <h3>Система балів та рангів</h3>
 
         <div class="formula-box">
-            Бал = (процент виконання поточного показника / максимальний процент виконання) × maxScore (макс. бал по
-            показнику)
+          Бал = (процент виконання поточного показника / максимальний процент виконання) ×
+          maxScore (макс. бал по показнику)
         </div>
 
         <div class="two-column">
-            <div class="info-block">
-                <div class="info-title">Принципи розрахунку</div>
-                <ul>
-                    <li>Бали розраховуються відносно найкращого результату</li>
-                    <li>Максимальний бал (maxScore) задається для кожного показника</li>
-                    <li>Адаптивність до різних діапазонів значень</li>
-                    <li>Ранги по окремим показникам</li>
-                </ul>
-            </div>
+          <div class="info-block">
+            <div class="info-title">Принципи розрахунку</div>
+            <ul>
+              <li>Бали розраховуються відносно найкращого результату</li>
+              <li>Максимальний бал (maxScore) задається для кожного показника</li>
+              <li>Адаптивність до різних діапазонів значень</li>
+              <li>Ранги по окремим показникам</li>
+            </ul>
+          </div>
 
-            <div class="info-block">
-                <div class="info-title">Незалежність від періодів</div>
-                <ul>
-                    <li>Групування базується на логіці коефіцієнтів</li>
-                    <li>Показники порівнюються відносно, не абсолютно</li>
-                    <li>Система працює з будь-якою кількістю періодів</li>
-                    <li>Історичні дані не впливають на поточні розрахунки</li>
-                    <li>Обмеження: замалі періоди</li>
-                </ul>
-            </div>
+          <div class="info-block">
+            <div class="info-title">Незалежність від періодів</div>
+            <ul>
+              <li>Групування базується на логіці коефіцієнтів</li>
+              <li>Показники порівнюються відносно, не абсолютно</li>
+              <li>Система працює з будь-якою кількістю періодів</li>
+              <li>Історичні дані не впливають на поточні розрахунки</li>
+              <li>Обмеження: замалі періоди</li>
+            </ul>
+          </div>
         </div>
 
         <div class="table-container">
-            Приклади:
-            <table>
-                <thead>
-                    <tr>
-                        <th>Показник</th>
-                        <th>maxScore</th>
-                        <th>Тип</th>
-                        <th>Логіка розрахунку балів</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Оборот</td>
-                        <td>100</td>
-                        <td>Positive</td>
-                        <td>Найвищий % виконання плану отримує 100 балів</td>
-                    </tr>
-                    <tr>
-                        <td>Втрати</td>
-                        <td>20</td>
-                        <td>Negative</td>
-                        <td>Найменші втрати отримують 20 балів</td>
-                    </tr>
-                    <tr>
-                        <td>Недостачі</td>
-                        <td>20</td>
-                        <td>Negative</td>
-                        <td>Найменші недостачі отримують 20 балів</td>
-                    </tr>
-                    <tr>
-                        <td>ФОП</td>
-                        <td>15</td>
-                        <td>Negative</td>
-                        <td>Найменші ФОП отримують 15 балів</td>
-                    </tr>
-                </tbody>
-            </table>
+          Приклади:
+          <table>
+            <thead>
+              <tr>
+                <th>Показник</th>
+                <th>maxScore</th>
+                <th>Тип</th>
+                <th>Логіка розрахунку балів</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Оборот</td>
+                <td>100</td>
+                <td>Positive</td>
+                <td>Найвищий % виконання плану отримує 100 балів</td>
+              </tr>
+              <tr>
+                <td>Втрати</td>
+                <td>20</td>
+                <td>Negative</td>
+                <td>Найменші втрати отримують 20 балів</td>
+              </tr>
+              <tr>
+                <td>Недостачі</td>
+                <td>20</td>
+                <td>Negative</td>
+                <td>Найменші недостачі отримують 20 балів</td>
+              </tr>
+              <tr>
+                <td>ФОП</td>
+                <td>15</td>
+                <td>Negative</td>
+                <td>Найменші ФОП отримують 15 балів</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <h3>Інтерактивні підказки (проміжні обчислення)</h3>
-        <h4>Кнопка "Деталі" активує курсор при наведенні на табличні дані</h4>
+        <h4>Кнопка "Підказки" активує курсор при наведенні на табличні дані</h4>
 
         <div class="metrics-table">
-            <div class="metric-group">
-                <div class="metric-group-header">Базові розрахунки</div>
-                <div class="metric-group-content">
-                    <div class="metric-item">
-                        <div class="metric-name">План показника</div>
-                        <div class="metric-desc">% від факту × факт</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">% виконання</div>
-                        <div class="metric-desc">залежить від типу показника</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Бал показника</div>
-                        <div class="metric-desc">(% поточний / % максимальний) × maxScore</div>
-                    </div>
-                </div>
+          <div class="metric-group">
+            <div class="metric-group-header">Базові розрахунки</div>
+            <div class="metric-group-content">
+              <div class="metric-item">
+                <div class="metric-name">План показника</div>
+                <div class="metric-desc">% від факту × факт</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-name">% виконання</div>
+                <div class="metric-desc">залежить від типу показника</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-name">Бал показника</div>
+                <div class="metric-desc">(% поточний / % максимальний) × maxScore</div>
+              </div>
             </div>
+          </div>
 
-            <div class="metric-group">
-                <div class="metric-group-header">Ранжування</div>
-                <div class="metric-group-content">
-                    <div class="metric-item">
-                        <div class="metric-name">Ранг у колонці</div>
-                        <div class="metric-desc">позиція серед усіх об'єктів</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Процентиль</div>
-                        <div class="metric-desc">(ранг / загальна кількість) × 100</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Загальний рейтинг</div>
-                        <div class="metric-desc">сума балів усіх показників</div>
-                    </div>
-                </div>
+          <div class="metric-group">
+            <div class="metric-group-header">Ранжування</div>
+            <div class="metric-group-content">
+              <div class="metric-item">
+                <div class="metric-name">Ранг у колонці</div>
+                <div class="metric-desc">позиція серед усіх об'єктів</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-name">Процентиль</div>
+                <div class="metric-desc">(ранг / загальна кількість) × 100</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-name">Загальний рейтинг</div>
+                <div class="metric-desc">сума балів усіх показників</div>
+              </div>
             </div>
+          </div>
 
-            <div class="metric-group">
-                <div class="metric-group-header">Інформація в підказках</div>
-                <div class="metric-group-content">
-                    <div class="metric-item">
-                        <div class="metric-name">Розрахункові дані</div>
-                        <div class="metric-desc">план, факт, цілі, проценти</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Бали та ранги</div>
-                        <div class="metric-desc">поточні та максимальні значення</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">Контекст групи</div>
-                        <div class="metric-desc">тільки показники поточної групи</div>
-                    </div>
-                </div>
+          <div class="metric-group">
+            <div class="metric-group-header">Інформація в підказках</div>
+            <div class="metric-group-content">
+              <div class="metric-item">
+                <div class="metric-name">Розрахункові дані</div>
+                <div class="metric-desc">план, факт, цілі, проценти</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-name">Бали та ранги</div>
+                <div class="metric-desc">поточні та максимальні значення</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-name">Контекст групи</div>
+                <div class="metric-desc">тільки показники поточної групи</div>
+              </div>
             </div>
+          </div>
         </div>
 
         <h3>Умовне форматування (5 кольрів ранжування)</h3>
 
         <div class="table-container">
-            <table class="ranking-table">
-                <thead>
-                    <tr>
-                        <th>Процентиль</th>
-                        <th>Опис категорії</th>
-                        <th>Колір фону</th>
-                        <th>Застосування</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="rank-1">
-                        <td>81-100%</td>
-                        <td>Топ-рівень (найкращі 20%)</td>
-                        <td>Зелений градієнт</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                    <tr class="rank-2">
-                        <td>61-80%</td>
-                        <td>Відмінний рівень</td>
-                        <td>Світло-зелений</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                    <tr class="rank-3">
-                        <td>41-60%</td>
-                        <td>Хороший рівень</td>
-                        <td>Жовтий/помаранчевий</td>
-                        <td>localstorage, spa_indexDB</td>
-                    </tr>
-                    <tr class="rank-4">
-                        <td>21-40%</td>
-                        <td>Середній рівень</td>
-                        <td>Помаранчевий</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                    <tr class="rank-5">
-                        <td>≤ 20%</td>
-                        <td>Низький рівень (потребує уваги)</td>
-                        <td>Червоний градієнт</td>
-                        <td>localstorage, spaindexdb</td>
-                    </tr>
-                </tbody>
-            </table>
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>Процентиль</th>
+                <th>Опис категорії</th>
+                <th>Колір фону</th>
+                <th>Застосування</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="rank-1">
+                <td>81-100%</td>
+                <td>Топ-рівень (найкращі 20%)</td>
+                <td>Зелений градієнт</td>
+                <td>localstorage, spaindexdb</td>
+              </tr>
+              <tr class="rank-2">
+                <td>61-80%</td>
+                <td>Відмінний рівень</td>
+                <td>Світло-зелений</td>
+                <td>localstorage, spaindexdb</td>
+              </tr>
+              <tr class="rank-3">
+                <td>41-60%</td>
+                <td>Хороший рівень</td>
+                <td>Жовтий/помаранчевий</td>
+                <td>localstorage, spa_indexDB</td>
+              </tr>
+              <tr class="rank-4">
+                <td>21-40%</td>
+                <td>Середній рівень</td>
+                <td>Помаранчевий</td>
+                <td>localstorage, spaindexdb</td>
+              </tr>
+              <tr class="rank-5">
+                <td>≤ 20%</td>
+                <td>Низький рівень (потребує уваги)</td>
+                <td>Червоний градієнт</td>
+                <td>localstorage, spaindexdb</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="two-column">
-            <div class="info-block">
-                <div class="info-title">Автоматизація</div>
-                <ul>
-                    <li>Автоматичні сповіщення при оновленні даних</li>
-                    <li>Форматування застосовується миттєво</li>
-                    <li>Немає необхідності в ручних налаштуваннях (окрім заповнення планових показників)</li>
-                    <li>Розрахунки адаптуються до змін в структурі даних</li>
-                </ul>
-            </div>
-            <div class="info-block">
-                <div class="info-title">Feauters</div>
-                <ul>
-                    <li>Процентилі налаштовуються в ODOO</li>
-                    <li>Зберіання в Ексель</li>
-                    <li>Ранжування градієнтне</li>
-                    <li>Підтримка різних стилів для різних типів показників</li>
-                </ul>
-            </div>
-
+          <div class="info-block">
+            <div class="info-title">Автоматизація</div>
+            <ul>
+              <li>Автоматичні сповіщення при оновленні даних</li>
+              <li>Форматування застосовується миттєво</li>
+              <li>
+                Немає необхідності в ручних налаштуваннях (окрім заповнення планових
+                показників)
+              </li>
+              <li>Розрахунки адаптуються до змін в структурі даних</li>
+            </ul>
+          </div>
+          <div class="info-block">
+            <div class="info-title">Feauters</div>
+            <ul>
+              <li>Процентилі налаштовуються в ODOO</li>
+              <li>Зберіання в Ексель</li>
+              <li>Ранжування градієнтне</li>
+              <li>Підтримка різних стилів для різних типів показників</li>
+            </ul>
+          </div>
         </div>
-
+      </div>
     </div>
 
     <div class="kpi">
-      <div v-if="!isOpen" @click="togglePanel" class="kpi-toggle-btn" title="Открыть панель КПИ">
-        <img src="https://i.ibb.co/fV6qHXLb/com.png" alt="" class="comp">
+      <div
+        v-if="!isOpen"
+        @click="togglePanel"
+        class="kpi-toggle-btn"
+        title="Открыть панель КПИ"
+      >
+        <img src="https://i.ibb.co/fV6qHXLb/com.png" alt="" class="comp" />
       </div>
       <div v-if="isOpen" class="kpi-overlay" @click="closePanel"></div>
       <div class="kpi-sidebar" :class="{ 'kpi-sidebar--open': isOpen }">
@@ -471,7 +586,6 @@
         </div>
 
         <div class="kpi-content" v-if="processedData">
-
           <div class="kpi-section">
             <h3>🎯 Загальне зведення</h3>
             <div class="kpi-cards">
@@ -484,7 +598,9 @@
                 <div class="kpi-label">Регіонів</div>
               </div>
               <div class="kpi-card info">
-                <div class="kpi-value">{{ formatNumber(processedData.averageScore) }}</div>
+                <div class="kpi-value">
+                  {{ formatNumber(processedData.averageScore) }}
+                </div>
                 <div class="kpi-label">Середній бал</div>
               </div>
               <div class="kpi-card warning">
@@ -497,11 +613,18 @@
           <div class="kpi-section">
             <h3>🏆 Топ регіони</h3>
             <div class="kpi-list">
-              <div v-for="(region, index) in processedData.topRegions" :key="region.id" class="kpi-list-item"
-                :class="`rank-${index + 1}`">
+              <div
+                v-for="(region, index) in processedData.topRegions"
+                :key="region.id"
+                class="kpi-list-item"
+                :class="`rank-${index + 1}`"
+              >
                 <div class="rank-badge">{{ index + 1 }}</div>
                 <div class="region-info">
-                  <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
+                  <div
+                    class="region-indicator"
+                    :style="{ backgroundColor: region.color }"
+                  ></div>
                   <span class="region-name">{{ region.name }}</span>
                 </div>
                 <div class="region-score">{{ formatNumber(region.score) }}</div>
@@ -510,14 +633,22 @@
           </div>
 
           <div class="kpi-section">
-            <h3>⭐ Топ <b> {{ KPITopStores }} </b> магазини</h3>
+            <h3>
+              ⭐ Топ <b> {{ KPITopStores }} </b> магазини
+            </h3>
             <div class="kpi-list">
-              <div v-for="(store, index) in processedData.topStores" :key="store.id" class="kpi-list-item"
-                :class="`rank-${index + 1}`">
+              <div
+                v-for="(store, index) in processedData.topStores"
+                :key="store.id"
+                class="kpi-list-item"
+                :class="`rank-${index + 1}`"
+              >
                 <div class="rank-badge">{{ index + 1 }}</div>
                 <div class="store-info">
-                  <div class="store-region-indicator" :style="{ backgroundColor: store.regionColor }">
-                  </div>
+                  <div
+                    class="store-region-indicator"
+                    :style="{ backgroundColor: store.regionColor }"
+                  ></div>
                   <span class="store-name">{{ store.name }}</span>
                   <span class="store-region">{{ store.regionName }}</span>
                 </div>
@@ -529,12 +660,17 @@
           <div class="kpi-section">
             <h3>⚠️ Проблемні зони</h3>
             <div class="kpi-cards">
-
-              <div class="kpi-card danger odx-tip_tool ">
+              <div class="kpi-card danger odx-tip_tool">
                 <div class="kpi-value">{{ processedData.problemStores.length }}</div>
-                <div v-if="processedData.problemStores.length" class="odx-tip_tooltext"
-                  :style="`background-color: ${selectedColor};`">
-                  <div v-for="val in (processedData.problemStores)" class="odx-tip_tooltext_item">
+                <div
+                  v-if="processedData.problemStores.length"
+                  class="odx-tip_tooltext"
+                  :style="`background-color: ${selectedColor};`"
+                >
+                  <div
+                    v-for="val in processedData.problemStores"
+                    class="odx-tip_tooltext_item"
+                  >
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ val.overallTotalScore }}</div>
                   </div>
@@ -542,14 +678,27 @@
                 <div class="kpi-label">Магазинів в зоні ризику</div>
               </div>
 
-              <div class="kpi-card warning odx-tip_tool ">
+              <div class="kpi-card warning odx-tip_tool">
                 <div class="kpi-value">{{ processedData.belowPlanStores.length }}</div>
-                <div v-if="processedData.belowPlanStores.length" class="odx-tip_tooltext"
-                  :style="`background-color: ${selectedColor};`">
-                  <div v-for="val in (processedData.belowPlanStores)" class="odx-tip_tooltext_item">
+                <div
+                  v-if="processedData.belowPlanStores.length"
+                  class="odx-tip_tooltext"
+                  :style="`background-color: ${selectedColor};`"
+                >
+                  <div
+                    v-for="val in processedData.belowPlanStores"
+                    class="odx-tip_tooltext_item"
+                  >
                     <div class="item">{{ val.name }}</div>
-                    <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact) / (val.weeklyData[0].plan +
-                      val.weeklyData[1].plan) * 100).toFixed(1) }}%</div>
+                    <div class="item">
+                      {{
+                        (
+                          ((val.weeklyData[0].fact + val.weeklyData[1].fact) /
+                            (val.weeklyData[0].plan + val.weeklyData[1].plan)) *
+                          100
+                        ).toFixed(1)
+                      }}%
+                    </div>
                   </div>
                 </div>
 
@@ -558,7 +707,11 @@
             </div>
 
             <div class="problem-details">
-              <div class="problem-item" v-for="issue in processedData.topIssues" :key="issue.type">
+              <div
+                class="problem-item"
+                v-for="issue in processedData.topIssues"
+                :key="issue.type"
+              >
                 <div class="issue-type">{{ issue.name }}</div>
                 <div class="issue-stats">
                   <span class="issue-value">{{ formatNumber(issue.totalValue) }}</span>
@@ -571,7 +724,11 @@
           <div class="kpi-section">
             <h3>📈 Динаміка по неділям</h3>
             <div class="week-comparison">
-              <div v-for="week in processedData.weeklyComparison" :key="week.id" class="week-stats">
+              <div
+                v-for="week in processedData.weeklyComparison"
+                :key="week.id"
+                class="week-stats"
+              >
                 <div class="week-header">
                   <div class="week-name">{{ week.name }}</div>
                   <div class="week-period">{{ week.dateRange }}</div>
@@ -595,7 +752,8 @@
               <div class="trend-indicator" v-if="processedData.weeklyTrend">
                 <div class="trend-label">Тренд:</div>
                 <div class="trend-value" :class="processedData.weeklyTrend.type">
-                  {{ processedData.weeklyTrend.icon }} {{ processedData.weeklyTrend.text }}
+                  {{ processedData.weeklyTrend.icon }}
+                  {{ processedData.weeklyTrend.text }}
                 </div>
               </div>
             </div>
@@ -604,14 +762,24 @@
           <div class="kpi-section">
             <h3>🎯 Цілі та досягнення</h3>
             <div class="targets-overview">
-              <div v-for="target in processedData.targetsOverview" :key="target.key" class="target-item">
+              <div
+                v-for="target in processedData.targetsOverview"
+                :key="target.key"
+                class="target-item"
+              >
                 <div class="target-header">
                   <span class="target-name">{{ target.name }}</span>
-                  <span class="target-score">{{ target.averageScore }}/{{ target.maxScore }}</span>
+                  <span class="target-score"
+                    >{{ target.averageScore }}/{{ target.maxScore }}</span
+                  >
                 </div>
                 <div class="target-progress">
-                  <div class="progress-bar" :style="{ width: `${(target.averageScore / target.maxScore) * 100}%` }">
-                  </div>
+                  <div
+                    class="progress-bar"
+                    :style="{
+                      width: `${(target.averageScore / target.maxScore) * 100}%`,
+                    }"
+                  ></div>
                 </div>
                 <div class="target-stats">
                   <span class="success-stores">✅ {{ target.successfulStores }}</span>
@@ -620,378 +788,643 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
 
-    <div v-if="tooltip.visible && tooltip.data" class="odx-tooltip"
-      :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px', opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1 }">
+    
+    <div
+      v-if="tooltip.visible && tooltip.data"
+      class="odx-tooltip"
+      :style="{
+        left: tooltip.x + 'px',
+        top: tooltip.y + 'px',
+        opacity: tooltip.x === 0 && tooltip.y === 0 ? 0 : 1,
+      }"
+    >
       <div class="odx-tooltip__header">
         <div class="odx-tooltip__title">{{ tooltip.data.entityName }}</div>
-        <div class="odx-tooltip__subtitle">{{ tooltip.data.weekName }} </div>
+        <div class="odx-tooltip__subtitle">{{ tooltip.data.weekName }}</div>
       </div>
       <div class="odx-tooltip__main">{{ tooltip.data.mainValue }}</div>
       <div class="odx-tooltip__details">
-        <div v-for="detail in tooltip.data.details" :key="detail.label" class="odx-tooltip__detail">
-
+        <div
+          v-for="detail in tooltip.data.details"
+          :key="detail.label"
+          class="odx-tooltip__detail"
+        >
           <span class="odx-tooltip__detail-label">{{ detail.label }}</span>
           <span class="odx-tooltip__detail-value">{{ detail.value }}</span>
         </div>
       </div>
     </div>
-    <div class="space" style="height: 500px;"></div>
-
-
+    
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch, Transition } from 'vue'
-import Plans from '../components/Plans.vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  reactive,
+  nextTick,
+  watch,
+  Transition,
+} from "vue";
+import { useDataTransformStore } from "../stores/dataTransform.js";
+import Plans from "../components/Plans.vue";
 
-const loading = ref(true)
-const error = ref(null)
-const salesData = ref(null)
-const targetsData = ref(null)
-const sortByTotalScore = ref(true)
-const regions = ref([])
-const tooltipEnabled = ref(true)
-const formatter = ref(true)
-const KPITopStores = ref(5)
-const isOpen = ref(false)
-const planScore = ref(0)
-const showPlansEditor = ref(false)
-const dynamicTargetsData = ref(null)
+const loading = ref(true);
+const error = ref(null);
+const salesData = ref(null);
+const targetsData = ref(null);
+const sortByTotalScore = ref(true);
+const regions = ref([]);
+const tooltipEnabled = ref(true);
+const formatter = ref(true);
+const KPITopStores = ref(5);
+const isOpen = ref(false);
+const planScore = ref(0);
+const showPlansEditor = ref(false);
+const dynamicTargetsData = ref(null);
 const darkColors = ref([
-  '#1b263b', // тёмно-синий
-  '#0d1b2a', // глубокий морской
-  '#1a1a2e', // сине-фиолетовый
-  '#2c3e50', // графитовый
-  '#22333b', // угольно-зелёный
-  '#1b4332', // тёмно-зелёный
-  '#2d6a4f', // хвойный
-  '#3a0ca3', // тёмный индиго
-  '#240046', // насыщенный фиолетовый
-  '#4b1459', // тёмная слива
-  '#5a189a', // виноградный
-  '#641220', // бордово-красный
-  '#800f2f', // тёмная малина
-  '#6a040f', // вишнёвый
-  '#5c3c00', // тёмно-янтарный
-  '#4e342e', // кофейный
-  '#3e2723', // шоколадный
-  '#2b2d31'  // нейтральный тёмный
-]) 
-const selectedColor = ref('#e3f2fd')
-const isPaletteOpen = ref(false)
+  "#f5f5f5",
+  "#ffffff",
+  "#f0f4f8",
+  "#e8f0fe",
+  "#d9faff",
+  "#e6f7f1",
+  "#f6fff0",
+  "#fffbe6",
+  "#fff3e0",
+  "#ffe6eb",
+  "#f3e8ff",
+  "#ede7f6",
+  "#f9e5ff",
+  "#fff0f5",
+  "#fafafa",
+  "#fdf6ec",
+  "#eaeaea",
+  "#f0f0f0",
+]);
+const selectedColor = ref("#e3f2fd");
+const isPaletteOpen = ref(false);
 
-const selectedPeriod = ref('Місяць')
-const STORAGE_KEY_LIMIT = 'dashboardLimit'
-const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200)
+const selectedPeriod = ref("Мiсяцi");
+const STORAGE_KEY_LIMIT = "dashboardLimit";
+const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200);
+
+const dataStore = useDataTransformStore();
+
+const sortedId = ref('')
+// const regionSortBy = ref({});
+// const storeSortBy = ref({ weekId: '2025-07', columnKey: "totalScore", direction: "desc" });
+
+const transformedSalesData = computed(() => dataStore.transformedData);
+const isDataLoading = computed(() => dataStore.isLoading);
+const dataError = computed(() => dataStore.error);
+const transformStats = computed(() => dataStore.transformStats);
+
+const showOnlyLastWeeks = ref(true)
+const weeksToShow = ref(2)
+const availableWeeksCount = ref(0)
+
+const isMonthlyMode = computed(() => dataStore.transformType === "monthly");
+const availablePeriods = computed(() => {
+  return isMonthlyMode.value ? dataStore.availableMonths : dataStore.availableWeeks;
+});
 
 const loadData = async () => {
   try {
-    loading.value = true
-    error.value = null
-    selectedPeriod.value = 'Місяць'
-    const [salesResponse, targetsResponse] = await Promise.all([
-      // fetch('/com/static/data/output.json'),
-      // fetch('/com/static/data/targets.json'),
-      fetch('output.json'),
-      fetch('targets.json')
-    ])
-    if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
-    const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Невірна структура даних продаж')}
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Невірна структура даних Цілей')}
-    const savedTargets = getSavedTargetsFromMemory()
-    salesData.value = salesDataResult
-    targetsData.value = savedTargets || targetsDataResult
-    dynamicTargetsData.value = targetsData.value
-    regions.value = Object.values(salesDataResult.regions)
-    initializeVisibility()
-    processData()
-    getSavedColor()
+    loading.value = true;
+    error.value = null;
+    selectedPeriod.value = "Недiлi";
 
+    const targetsResponse = await fetch(
+      "targets.json"
+    ).then((response) => response.json());
+
+    const dailyResponse = await fetch(
+      "https://odoo.smkft.space/get_compass_data_by_day",
+      {
+        method: "POST",
+        Cookie:
+          " session_id=4BzQRR1gEFm_uNaUHAnT-mVmxrlYCCcs0VTbhWsui0FDIgbDkYt6bgqipCKDhsgrAu4BZeMrRVU05D-tQlYE; Cookie_1=value; session_id=4BzQRR1gEFm_uNaUHAnT-mVmxrlYCCcs0VTbhWsui0FDIgbDkYt6bgqipCKDhsgrAu4BZeMrRVU05D-tQlYE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          start_date: "01.06.2025",
+          end_date: "24.08.2025",
+        }),
+      }
+    ).then((response) => response.json());
+
+    const targetsDataResult = targetsResponse;
+    const dailyData = dailyResponse;
+
+    if (!Array.isArray(dailyData) || dailyData.length === 0) {
+      throw new Error("Неверная структура дневных данных или пустой массив");
+    }
+
+    const firstRecord = dailyData[0];
+    const requiredFields = ["region_data", "shop", "week", "plan", "fact"];
+    for (const field of requiredFields) {
+      if (!firstRecord[field] && !firstRecord[field] === 0) {
+        throw new Error(`Отсутствует обязательное поле: ${field}`);
+      }
+    }
+
+    await dataStore.loadAndTransformData(dailyData, "weekly");
+
+    availableWeeksCount.value = dataStore.availableWeeks.length
+
+    if (showOnlyLastWeeks.value) {
+      dataStore.applyLastWeeksFilter(weeksToShow.value)
+    }
+
+    salesData.value = dataStore.getLegacyFormatData()
+
+    if (!salesData.value?.weeks || !salesData.value?.regions) {
+      throw new Error('Ошибка преобразования данных: неверная структура результата')
+    }
+
+    salesData.value = dataStore.getLegacyFormatData();
+
+    sortedId.value = salesData.value.weeks[1].id
+    // regionSortBy.value = ref({ weekId: sortedId.value, columnKey: "totalScore", direction: "desc" });
+    // storeSortBy.value = ref({ weekId: '2025-07', columnKey: "totalScore", direction: "desc" });
+
+    if (!salesData.value?.weeks || !salesData.value?.regions) {
+      throw new Error("Ошибка преобразования данных: неверная структура результата");
+    }
+
+    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {
+      throw new Error("Неверная структура данных целей");
+    }
+
+    const savedTargets = getSavedTargetsFromMemory();
+    targetsData.value = savedTargets || targetsDataResult;
+    dynamicTargetsData.value = targetsData.value;
+
+    regions.value = Object.values(salesData.value.regions);
+
+    initializeVisibility();
+    processData();
+    getSavedColor();
+    // handleRegionSort("1", "totalScore");
+    // await handleStoreSort("33-2025", "totalScore");
   } catch (err) {
-    console.error('помилка  даных:', err)
-    error.value = err.message || 'помилка  даных'
-  } finally {setTimeout(() => {loading.value = false}, 400)}
-}
-const loadData2 = async () => {
+    console.error("❌ Ошибка загрузки данных:", err);
+    error.value = err.message || "Ошибка загрузки данных";
+
+  } finally {
+    // setTimeout(() => {
+      loading.value = false;
+    // }, 300);
+  }
+};
+
+const loadMonthlyData = async () => {
   try {
-    loading.value = true
-    error.value = null
-    selectedPeriod.value = 'Неділя'
-    const [salesResponse, targetsResponse] = await Promise.all([
-      fetch('/com/static/data/output.json'),
-      fetch('/com/static/data/targets.json'),
-      // fetch('output.json'),
-      // fetch('targets.json')
-    ])
-    if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
-    const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-    if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
-    if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
-    const savedTargets = getSavedTargetsFromMemory()
-    salesData.value = salesDataResult
-    targetsData.value = savedTargets || targetsDataResult
-    dynamicTargetsData.value = targetsData.value
-    regions.value = Object.values(salesDataResult.regions)
-    initializeVisibility()
-    processData()
-    getSavedColor()
+    loading.value = true;
+    error.value = null;
+    selectedPeriod.value = "Мiсяцi";
 
+    const targetsResponse = await fetch(
+      "targets.json"
+    ).then((response) => response.json());
+
+    const dailyResponse = await fetch(
+      "https://odoo.smkft.space/get_compass_data_by_day",
+      {
+        method: "POST",
+
+        Cookie:
+          " session_id=4BzQRR1gEFm_uNaUHAnT-mVmxrlYCCcs0VTbhWsui0FDIgbDkYt6bgqipCKDhsgrAu4BZeMrRVU05D-tQlYE; Cookie_1=value; session_id=4BzQRR1gEFm_uNaUHAnT-mVmxrlYCCcs0VTbhWsui0FDIgbDkYt6bgqipCKDhsgrAu4BZeMrRVU05D-tQlYE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          start_date: "01.06.2025",
+          end_date: "24.08.2025",
+        }),
+      }
+    ).then((response) => response.json());
+
+    const targetsDataResult = targetsResponse;
+    const dailyData = dailyResponse;
+
+    if (!Array.isArray(dailyData) || dailyData.length === 0) {
+      throw new Error("Неверная структура дневных данных или пустой массив");
+    }
+
+    await dataStore.loadAndTransformData(dailyData, "monthly");
+
+    salesData.value = dataStore.getLegacyFormatData();
+
+    console.log( salesData.value )
+
+    sortedId.value = await salesData.value.months[1]?.id
+    // regionSortBy.value = ref({ weekId: '2025-07', columnKey: "totalScore", direction: "desc" });
+    // storeSortBy.value = ref({ weekId: '2025-07', columnKey: "totalScore", direction: "desc" });
+
+
+    if (!salesData.value?.months || !salesData.value?.regions) {
+      throw new Error(
+        "Ошибка преобразования месячных данных: неверная структура результата"
+      );
+    }
+
+    if (salesData.value.months && !salesData.value.weeks) {
+      salesData.value.weeks = salesData.value.months.map((month) => ({
+        ...month,
+
+        name: month.name,
+        dateRange: month.dateRange,
+      }));
+    }
+
+    Object.values(salesData.value.regions).forEach((region) => {
+      region.stores.forEach((store) => {
+        if (store.monthlyData && !store.weeklyData) {
+          store.weeklyData = store.monthlyData.map((monthData) => ({
+            ...monthData,
+            weekId: monthData.monthId,
+            daysInPeriod: monthData.daysCount || 0,
+            averageDaily: monthData.averageDaily || 0,
+          }));
+        }
+      });
+    });
+
+    const savedTargets = getSavedTargetsFromMemory();
+    targetsData.value = savedTargets || targetsDataResult;
+    dynamicTargetsData.value = targetsData.value;
+    regions.value = Object.values(salesData.value.regions);
+
+    console.log("✅ Месячные данные успешно загружены:", transformStats.value);
+
+    initializeVisibility();
+    processData();
+    getSavedColor();
+    // handleRegionSort("1", "totalScore");
+    // handleStoreSort("33-2025", "totalScore");
   } catch (err) {
-    console.error('Ошибка загрузки данных:', err)
-    error.value = err.message || 'Ошибка загрузки данных'
-  } finally {setTimeout(() => {loading.value = false}, 400)}
-}
+    console.error("❌ Ошибка загрузки месячных данных:", err);
+    error.value = err.message || "Ошибка загрузки месячных данных";
+    await loadFallbackData();
+  } finally {
+    // setTimeout(() => {
+      loading.value = false;
+    // }, 300);
+  }
+};
+
+
+
+const exportMonthlyData = () => {
+  try {
+    if (!isMonthlyMode.value) {
+      throw new Error("Экспорт месячных данных доступен только в месячном режиме");
+    }
+
+    const csvData = dataStore.exportMonthlyToCSV();
+
+    if (!csvData) {
+      throw new Error("Нет месячных данных для экспорта");
+    }
+
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `monthly_analytics_${new Date().toISOString().slice(0, 10)}.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    console.log("📁 Экспорт месячных данных завершен");
+  } catch (error) {
+    console.error("❌ Ошибка экспорта месячных данных:", error);
+  }
+};
+
+const exportDataToCSV = () => {
+  if (isMonthlyMode.value) {
+    exportMonthlyData();
+  } else {
+
+    try {
+      const csvData = dataStore.exportToCSV();
+
+      if (!csvData) {
+        throw new Error("Нет данных для экспорта");
+      }
+
+      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute(
+          "download",
+          `weekly_analytics_${new Date().toISOString().slice(0, 10)}.csv`
+        );
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      console.log("📁 CSV экспорт завершен");
+    } catch (error) {
+      console.error("❌ Ошибка экспорта:", error);
+    }
+  }
+};
+
+watch(
+  () => dataStore.error,
+  (newError) => {
+    if (newError) {
+      error.value = newError;
+    }
+  }
+);
+
+
+
+const scrollToSection = (id) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+};
 
 const saveColor = (color) => {
   try {
-    localStorage.setItem('selectedColor', color)
+    localStorage.setItem("selectedColor", color);
   } catch (err) {
-    console.error('Ошибка сохранения цвета в localStorage:', err)
+    console.error("Ошибка сохранения цвета в localStorage:", err);
   }
-}
+};
 
 const getSavedColor = () => {
   try {
-    selectedColor.value = localStorage.getItem('selectedColor') || selectedColor.value
-    return selectedColor.value
+    selectedColor.value = localStorage.getItem("selectedColor") || selectedColor.value;
+    return selectedColor.value;
   } catch (err) {
-    console.error('Ошибка чтения цвета из localStorage:', err)
-    return selectedColor.value // Цвет по умолчанию
+    console.error("Ошибка чтения цвета из localStorage:", err);
+    return selectedColor.value;
   }
-}
+};
 
 const getSavedTargetsFromMemory = () => {
   try {
-    const saved = localStorage.getItem('targetsData')
-    return saved ? JSON.parse(saved) : null
+    const saved = localStorage.getItem("targetsData");
+    return saved ? JSON.parse(saved) : null;
   } catch (err) {
-    console.error('❌ Ошибка чтения localStorage:', err)
-    return null
+    console.error("❌ Ошибка чтения localStorage:", err);
+    return null;
   }
-}
+};
 
 const saveTargetsToMemory = (data) => {
   try {
-    localStorage.setItem('targetsData', JSON.stringify(data))
-    return true
+    localStorage.setItem("targetsData", JSON.stringify(data));
+    return true;
   } catch (err) {
-    console.error('Ошибка сохранения в localStorage:', err)
-    return false
+    console.error("Ошибка сохранения в localStorage:", err);
+    return false;
   }
-}
+};
 
 const handlePlansDataUpdate = (event) => {
-  const newTargetsData = event.detail
+  const newTargetsData = event.detail;
 
-  targetsData.value = newTargetsData
-  dynamicTargetsData.value = newTargetsData
+  targetsData.value = newTargetsData;
+  dynamicTargetsData.value = newTargetsData;
 
-  saveTargetsToMemory(newTargetsData)
+  saveTargetsToMemory(newTargetsData);
 
-  processData()
-}
+  processData();
+};
 
 const togglePlansEditor = () => {
-  showPlansEditor.value = !showPlansEditor.value
-}
+  showPlansEditor.value = !showPlansEditor.value;
+};
 
-
-
-
-
-
-const togglePanel = () => { isOpen.value = !isOpen.value }
-const closePanel = () => { isOpen.value = false }
+const togglePanel = () => {
+  isOpen.value = !isOpen.value;
+};
+const closePanel = () => {
+  isOpen.value = false;
+};
 
 const processedData = computed(() => {
-  if (!salesData.value || !regions.value || !weeks.value) return null
+  if (!salesData.value || !regions.value || !weeks.value) return null;
 
-  const allStores = []
-  regions.value.forEach(region => {
+  const allStores = [];
+  regions.value.forEach((region) => {
     if (region.stores) {
-      region.stores.forEach(store => {
+      region.stores.forEach((store) => {
         allStores.push({
           ...store,
           regionId: region.id,
           regionName: region.name,
-          regionColor: region.color
-        })
-      })
+          regionColor: region.color,
+        });
+      });
     }
-  })
+  });
 
-  const totalStores = allStores.length
-  const totalRegions = regions.value.length
-  const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
-  const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
+  const totalStores = allStores.length;
+  const totalRegions = regions.value.length;
+  const totalScore = allStores.reduce(
+    (sum, store) => sum + (store.overallTotalScore || 0),
+    0
+  );
+  const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0;
 
-
-
-  let totalPlan = 0
-  let totalFact = 0
-  allStores.forEach(store => {
-    weeks.value.forEach(week => {
-      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+  let totalPlan = 0;
+  let totalFact = 0;
+  allStores.forEach((store) => {
+    weeks.value.forEach((week) => {
+      const weekData = store.weeklyData?.find((w) => w.weekId === week.id);
       if (weekData) {
-        totalPlan += weekData.plan || 0
-        totalFact += weekData.fact || 0
+        totalPlan += weekData.plan || 0;
+        totalFact += weekData.fact || 0;
       }
-    })
-  })
-  const planExecutionPercent = totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0
+    });
+  });
+  const planExecutionPercent =
+    totalPlan > 0 ? Math.round((totalFact / totalPlan) * 100) : 0;
 
-  const regionsWithScores = regions.value.map(region => {
-    let regionScore = 0
-    if (region.stores) {
-      region.stores.forEach(store => {
-        regionScore += store.overallTotalScore || 0
-      })
-    }
-    return { ...region, score: regionScore }
-  }).sort((a, b) => b.score - a.score).slice(0, 5)
+  const regionsWithScores = regions.value
+    .map((region) => {
+      let regionScore = 0;
+      if (region.stores) {
+        region.stores.forEach((store) => {
+          regionScore += store.overallTotalScore || 0;
+        });
+      }
+      return { ...region, score: regionScore };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
 
   const topStores = [...allStores]
     .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
-    .slice(0, KPITopStores.value)
+    .slice(0, KPITopStores.value);
 
-  const problemStores = allStores.filter(store => (store.overallTotalScore || 0) < averageScore * 0.8)
-    .sort((a, b) => (a.overallTotalScore || 0) - (b.overallTotalScore || 0))
-  const belowPlanStores = allStores.filter(store => {
-    let storePlan = 0
-    let storeFact = 0
-    weeks.value.forEach(week => {
-      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+  const problemStores = allStores
+    .filter((store) => (store.overallTotalScore || 0) < averageScore * 0.8)
+    .sort((a, b) => (a.overallTotalScore || 0) - (b.overallTotalScore || 0));
+  const belowPlanStores = allStores.filter((store) => {
+    let storePlan = 0;
+    let storeFact = 0;
+    weeks.value.forEach((week) => {
+      const weekData = store.weeklyData?.find((w) => w.weekId === week.id);
       if (weekData) {
-        storePlan += weekData.plan || 0
-        storeFact += weekData.fact || 0
+        storePlan += weekData.plan || 0;
+        storeFact += weekData.fact || 0;
       }
-    })
-    return storePlan > 0 && (storeFact / storePlan) < 1
-  })
+    });
+    return storePlan > 0 && storeFact / storePlan < 1;
+  });
 
-  const topIssues = []
+  const topIssues = [];
   let summ = 0;
   if (targetsData.value.targetTree) {
     Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-      let totalValue = 0
-      let affectedStores = 0
-      summ += target.maxScore
-      allStores.forEach(store => {
-        let storeValue = 0
-        weeks.value.forEach(week => {
-          const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+      let totalValue = 0;
+      let affectedStores = 0;
+      summ += target.maxScore;
+      allStores.forEach((store) => {
+        let storeValue = 0;
+        weeks.value.forEach((week) => {
+          const weekData = store.weeklyData?.find((w) => w.weekId === week.id);
           if (weekData && weekData[key]) {
-            storeValue += weekData[key] || 0
+            storeValue += weekData[key] || 0;
           }
-        })
+        });
         if (storeValue > 0) {
-          totalValue += storeValue
-          affectedStores++
+          totalValue += storeValue;
+          affectedStores++;
         }
-      })
+      });
 
       if (totalValue > 0) {
         topIssues.push({
           type: key,
           name: target.name,
           totalValue,
-          affectedStores
-        })
+          affectedStores,
+        });
       }
-    })
+    });
   }
-  planScore.value = summ
-  topIssues.sort((a, b) => b.totalValue - a.totalValue)
+  planScore.value = summ;
+  topIssues.sort((a, b) => b.totalValue - a.totalValue);
 
-  const weeklyComparison = weeks.value.map(week => {
-    let weekTotalScore = 0
-    let weekTotalPlan = 0
-    let weekTotalFact = 0
-    let storeCount = 0
+  const weeklyComparison = weeks.value.map((week) => {
+    let weekTotalScore = 0;
+    let weekTotalPlan = 0;
+    let weekTotalFact = 0;
+    let storeCount = 0;
 
-    allStores.forEach(store => {
-      const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+    allStores.forEach((store) => {
+      const weekData = store.weeklyData?.find((w) => w.weekId === week.id);
       if (weekData) {
-        weekTotalScore += weekData.totalScore || 0
-        weekTotalPlan += weekData.plan || 0
-        weekTotalFact += weekData.fact || 0
-        storeCount++
+        weekTotalScore += weekData.totalScore || 0;
+        weekTotalPlan += weekData.plan || 0;
+        weekTotalFact += weekData.fact || 0;
+        storeCount++;
       }
-    })
+    });
 
     return {
       ...week,
       totalScore: weekTotalScore,
-      planExecution: weekTotalPlan > 0 ? Math.round((weekTotalFact / weekTotalPlan) * 100) : 0,
-      averageFact: storeCount > 0 ? Math.round(weekTotalFact / storeCount) : 0
-    }
-  })
+      planExecution:
+        weekTotalPlan > 0 ? Math.round((weekTotalFact / weekTotalPlan) * 100) : 0,
+      averageFact: storeCount > 0 ? Math.round(weekTotalFact / storeCount) : 0,
+    };
+  });
 
-  let weeklyTrend = null
+  let weeklyTrend = null;
   if (weeklyComparison.length >= 2) {
-    const latestWeek = weeklyComparison[0]
-    const previousWeek = weeklyComparison[1]
-    const scoreDiff = latestWeek.totalScore - previousWeek.totalScore
-    const planDiff = latestWeek.planExecution - previousWeek.planExecution
+    const latestWeek = weeklyComparison[0];
+    const previousWeek = weeklyComparison[1];
+    const scoreDiff = latestWeek.totalScore - previousWeek.totalScore;
+    const planDiff = latestWeek.planExecution - previousWeek.planExecution;
 
     if (scoreDiff < 0 && planDiff < 0) {
-      weeklyTrend = { type: 'positive', icon: '📈', text: 'Позитивна динаміка' }
+      weeklyTrend = { type: "positive", icon: "📈", text: "Позитивна динаміка" };
     } else if (scoreDiff > 0) {
-      weeklyTrend = { type: 'negative', icon: '📉', text: 'Негативна динаміка' }
+      weeklyTrend = { type: "negative", icon: "📉", text: "Негативна динаміка" };
     } else {
-      weeklyTrend = { type: 'stable', icon: '➡️', text: 'Стабільні показники' }
+      weeklyTrend = { type: "stable", icon: "➡️", text: "Стабільні показники" };
     }
   }
 
-  const targetsOverview = []
+  const targetsOverview = [];
   if (targetsData.value.targetTree) {
     Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-      let totalScore = 0
-      let successfulStores = 0
-      let problemStores = []
-      const storeAverages = [] // Массив для хранения средних баллов каждого магазина
+      let totalScore = 0;
+      let successfulStores = 0;
+      let problemStores = [];
+      const storeAverages = [];
 
-      allStores.forEach(store => {
-        let storeScore = 0
-        let validWeeks = 0
+      allStores.forEach((store) => {
+        let storeScore = 0;
+        let validWeeks = 0;
 
-        weeks.value.forEach(week => {
-          const weekData = store.weeklyData?.find(w => w.weekId === week.id)
+        weeks.value.forEach((week) => {
+          const weekData = store.weeklyData?.find((w) => w.weekId === week.id);
           if (weekData && weekData[`${key}_score`] !== undefined) {
-            storeScore += weekData[`${key}_score`] || 0
-            validWeeks++
+            storeScore += weekData[`${key}_score`] || 0;
+            validWeeks++;
           }
-        })
+        });
 
-        const averageStoreScore = validWeeks > 0 ? storeScore / validWeeks : 0
-        storeAverages.push(averageStoreScore)
-        totalScore += storeScore
-      })
+        const averageStoreScore = validWeeks > 0 ? storeScore / validWeeks : 0;
+        storeAverages.push(averageStoreScore);
+        totalScore += storeScore;
+      });
 
-      const overallAverageScore = storeAverages.length > 0
-        ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length
-        : 0
+      const overallAverageScore =
+        storeAverages.length > 0
+          ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length
+          : 0;
 
-      const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
+      const thresholdScore = overallAverageScore * 0.7;
 
       storeAverages.forEach((averageStoreScore, index) => {
-
         if (averageStoreScore >= overallAverageScore) {
-          successfulStores++
+          successfulStores++;
         } else if (averageStoreScore < thresholdScore) {
-          problemStores++
-          console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`)
+          problemStores++;
+          console.log(`  ^ Проблемный магазин (балл < ${thresholdScore.toFixed(2)})`);
         }
-      })
+      });
 
-      const averageScore = allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0
+      const averageScore =
+        allStores.length > 0 ? Math.round(totalScore / allStores.length) : 0;
 
       targetsOverview.push({
         key,
@@ -999,9 +1432,9 @@ const processedData = computed(() => {
         maxScore: target.maxScore,
         averageScore,
         successfulStores,
-        problemStores
-      })
-    })
+        problemStores,
+      });
+    });
   }
 
   return {
@@ -1017,27 +1450,24 @@ const processedData = computed(() => {
     weeklyComparison,
     weeklyTrend,
     targetsOverview,
-  }
-})
-
-
-
+  };
+});
 
 const handleKeydown = (event) => {
-  if (event.key === 'Escape' && isOpen.value) {
-    closePanel()
+  if (event.key === "Escape" && isOpen.value) {
+    closePanel();
   }
-}
+};
 
 watch(isOpen, (newValue) => {
   if (newValue) {
-    document.addEventListener('keydown', handleKeydown)
-    document.body.style.overflow = 'hidden'
+    document.addEventListener("keydown", handleKeydown);
+    document.body.style.overflow = "hidden";
   } else {
-    document.removeEventListener('keydown', handleKeydown)
-    document.body.style.overflow = ''
+    document.removeEventListener("keydown", handleKeydown);
+    document.body.style.overflow = "";
   }
-})
+});
 
 const tooltip = ref({
   visible: false,
@@ -1046,12 +1476,12 @@ const tooltip = ref({
   data: null,
   type: null,
   width: 0,
-  height: 0
-})
+  height: 0,
+});
 
 const showTooltip = (event, data, type, weekId, indicator) => {
-  if (!tooltipEnabled.value) return
-  const tooltipData = getTooltipData(data, weekId, indicator, type)
+  if (!tooltipEnabled.value) return;
+  const tooltipData = getTooltipData(data, weekId, indicator, type);
   tooltip.value = {
     visible: true,
     x: 0,
@@ -1059,972 +1489,1079 @@ const showTooltip = (event, data, type, weekId, indicator) => {
     data: tooltipData,
     type: type,
     width: 0,
-    height: 0
-  }
+    height: 0,
+  };
   nextTick(() => {
-    updateTooltipPosition(event)
-  })
-}
+    updateTooltipPosition(event);
+  });
+};
 
 const updateTooltipPosition = (event) => {
-  if (!tooltip.value.visible) return
+  if (!tooltip.value.visible) return;
 
-  const tooltipElement = document.querySelector('.odx-tooltip')
-  if (!tooltipElement) return
+  const tooltipElement = document.querySelector(".odx-tooltip");
+  if (!tooltipElement) return;
 
-  const tooltipRect = tooltipElement.getBoundingClientRect()
-  const windowWidth = window.innerWidth
-  const windowHeight = window.innerHeight
+  const tooltipRect = tooltipElement.getBoundingClientRect();
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
 
-  let x = event.clientX + 10
-  let y = event.clientY + 10
+  let x = event.clientX + 10;
+  let y = event.clientY + 10;
 
   if (x + tooltipRect.width > windowWidth - 10) {
-    x = event.clientX - tooltipRect.width - 10
+    x = event.clientX - tooltipRect.width - 10;
   }
   if (y + tooltipRect.height > windowHeight - 10) {
-    y = event.clientY - tooltipRect.height - 10
+    y = event.clientY - tooltipRect.height - 10;
   }
-  if (x < 10) x = 10
-  if (y < 10) y = 10
+  if (x < 10) x = 10;
+  if (y < 10) y = 10;
 
-  tooltip.value.x = x
-  tooltip.value.y = y
-  tooltip.value.width = tooltipRect.width
-  tooltip.value.height = tooltipRect.height
-}
+  tooltip.value.x = x;
+  tooltip.value.y = y;
+  tooltip.value.width = tooltipRect.width;
+  tooltip.value.height = tooltipRect.height;
+};
 
 const hideTooltip = () => {
-  tooltip.value.visible = false
-}
+  tooltip.value.visible = false;
+};
 
 const getTooltipData = (entity, weekId, indicator, type) => {
-  const weekData = type === 'store'
-    ? getStoreWeekData(entity, weekId)
-    : entity.weeklyData?.find(w => w.weekId === weekId) || {}
+  const weekData =
+    type === "store"
+      ? getStoreWeekData(entity, weekId)
+      : entity.weeklyData?.find((w) => w.weekId === weekId) || {};
 
-  const week = weeks.value.find(w => w.id === weekId)
-  const indicatorConfig = availableIndicators.value.find(ind => ind.key === indicator)
-  const currentGroup = indicatorGroups.value.find(group =>
-    group.indicators.some(ind => ind.key === indicator)
-  )
+  const week = weeks.value.find((w) => w.id === weekId);
+  const indicatorConfig = availableIndicators.value.find((ind) => ind.key === indicator);
+  const currentGroup = indicatorGroups.value.find((group) =>
+    group.indicators.some((ind) => ind.key === indicator)
+  );
 
   const result = {
     entityName: entity.name,
     weekName: week?.name || `Неділя ${weekId}`,
-    groupName: currentGroup?.label || 'Показники',
+    groupName: currentGroup?.label || "Показники",
     indicator: indicatorConfig?.label || indicator,
     mainValue: getDisplayValue(weekData, indicator),
-    details: []
-  }
+    details: [],
+  };
 
   if (currentGroup) {
-    if (currentGroup.key === 'score') {
+    if (currentGroup.key === "score") {
       result.details.push({
-        label: 'Загальний бал',
-        value: weekData.totalScore || 0
-      })
-    } else if (currentGroup.key === 'turnover') {
+        label: "Загальний бал",
+        value: weekData.totalScore || 0,
+      });
+    } else if (currentGroup.key === "turnover") {
       result.details.push(
-        { label: 'План', value: formatNumber(weekData.plan || 0) },
+        { label: "План", value: formatNumber(weekData.plan || 0) },
         {
-          label: 'Факт',
-          value: `${formatNumber(weekData.fact || 0)} (${weekData.percent || 0}% від плану)`
+          label: "Факт",
+          value: `${formatNumber(weekData.fact || 0)} (${
+            weekData.percent || 0
+          }% від плану)`,
         },
-        { label: 'Процент обороту', value: `${weekData.percent || 0}%` },
-      )
+        { label: "Процент обороту", value: `${weekData.percent || 0}%` }
+      );
 
       if (weekData.turnover_score !== undefined) {
-        const maxScore = targetsData.value?.targetTree?.turnover?.maxScore
+        const maxScore = targetsData.value?.targetTree?.turnover?.maxScore;
         result.details.push({
           label: `Бал за оборот (з ${maxScore})`,
-          value: weekData.turnover_score || 0
-        })
+          value: weekData.turnover_score || 0,
+        });
       }
     } else {
-      const groupKey = currentGroup.key
-      const target = targetsData.value?.targetTree?.[groupKey]
+      const groupKey = currentGroup.key;
+      const target = targetsData.value?.targetTree?.[groupKey];
 
       if (target) {
-        const value = weekData[groupKey] || 0
-        const percent = weekData[`${groupKey}_percent`] || 0
-        const score = weekData[`${groupKey}_score`] || 0
-        const targetValue = weekData[`${groupKey}_target`] || 0
-        const factValue = weekData.fact || 0
-        const planValue = factValue > 0 ? targetValue : 0
+        const value = weekData[groupKey] || 0;
+        const percent = weekData[`${groupKey}_percent`] || 0;
+        const score = weekData[`${groupKey}_score`] || 0;
+        const targetValue = weekData[`${groupKey}_target`] || 0;
+        const factValue = weekData.fact || 0;
+        const planValue = factValue > 0 ? targetValue : 0;
 
         result.details.push(
           { label: `${target.name} (факт)`, value: formatNumber(value) },
           {
             label: `План, коеф. %`,
-            value: `  (${((targetValue / factValue) * 100).toFixed(2)}% від факту)`
+            value: `  (${((targetValue / factValue) * 100).toFixed(2)}% від факту)`,
           },
           {
             label: `Розрахунковий план. грн`,
-            value: ` ${formatNumber(planValue)} `
+            value: ` ${formatNumber(planValue)} `,
           },
           {
-            label: 'Факт обороту →',
-            value: `${formatNumber(factValue)}`
+            label: "Факт обороту →",
+            value: `${formatNumber(factValue)}`,
           },
           { label: `Процент виконання`, value: `${percent}%` },
-          { label: `Реальний Процент`, value: `${((planValue / value) * 100 ).toFixed(0)}%` },
+          {
+            label: `Реальний Процент`,
+            value: `${((planValue / value) * 100).toFixed(0)}%` || `${((planValue / value) * 100).toFixed(0)}`,
+          },
           {
             label: `Бал (з ${target.maxScore})`,
-            value: `${score} / ${target.maxScore}`
+            value: `${score} / ${target.maxScore}`,
           }
-        )
+        );
       }
     }
   }
 
   if (weekData.columnRanks && weekData.columnRanks[indicator]) {
-    const totalItems = type === 'store'
-      ? regions.value?.reduce((total, region) => total + (region.stores?.length || 0), 0) || 0
-      : regions.value?.length || 0
+    const totalItems =
+      type === "store"
+        ? regions.value?.reduce(
+            (total, region) => total + (region.stores?.length || 0),
+            0
+          ) || 0
+        : regions.value?.length || 0;
 
     result.details.push({
-      label: 'Ранг по показнику',
-      value: `${weekData.columnRanks[indicator]} з ${totalItems}`
-    })
+      label: "Ранг по показнику",
+      value: `${weekData.columnRanks[indicator]} з ${totalItems}`,
+    });
   }
 
-  return result
-}
+  return result;
+};
 
 const getDisplayValue = (weekData, indicator) => {
   switch (indicator) {
-    case 'totalScore':
-    case 'turnover_score':
-      return weekData[indicator] || '-'
-    case 'plan':
-    case 'fact':
-      return formatNumber(weekData[indicator] || '-')
-    case 'percent':
-      return `${weekData.percent || 0}%`
+    case "totalScore":
+    case "turnover_score":
+      return weekData[indicator] || "-";
+    case "plan":
+    case "fact":
+      return formatNumber(weekData[indicator] || "-");
+    case "percent":
+      return `${weekData.percent || 0}%`;
     default:
-      if (indicator.endsWith('_percent')) {
-        return `${weekData[indicator] || 0}%`
-      } else if (indicator.endsWith('_score')) {
-        return weekData[indicator] || '-'
+      if (indicator.endsWith("_percent")) {
+        return `${weekData[indicator] || 0}%`;
+      } else if (indicator.endsWith("_score")) {
+        return weekData[indicator] || "-";
       } else {
-        return formatNumber(weekData[indicator] || '-')
+        return formatNumber(weekData[indicator] || "-");
       }
   }
-}
-
-
+};
 
 const darkenColor = (color, percent = 20) => {
-  const num = parseInt(color.replace("#", ""), 16)
-  const amt = Math.round(2.55 * percent)
-  const R = (num >> 16) - amt
-  const G = (num >> 8 & 0x00FF) - amt
-  const B = (num & 0x0000FF) - amt
-  return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-    (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1)
-}
+  const num = parseInt(color.replace("#", ""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) - amt;
+  const G = ((num >> 8) & 0x00ff) - amt;
+  const B = (num & 0x0000ff) - amt;
+  return (
+    "#" +
+    (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    )
+      .toString(16)
+      .slice(1)
+  );
+};
 const hoverColor = () => {
-  return 'style="background-color: ' + darkenColor(selectedColor.value, 10) + '!important;"'
-}
+  return (
+    'style="background-color: ' + darkenColor(selectedColor.value, 10) + '!important;"'
+  );
+};
 
 const headerStyle = computed(() => ({
   backgroundColor: selectedColor.value,
-  color: '#0f4478',
-  // borderCollapse: 'separate',
-  border: '1px solid #91b6db',
-  borderSpacing: 0
-}))
+  color: "#0f4478",
+
+  border: "1px solid #91b6db",
+  borderSpacing: 0,
+}));
 
 const changeColor = (color) => {
-  selectedColor.value = color
-  saveColor(color)
-}
-const togglePalette = () => { isPaletteOpen.value = !isPaletteOpen.value }
-const closePalette = () => { isPaletteOpen.value = false }
+  selectedColor.value = color;
+  saveColor(color);
+};
+const togglePalette = () => {
+  isPaletteOpen.value = !isPaletteOpen.value;
+};
+const closePalette = () => {
+  isPaletteOpen.value = false;
+};
 
-const regionSortBy = ref({ weekId: '1', columnKey: 'totalScore', direction: 'desc' })
-const storeSortBy = ref({ weekId: '1', columnKey: 'totalScore', direction: 'desc' })
+
+
+const regionSortBy = ref({ weekId: sortedId.value, columnKey: "totalScore", direction: "desc" });
+const storeSortBy = ref({ weekId: sortedId.value, columnKey: "totalScore", direction: "desc" });
+
 
 const indicatorGroups = computed(() => {
   const groups = [
     {
-      key: 'score',
-      label: 'Заг. бал',
-      indicators: [{ key: 'totalScore', label: `${planScore.value}` }]
-    }
-  ]
+      key: "score",
+      label: "Заг. бал",
+      indicators: [{ key: "totalScore", label: `${planScore.value}` }],
+    },
+  ];
 
   if (targetsData.value?.targetTree) {
     Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
-      if (key === 'turnover') {
+      if (key === "turnover") {
         groups.push({
-          key: 'turnover',
-          label: 'Оборот',
+          key: "turnover",
+          label: "Оборот",
           indicators: [
-            { key: 'plan', label: 'План' },
-            { key: 'fact', label: 'Факт' },
-            { key: 'percent', label: '%' },
-            { key: 'turnover_score', label: 'planScore.value' }
-          ]
-        })
+            { key: "plan", label: "План" },
+            { key: "fact", label: "Факт" },
+            { key: "percent", label: "%" },
+            { key: "turnover_score", label: "planScore.value" },
+          ],
+        });
       } else {
         groups.push({
           key: key,
           label: target.name,
           indicators: [
-            { key: key, label: 'факт' },
-            { key: `${key}_percent`, label: '%' },
-            { key: `${key}_score`, label: 'Бал' }
-          ]
-        })
+            { key: key, label: "факт" },
+            { key: `${key}_percent`, label: "%" },
+            { key: `${key}_score`, label: "Бал" },
+          ],
+        });
       }
-    })
+    });
   } else {
     groups.push({
-      key: 'turnover',
-      label: 'Оборот',
+      key: "turnover",
+      label: "Оборот",
       indicators: [
-        { key: 'plan', label: 'План' },
-        { key: 'fact', label: 'Факт' },
-        { key: 'percent', label: '%' }
-      ]
-    })
+        { key: "plan", label: "План" },
+        { key: "fact", label: "Факт" },
+        { key: "percent", label: "%" },
+      ],
+    });
   }
 
-  return groups
-})
+  return groups;
+});
 
 const availableIndicators = computed(() => {
-  const indicators = []
-  indicatorGroups.value.forEach(group => {
-    group.indicators.forEach(indicator => {
+  const indicators = [];
+  indicatorGroups.value.forEach((group) => {
+    group.indicators.forEach((indicator) => {
       indicators.push({
         ...indicator,
         groupKey: group.key,
-        groupLabel: group.label
-      })
-    })
-  })
-  return indicators
-})
+        groupLabel: group.label,
+      });
+    });
+  });
+  return indicators;
+});
 
-const visible = reactive({})
-const groupVisibility = reactive({})
+const visible = reactive({});
+const groupVisibility = reactive({});
 
 const initializeVisibility = () => {
-  indicatorGroups.value.forEach(group => {
-    if (group.key === 'score') {
-      groupVisibility[group.key] = true
+  indicatorGroups.value.forEach((group) => {
+    if (group.key === "score") {
+      groupVisibility[group.key] = true;
     } else {
-      groupVisibility[group.key] = false
+      groupVisibility[group.key] = false;
     }
-  })
+  });
 
-  indicatorGroups.value.forEach(group => {
-    group.indicators.forEach(indicator => {
-      if (indicator.key === 'totalScore') {
-        visible[indicator.key] = true
-      } else if (indicator.key.includes('_score')) {
-        visible[indicator.key] = true
-      } else if (group.key === 'score') {
-        visible[indicator.key] = true
+  indicatorGroups.value.forEach((group) => {
+    group.indicators.forEach((indicator) => {
+      if (indicator.key === "totalScore") {
+        visible[indicator.key] = true;
+      } else if (indicator.key.includes("_score")) {
+        visible[indicator.key] = true;
+      } else if (group.key === "score") {
+        visible[indicator.key] = true;
       } else {
-        visible[indicator.key] = groupVisibility[group.key] || false
+        visible[indicator.key] = groupVisibility[group.key] || false;
       }
-    })
-  })
-}
+    });
+  });
+};
 
 const toggleGroupVisibility = (groupKey) => {
-  if (groupKey === 'score') return
-  groupVisibility[groupKey] = !groupVisibility[groupKey]
-  const group = indicatorGroups.value.find(g => g.key === groupKey)
+  if (groupKey === "score") return;
+  groupVisibility[groupKey] = !groupVisibility[groupKey];
+  const group = indicatorGroups.value.find((g) => g.key === groupKey);
   if (group) {
-    group.indicators.forEach(indicator => {
-      if (indicator.key.includes('_score') || indicator.key === 'totalScore') {
-        visible[indicator.key] = true
+    group.indicators.forEach((indicator) => {
+      if (indicator.key.includes("_score") || indicator.key === "totalScore") {
+        visible[indicator.key] = true;
       } else {
-        visible[indicator.key] = groupVisibility[groupKey]
+        visible[indicator.key] = groupVisibility[groupKey];
       }
-    })
+    });
   }
-}
+};
 
 const visibleIndicators = computed(() =>
-  availableIndicators.value.filter(indicator => visible[indicator.key])
-)
+  availableIndicators.value.filter((indicator) => visible[indicator.key])
+);
 
 const visibleGroups = computed(() => {
-  return indicatorGroups.value.map(group => ({
-    ...group,
-    indicators: group.indicators.filter(indicator => visible[indicator.key]),
-    visibleCount: group.indicators.filter(indicator => visible[indicator.key]).length
-  })).filter(group => group.visibleCount > 0)
-})
+  return indicatorGroups.value
+    .map((group) => ({
+      ...group,
+      indicators: group.indicators.filter((indicator) => visible[indicator.key]),
+      visibleCount: group.indicators.filter((indicator) => visible[indicator.key]).length,
+    }))
+    .filter((group) => group.visibleCount > 0);
+});
 
 const dynamicRowWidth = computed(() => {
-  const total = visibleIndicators.value.length
-  return total > 0 ? '100%' : '0%'
-})
+  const total = visibleIndicators.value.length;
+  return total > 0 ? "100%" : "0%";
+});
 
 function getStyle(key) {
-  const total = visibleIndicators.value.length
-  const isVisible = visible[key]
-  const width = isVisible ? `${100 / total}%` : '0%'
+  const total = visibleIndicators.value.length;
+  const isVisible = visible[key];
+  const width = isVisible ? `${100 / total}%` : "0%";
 
   return {
     width,
-    transform: isVisible ? 'width:105%' : 'width:0%',
-    // willChange: 'transform',
-    // transition: 'width 0.3s',
-    transformOrigin: 'left right',
-    fontWeight: key === 'totalScore' ? '700' : 'normal',
-    borderRight: isVisible ? '1px solid #e0e0e0!important' : 'none!important',
-  }
+    transform: isVisible ? "width:105%" : "width:0%",
+
+    transformOrigin: "left right",
+    fontWeight: key === "totalScore" ? "700" : "normal",
+    borderRight: isVisible ? "1px solid #e0e0e0!important" : "none!important",
+  };
 }
 
 function getGroupStyle(groupKey) {
-  const group = visibleGroups.value.find(g => g.key === groupKey)
-  if (!group) return { width: '0%', transform: 'width:0%' }
+  const group = visibleGroups.value.find((g) => g.key === groupKey);
+  if (!group) return { width: "0%", transform: "width:0%" };
 
-  const total = visibleIndicators.value.length
-  const groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
+  const total = visibleIndicators.value.length;
+  const groupWidth =
+    group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : "0%";
 
   return {
     width: groupWidth,
-    transform: group.visibleCount > 0 ? 'width:100%' : 'width:0%',
-    transition: 'width 0.2s',
-    willChange: 'transform',
-    transformOrigin: 'left right',
-    background: group.visibleCount > 1 ? darkenColor(selectedColor.value, 13) : '',
-  }
+    transform: group.visibleCount > 0 ? "width:100%" : "width:0%",
+    transition: "width 0.2s",
+    willChange: "transform",
+    transformOrigin: "left right",
+    background: group.visibleCount > 1 ? darkenColor(selectedColor.value, 5) : "",
+  };
 }
 
 const processData = () => {
-  if (!regions.value || !salesData.value || !targetsData.value) return
+  if (!regions.value || !salesData.value || !targetsData.value) return;
 
-  regions.value.forEach(region => {
+  regions.value.forEach((region) => {
     if (region.stores) {
-      region.stores.forEach(store => {
-        store.regionId = region.id
-        store.regionName = region.name
-        store.regionColor = region.color
-      })
+      region.stores.forEach((store) => {
+        store.regionId = region.id;
+        store.regionName = region.name;
+        store.regionColor = region.color;
+      });
     }
-  })
+  });
 
-  const allStores = []
-  regions.value.forEach(region => {
+  const allStores = [];
+  regions.value.forEach((region) => {
     if (region.stores) {
-      region.stores.forEach(store => {
-        allStores.push(store)
-      })
+      region.stores.forEach((store) => {
+        allStores.push(store);
+      });
     }
-  })
+  });
 
-  salesData.value.weeks.forEach(week => {
-    calculateWeeklyMetrics(week.id, allStores)
-  })
+  salesData.value.weeks.forEach((week) => {
+    calculateWeeklyMetrics(week.id, allStores);
+  });
 
-  calculateRegionMetrics()
-  calculateRegionColumnRanks()
-  calculateOverallScores(allStores)
-}
+  calculateRegionMetrics();
+  calculateRegionColumnRanks();
+  calculateOverallScores(allStores);
+};
 
 const calculateWeeklyMetrics = (weekId, allStores) => {
-  const { targetTree, storeTargets } = targetsData.value
+  const { targetTree, storeTargets } = targetsData.value;
 
-  allStores.forEach(store => {
-    const weekData = getStoreWeekData(store, weekId)
-    const storeTargetConfig = storeTargets[store.id] || {}
-    weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
+  allStores.forEach((store) => {
+    const weekData = getStoreWeekData(store, weekId);
+    const storeTargetConfig = storeTargets[store.id] || {};
+    weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact);
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-      if (key === 'turnover') return
+      if (key === "turnover") return;
 
-      const targetPercent = storeTargetConfig[key] || 0
-      const actualValue = weekData[key] || 0
-      const target = targetPercent * weekData.fact
+      const targetPercent = storeTargetConfig[key] || 0;
+      const actualValue = weekData[key] || 0;
+      const target = targetPercent * weekData.fact;
 
-      let achievementPercent = 0
+      let achievementPercent = 0;
 
       if (target > 0) {
-        if (targetConfig.type === 'negative') {
-          achievementPercent = Math.min((target / actualValue) * 100, limit.value)
+        if (targetConfig.type === "negative") {
+          achievementPercent = Math.min((target / actualValue) * 100, limit.value);
         } else {
-          achievementPercent = (actualValue / target) * 100
+          achievementPercent = (actualValue / target) * 100;
         }
       }
 
-      weekData[`${key}_percent`] = Math.round(achievementPercent)
-      weekData[`${key}_target`] = target
-    })
-  })
+      weekData[`${key}_percent`] = Math.round(achievementPercent);
+      weekData[`${key}_target`] = target;
+    });
+  });
 
   Object.entries(targetTree).forEach(([key, targetConfig]) => {
-    if (key === 'turnover') return
-    const maxPercent = Math.max(...allStores.map(store => {
-      const weekData = getStoreWeekData(store, weekId)
-      return weekData[`${key}_percent`] || 0
-    }))
+    if (key === "turnover") return;
+    const maxPercent = Math.max(
+      ...allStores.map((store) => {
+        const weekData = getStoreWeekData(store, weekId);
+        return weekData[`${key}_percent`] || 0;
+      })
+    );
 
-    allStores.forEach(store => {
-      const weekData = getStoreWeekData(store, weekId)
-      const currentPercent = weekData[`${key}_percent`] || 0
-      let score = 0
+    allStores.forEach((store) => {
+      const weekData = getStoreWeekData(store, weekId);
+      const currentPercent = weekData[`${key}_percent`] || 0;
+      let score = 0;
 
       if (maxPercent > 0 && currentPercent > 0) {
-        score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore)
+        score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore);
       }
 
-      weekData[`${key}_score`] = score
-    })
-  })
+      weekData[`${key}_score`] = score;
+    });
+  });
 
   if (targetTree.turnover) {
-    const maxTurnoverPercent = Math.max(...allStores.map(store => {
-      const weekData = getStoreWeekData(store, weekId)
-      return weekData.percent || 0
-    }))
+    const maxTurnoverPercent = Math.max(
+      ...allStores.map((store) => {
+        const weekData = getStoreWeekData(store, weekId);
+        return weekData.percent || 0;
+      })
+    );
 
-    allStores.forEach(store => {
-      const weekData = getStoreWeekData(store, weekId)
-      const turnoverPercent = weekData.percent || 0
-      let turnoverScore = 0
+    allStores.forEach((store) => {
+      const weekData = getStoreWeekData(store, weekId);
+      const turnoverPercent = weekData.percent || 0;
+      let turnoverScore = 0;
 
       if (maxTurnoverPercent > 0) {
-        turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+        turnoverScore = Math.round(
+          (turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore
+        );
       }
 
-      weekData.turnover_score = turnoverScore
-    })
+      weekData.turnover_score = turnoverScore;
+    });
   }
 
-  allStores.forEach(store => {
-    const weekData = getStoreWeekData(store, weekId)
-    let totalScore = 0
+  allStores.forEach((store) => {
+    const weekData = getStoreWeekData(store, weekId);
+    let totalScore = 0;
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-      if (key === 'turnover') {
-        totalScore += weekData.turnover_score || 0
+      if (key === "turnover") {
+        totalScore += weekData.turnover_score || 0;
       } else {
-        totalScore += weekData[`${key}_score`] || 0
+        totalScore += weekData[`${key}_score`] || 0;
       }
-    })
+    });
 
-    weekData.totalScore = totalScore
-  })
+    weekData.totalScore = totalScore;
+  });
 
-  calculateColumnRanks(weekId, allStores)
-}
+  calculateColumnRanks(weekId, allStores);
+};
 
 const calculateRegionMetrics = () => {
-  if (!regions.value || !salesData.value || !targetsData.value) return
-  const { targetTree, storeTargets } = targetsData.value
-  salesData.value.weeks.forEach(week => {
-    regions.value.forEach(region => {
-      if (!region.stores) return
+  if (!regions.value || !salesData.value || !targetsData.value) return;
+  const { targetTree, storeTargets } = targetsData.value;
+  salesData.value.weeks.forEach((week) => {
+    regions.value.forEach((region) => {
+      if (!region.stores) return;
       if (!region.weeklyData) {
-        region.weeklyData = []
+        region.weeklyData = [];
       }
 
-      let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
+      let regionWeekData = region.weeklyData.find((w) => w.weekId === week.id);
       if (!regionWeekData) {
-        regionWeekData = { weekId: week.id }
-        region.weeklyData.push(regionWeekData)
+        regionWeekData = { weekId: week.id };
+        region.weeklyData.push(regionWeekData);
       }
-      let totalPlan = 0
-      let totalFact = 0
-      region.stores.forEach(store => {
-        const storeWeekData = getStoreWeekData(store, week.id)
-        totalPlan += storeWeekData.plan || 0
-        totalFact += storeWeekData.fact || 0
-      })
+      let totalPlan = 0;
+      let totalFact = 0;
+      region.stores.forEach((store) => {
+        const storeWeekData = getStoreWeekData(store, week.id);
+        totalPlan += storeWeekData.plan || 0;
+        totalFact += storeWeekData.fact || 0;
+      });
 
-      regionWeekData.plan = totalPlan
-      regionWeekData.fact = totalFact
-      regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
+      regionWeekData.plan = totalPlan;
+      regionWeekData.fact = totalFact;
+      regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact);
 
       Object.entries(targetTree).forEach(([key, targetConfig]) => {
-        if (key === 'turnover') return
-        let totalValue = 0
-        let totalTarget = 0
-        region.stores.forEach(store => {
-          const storeWeekData = getStoreWeekData(store, week.id)
-          const storeTargetConfig = storeTargets[store.id] || {}
-          const targetPercent = storeTargetConfig[key] || 0
+        if (key === "turnover") return;
+        let totalValue = 0;
+        let totalTarget = 0;
+        region.stores.forEach((store) => {
+          const storeWeekData = getStoreWeekData(store, week.id);
+          const storeTargetConfig = storeTargets[store.id] || {};
+          const targetPercent = storeTargetConfig[key] || 0;
 
-          totalValue += storeWeekData[key] || 0
-          totalTarget += targetPercent * (storeWeekData.fact || 0)
-        })
+          totalValue += storeWeekData[key] || 0;
+          totalTarget += targetPercent * (storeWeekData.fact || 0);
+        });
 
-        regionWeekData[key] = totalValue
+        regionWeekData[key] = totalValue;
 
-        let achievementPercent = 0
+        let achievementPercent = 0;
         if (totalTarget > 0) {
-          if (targetConfig.type === 'negative') {
-            achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
+          if (targetConfig.type === "negative") {
+            achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value);
           } else {
-            achievementPercent = (totalValue / totalTarget) * 100
+            achievementPercent = (totalValue / totalTarget) * 100;
           }
         }
 
-        regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
-        regionWeekData[`${key}_target`] = totalTarget
-      })
-    })
+        regionWeekData[`${key}_percent`] = Math.round(achievementPercent);
+        regionWeekData[`${key}_target`] = totalTarget;
+      });
+    });
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-      if (key === 'turnover') return
-      const maxPercent = Math.max(...regions.value.map(region => {
-        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-        return regionWeekData?.[`${key}_percent`] || 0
-      }))
+      if (key === "turnover") return;
+      const maxPercent = Math.max(
+        ...regions.value.map((region) => {
+          const regionWeekData = region.weeklyData?.find((w) => w.weekId === week.id);
+          return regionWeekData?.[`${key}_percent`] || 0;
+        })
+      );
 
-      regions.value.forEach(region => {
-        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-        if (!regionWeekData) return
+      regions.value.forEach((region) => {
+        const regionWeekData = region.weeklyData?.find((w) => w.weekId === week.id);
+        if (!regionWeekData) return;
 
-        const achievementPercent = regionWeekData[`${key}_percent`] || 0
-        let score = 0
+        const achievementPercent = regionWeekData[`${key}_percent`] || 0;
+        let score = 0;
         if (maxPercent > 0) {
-          score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
+          score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore);
         }
-        regionWeekData[`${key}_score`] = score
-      })
-    })
+        regionWeekData[`${key}_score`] = score;
+      });
+    });
 
     if (targetTree.turnover) {
-      const maxTurnoverPercent = Math.max(...regions.value.map(region => {
-        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-        return regionWeekData?.percent || 0
-      }))
+      const maxTurnoverPercent = Math.max(
+        ...regions.value.map((region) => {
+          const regionWeekData = region.weeklyData?.find((w) => w.weekId === week.id);
+          return regionWeekData?.percent || 0;
+        })
+      );
 
-      regions.value.forEach(region => {
-        const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-        if (!regionWeekData) return
+      regions.value.forEach((region) => {
+        const regionWeekData = region.weeklyData?.find((w) => w.weekId === week.id);
+        if (!regionWeekData) return;
 
-        const turnoverPercent = regionWeekData.percent || 0
-        let turnoverScore = 0
+        const turnoverPercent = regionWeekData.percent || 0;
+        let turnoverScore = 0;
         if (maxTurnoverPercent > 0) {
-          turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
+          turnoverScore = Math.round(
+            (turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore
+          );
         }
-        regionWeekData.turnover_score = turnoverScore
-      })
+        regionWeekData.turnover_score = turnoverScore;
+      });
     }
 
-    regions.value.forEach(region => {
-      const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-      if (!regionWeekData) return
+    regions.value.forEach((region) => {
+      const regionWeekData = region.weeklyData?.find((w) => w.weekId === week.id);
+      if (!regionWeekData) return;
 
-      let totalScore = 0
+      let totalScore = 0;
 
       Object.entries(targetTree).forEach(([key, targetConfig]) => {
-        if (key === 'turnover') {
-          totalScore += regionWeekData.turnover_score || 0
+        if (key === "turnover") {
+          totalScore += regionWeekData.turnover_score || 0;
         } else {
-          totalScore += regionWeekData[`${key}_score`] || 0
+          totalScore += regionWeekData[`${key}_score`] || 0;
         }
-      })
+      });
 
-      regionWeekData.totalScore = totalScore
-    })
-  })
-}
+      regionWeekData.totalScore = totalScore;
+    });
+  });
+};
 
 const calculateOverallScores = (allStores) => {
-  allStores.forEach(store => {
-    let totalScore = 0
-    salesData.value.weeks.forEach(week => {
-      const weekData = getStoreWeekData(store, week.id)
-      totalScore += weekData.totalScore || 0
-    })
-    store.overallTotalScore = totalScore
-  })
+  allStores.forEach((store) => {
+    let totalScore = 0;
+    salesData.value.weeks.forEach((week) => {
+      const weekData = getStoreWeekData(store, week.id);
+      totalScore += weekData.totalScore || 0;
+    });
+    store.overallTotalScore = totalScore;
+  });
 
-  allStores.sort((a, b) => b.overallTotalScore - a.overallTotalScore)
+  allStores.sort((a, b) => b.overallTotalScore - a.overallTotalScore);
   allStores.forEach((store, index) => {
-    store.overallRank = index + 1
-  })
-}
+    store.overallRank = index + 1;
+  });
+};
 
 const weeks = computed(() => {
-  if (!salesData.value?.weeks) return []
-  return [...salesData.value.weeks].sort((a, b) => a.id - b.id)
-})
+  if (salesData.value?.months) {
+    return [...salesData.value.months].sort((a, b) => b.month - a.month)
+  }
+  if (salesData.value?.weeks) {
+    return [...salesData.value.weeks].sort((a, b) => b.number - a.number)
+  }
+});
 
 const calculateColumnRanks = (weekId, allStores) => {
-  const indicators = availableIndicators.value.map(ind => ind.key)
+  const indicators = availableIndicators.value.map((ind) => ind.key);
 
-  indicators.forEach(indicator => {
-    const storesWithValues = allStores.map(store => {
-      const weekData = getStoreWeekData(store, weekId)
-      let value = 0
+  indicators.forEach((indicator) => {
+    const storesWithValues = allStores.map((store) => {
+      const weekData = getStoreWeekData(store, weekId);
+      let value = 0;
 
       switch (indicator) {
-        case 'totalScore':
-          value = weekData.totalScore || 0
-          break
-        case 'percent':
-          value = weekData.percent || 0
-          break
-        case 'plan':
-          value = weekData.plan || 0
-          break
-        case 'fact':
-          value = weekData.fact || 0
-          break
+        case "totalScore":
+          value = weekData.totalScore || 0;
+          break;
+        case "percent":
+          value = weekData.percent || 0;
+          break;
+        case "plan":
+          value = weekData.plan || 0;
+          break;
+        case "fact":
+          value = weekData.fact || 0;
+          break;
         default:
-          value = weekData[indicator] || 0
-          break
+          value = weekData[indicator] || 0;
+          break;
       }
 
-      return { store, value, weekData }
-    })
+      return { store, value, weekData };
+    });
 
-    storesWithValues.sort((a, b) => b.value - a.value)
+    storesWithValues.sort((a, b) => b.value - a.value);
     storesWithValues.forEach((item, index) => {
       if (!item.weekData.columnRanks) {
-        item.weekData.columnRanks = {}
+        item.weekData.columnRanks = {};
       }
-      item.weekData.columnRanks[indicator] = index + 1
-    })
-  })
-}
+      item.weekData.columnRanks[indicator] = index + 1;
+    });
+  });
+};
 
 const calculateRegionColumnRanks = () => {
-  if (!regions.value || !salesData.value) return
+  if (!regions.value || !salesData.value) return;
 
-  salesData.value.weeks.forEach(week => {
-    const indicators = availableIndicators.value.map(ind => ind.key)
-    indicators.forEach(indicator => {
-      const regionsWithValues = regions.value.map(region => {
-        let value = getRegionIndicatorValue(region, week.id, indicator)
-        return { region, value }
-      })
+  salesData.value.weeks.forEach((week) => {
+    const indicators = availableIndicators.value.map((ind) => ind.key);
+    indicators.forEach((indicator) => {
+      const regionsWithValues = regions.value.map((region) => {
+        let value = getRegionIndicatorValue(region, week.id, indicator);
+        return { region, value };
+      });
 
-      regionsWithValues.sort((a, b) => b.value - a.value)
+      regionsWithValues.sort((a, b) => b.value - a.value);
       regionsWithValues.forEach((item, index) => {
         if (!item.region.columnRanks) {
-          item.region.columnRanks = {}
+          item.region.columnRanks = {};
         }
         if (!item.region.columnRanks[week.id]) {
-          item.region.columnRanks[week.id] = {}
+          item.region.columnRanks[week.id] = {};
         }
-        item.region.columnRanks[week.id][indicator] = index + 1
-      })
-    })
-  })
-}
+        item.region.columnRanks[week.id][indicator] = index + 1;
+      });
+    });
+  });
+};
 
 const getRegionIndicatorValue = (region, weekId, indicator) => {
-  const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId)
-  if (!regionWeekData) return 0
-  return regionWeekData[indicator] || 0
-}
+  const regionWeekData = region.weeklyData?.find((w) => w.weekId === weekId);
+  if (!regionWeekData) return 0;
+  return regionWeekData[indicator] || 0;
+};
 
 const sortedRegions = computed(() => {
-  if (!regions.value) return []
-  let sorted = [...regions.value]
+  if (!regions.value) return [];
+  let sorted = [...regions.value];
 
-  sorted.forEach(region => {
-    let totalScore = 0
+  sorted.forEach((region) => {
+    let totalScore = 0;
     if (region.weeklyData) {
-      region.weeklyData.forEach(weekData => {
-        totalScore += weekData.totalScore || 0
-      })
+      region.weeklyData.forEach((weekData) => {
+        totalScore += weekData.totalScore || 0;
+      });
     }
-    region.overallTotalScore = totalScore
-  })
-
-
+    region.overallTotalScore = totalScore;
+  });
 
   sorted.sort((a, b) => {
-    let aValue = 0
-    let bValue = 0
+    let aValue = 0;
+    let bValue = 0;
 
-    if (regionSortBy.value.columnKey === 'totalScore') {
-      // aValue = a.overallTotalScore
-      // bValue = b.overallTotalScore
-      aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-      bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+    if (regionSortBy.value.columnKey === "totalScore") {
+
+      aValue = getRegionIndicatorValue(
+        a,
+        regionSortBy.value.weekId,
+        regionSortBy.value.columnKey
+      );
+      bValue = getRegionIndicatorValue(
+        b,
+        regionSortBy.value.weekId,
+        regionSortBy.value.columnKey
+      );
     } else {
-      aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-      bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
+      aValue = getRegionIndicatorValue(
+        a,
+        regionSortBy.value.weekId,
+        regionSortBy.value.columnKey
+      );
+      bValue = getRegionIndicatorValue(
+        b,
+        regionSortBy.value.weekId,
+        regionSortBy.value.columnKey
+      );
     }
 
-    return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
-  })
+    return regionSortBy.value.direction === "desc" ? bValue - aValue : aValue - bValue;
+  });
 
-  // sorted.forEach((region, index) => {
-  //   region.regionRank = index + 1
-  // })
-
-  return sorted
-})
+  return sorted;
+});
 
 const allStores = computed(() => {
-  const stores = []
+  const stores = [];
 
-  regions.value.forEach(region => {
+  regions.value.forEach((region) => {
     if (region.stores) {
-      region.stores.forEach(store => {
+      region.stores.forEach((store) => {
         stores.push({
           ...store,
           regionId: region.id,
           regionName: region.name,
-          regionColor: region.color
-        })
-      })
+          regionColor: region.color,
+        });
+      });
     }
-  })
+  });
+
+  // console.log( "All stores before sorting:", stores);
+  // console.log( "All :", weeks.value);
 
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
     stores.sort((a, b) => {
-      let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-      let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-      return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
-    })
+      let aValue = getStoreSortValue(
+        a,
+        storeSortBy.value.weekId,
+        storeSortBy.value.columnKey
+      );
+      let bValue = getStoreSortValue(
+        b,
+        storeSortBy.value.weekId,
+        storeSortBy.value.columnKey
+      );
+      return storeSortBy.value.direction === "desc" ? bValue - aValue : aValue - bValue;
+    });
   } else if (sortByTotalScore.value) {
-    stores.sort((a, b) => (b.overallTotalScore) - (a.overallTotalScore))
+
+    stores.sort((a, b) => {
+      console.log( a )
+      b.overallTotalScore - a.overallTotalScore
+    });
   }
 
-  return stores
-})
+  return stores;
+});
 
 const getStoreSortValue = (store, weekId, indicator) => {
-  const weekData = getStoreWeekData(store, weekId)
+  const weekData = getStoreWeekData(store, weekId);
   switch (indicator) {
-    case 'totalScore': return weekData.totalScore || 0
-    case 'percent': return weekData.percent || 0
-    case 'plan': return weekData.plan || 0
-    case 'fact': return weekData.fact || 0
-    default: return weekData[indicator] || 0
+    case "totalScore":
+      return weekData.totalScore || 0;
+    case "percent":
+      return weekData.percent || 0;
+    case "plan":
+      return weekData.plan || 0;
+    case "fact":
+      return weekData.fact || 0;
+    default:
+      return weekData[indicator] || 0;
   }
-}
+};
 
 const handleStoreSort = (weekId, indicator) => {
   if (storeSortBy.value.weekId === weekId && storeSortBy.value.columnKey === indicator) {
-    storeSortBy.value.direction = storeSortBy.value.direction === 'desc' ? 'asc' : 'desc'
+    storeSortBy.value.direction = storeSortBy.value.direction === "desc" ? "asc" : "desc";
   } else {
-    storeSortBy.value = { weekId, columnKey: indicator, direction: 'desc' }
+    storeSortBy.value = { weekId, columnKey: indicator, direction: "desc" };
   }
-}
+};
 
 const getStoreSortIcon = (weekId, indicator) => {
   if (storeSortBy.value.weekId === weekId && storeSortBy.value.columnKey === indicator) {
-    return storeSortBy.value.direction === 'desc' ? '▼' : '▲'
+    return storeSortBy.value.direction === "desc" ? "▼" : "▲";
   }
-  return '↕'
-}
+  return "↕";
+};
 
 const getStoreSortArrowClass = (weekId, indicator) => {
   if (storeSortBy.value.weekId === weekId && storeSortBy.value.columnKey === indicator) {
-    return storeSortBy.value.direction === 'desc' ? 'odx-sort-control--desc' : 'odx-sort-control--asc'
+    return storeSortBy.value.direction === "desc"
+      ? "odx-sort-control--desc"
+      : "odx-sort-control--asc";
   }
-  return 'odx-sort-control--inactive'
-}
+  return "odx-sort-control--inactive";
+};
 
 const handleRegionSort = (weekId, indicator) => {
-  if (regionSortBy.value.weekId === weekId && regionSortBy.value.columnKey === indicator) {
-    regionSortBy.value.direction = regionSortBy.value.direction === 'desc' ? 'asc' : 'desc'
+  if (
+    regionSortBy.value.weekId === weekId &&
+    regionSortBy.value.columnKey === indicator
+  ) {
+    regionSortBy.value.direction =
+      regionSortBy.value.direction === "desc" ? "asc" : "desc";
   } else {
-    regionSortBy.value = { weekId, columnKey: indicator, direction: 'desc' }
+    regionSortBy.value = { weekId, columnKey: indicator, direction: "desc" };
   }
-}
+};
 
 const getSortIcon = (weekId, indicator) => {
-  if (regionSortBy.value.weekId === weekId && regionSortBy.value.columnKey === indicator) {
-    return regionSortBy.value.direction === 'desc' ? '▼' : '▲'
+  if (
+    regionSortBy.value.weekId === weekId &&
+    regionSortBy.value.columnKey === indicator
+  ) {
+    return regionSortBy.value.direction === "desc" ? "▼" : "▲";
   }
-  return '↕'
-}
+  return "↕";
+};
 
 const getStoreWeekData = (store, weekId) => {
   if (!store || !store.weeklyData) {
-    return { plan: 0, fact: 0, percent: 0, totalScore: 0 }
+    return { plan: 0, fact: 0, percent: 0, totalScore: 0 };
   }
-  const weekData = store.weeklyData.find(w => w.weekId === weekId)
-  return weekData || { plan: 0, fact: 0, percent: 0, totalScore: 0 }
-}
+  const weekData = store.weeklyData.find((w) => w.weekId === weekId);
+  return weekData || { plan: 0, fact: 0, percent: 0, totalScore: 0 };
+};
 
 const getStoreData = (store, weekId, indicator) => {
-  const weekData = getStoreWeekData(store, weekId, indicator)
+  const weekData = getStoreWeekData(store, weekId, indicator);
 
   switch (indicator) {
-    case 'totalScore': return weekData.totalScore || '-'
-    case 'plan': return formatNumber(weekData.plan)
-    case 'fact': return formatNumber(weekData.fact)
-    case 'percent': return weekData.percent ? `${weekData.percent}%` : '0%'
-    case 'turnover_score': return weekData.turnover_score || '-'
+    case "totalScore":
+      return weekData.totalScore || "-";
+    case "plan":
+      return formatNumber(weekData.plan);
+    case "fact":
+      return formatNumber(weekData.fact);
+    case "percent":
+      return weekData.percent ? `${weekData.percent}%` : "0%";
+    case "turnover_score":
+      return weekData.turnover_score || "-";
     default:
-      if (indicator.endsWith('_percent')) {
-        return weekData[indicator] ? `${weekData[indicator]}%` : '0%'
-      } else if (indicator.endsWith('_score')) {
-        return weekData[indicator] || '-'
+      if (indicator.endsWith("_percent")) {
+        return weekData[indicator] ? `${weekData[indicator]}%` : "0%";
+      } else if (indicator.endsWith("_score")) {
+        return weekData[indicator] || "-";
       } else {
-        return formatNumber(weekData[indicator] || '-')
+        return formatNumber(weekData[indicator] || "-");
       }
   }
-}
+};
 
 const getRegionData = (region, weekId, indicator) => {
-  const value = getRegionIndicatorValue(region, weekId, indicator)
+  const value = getRegionIndicatorValue(region, weekId, indicator);
 
   switch (value) {
-    case 'totalScore': return value || '-'
-    case 'percent': return `${value}%`
-    case 'plan':
-    case 'fact': return formatNumber(value)
-    case 'turnover_score': return value || '-'
+    case "totalScore":
+      return value || "-";
+    case "percent":
+      return `${value}%`;
+    case "plan":
+    case "fact":
+      return formatNumber(value);
+    case "turnover_score":
+      return value || "-";
     default:
-      if (indicator.endsWith('_percent')) {
-        return `${value}%`
-      } else if (indicator.endsWith('_score')) {
-        return value || '-'
+      if (indicator.endsWith("_percent")) {
+        return `${value}%`;
+      } else if (indicator.endsWith("_score")) {
+        return value
       } else {
-        return formatNumber(value) || '-'
+        return formatNumber(value) || "-";
       }
   }
-}
+};
 
 const calculateTurnoverPercent = (plan, fact) => {
-  if (!plan || plan === 0) return 0
-  return Math.round((fact / plan) * 100)
-}
+  if (!plan || plan === 0) return 0;
+  return Math.round((fact / plan) * 100);
+};
 
 const formatNumber = (number) => {
   if (number === null || number === undefined || isNaN(number)) {
-    return '-'
+    return "-";
   }
-  return new Intl.NumberFormat('UA', { maximumFractionDigits: 0 }).format(number)
-}
+  return new Intl.NumberFormat("UA", { maximumFractionDigits: 0 }).format(number);
+};
 
 const getStoreRowClass = (rank) => {
-  if (rank <= 3) return 'odx-table__row--top-rank'
-  if (rank <= 6) return 'odx-table__row--mid-rank'
-  return 'odx-table__row--low-rank'
-}
+  if (rank <= 3) return "odx-table__row--top-rank";
+  if (rank <= 6) return "odx-table__row--mid-rank";
+  return "odx-table__row--low-rank";
+};
 
 const getRegionRowClass = (regionRank) => {
-  if (regionRank <= 2) return 'odx-table__row--region-top'
-  if (regionRank <= 4) return 'odx-table__row--region-mid'
-  return 'odx-table__row--region-low'
-}
+  if (regionRank <= 2) return "odx-table__row--region-top";
+  if (regionRank <= 4) return "odx-table__row--region-mid";
+  return "odx-table__row--region-low";
+};
 
-const getCellClass = (indicator, weekData, isRegion = false, weekId = null, region = null) => {
-  const classes = []
+const getCellClass = (
+  indicator,
+  weekData,
+  isRegion = false,
+  weekId = null,
+  region = null
+) => {
+  const classes = [];
 
-  if (indicator === 'totalScore') {
-    classes.push('odx-table__cell--score')
+  if (indicator === "totalScore") {
+    classes.push("odx-table__cell--score");
   }
 
-  let rank = 0
-  let totalItems = 0
+  let rank = 0;
+  let totalItems = 0;
 
   if (isRegion && region && weekId) {
-    rank = region.columnRanks?.[weekId]?.[indicator] || 0
-    totalItems = regions.value?.length || 0
+    rank = region.columnRanks?.[weekId]?.[indicator] || 0;
+    totalItems = regions.value?.length || 0;
   } else {
-    rank = weekData.columnRanks?.[indicator] || 0
-    totalItems = regions.value?.reduce((total, region) => {
-      return total + (region.stores?.length || 0)
-    }, 0) || 0
+    rank = weekData.columnRanks?.[indicator] || 0;
+    totalItems =
+      regions.value?.reduce((total, region) => {
+        return total + (region.stores?.length || 0);
+      }, 0) || 0;
   }
 
   if (rank > 0 && totalItems > 0) {
-    const percentile = (rank / totalItems) * 100
-    if (indicator.endsWith('_score') || indicator === 'totalScore') {
-
+    const percentile = (rank / totalItems) * 100;
+    if (indicator.endsWith("_score") || indicator === "totalScore") {
       if (percentile <= 20) {
-        classes.push('odx-table__cell--percentile-top')
-        if (formatter.value) { classes.push('odx-table__cell--formatted-top') }
+        classes.push("odx-table__cell--percentile-top");
+        if (formatter.value) {
+          classes.push("odx-table__cell--formatted-top");
+        }
       } else if (percentile <= 40) {
-        classes.push('odx-table__cell--percentile-excellent')
-        if (formatter.value) { classes.push('odx-table__cell--formatted-excellent') }
+        classes.push("odx-table__cell--percentile-excellent");
+        if (formatter.value) {
+          classes.push("odx-table__cell--formatted-excellent");
+        }
       } else if (percentile <= 60) {
-        classes.push('odx-table__cell--percentile-good')
-        if (formatter.value) { classes.push('odx-table__cell--formatted-good') }
+        classes.push("odx-table__cell--percentile-good");
+        if (formatter.value) {
+          classes.push("odx-table__cell--formatted-good");
+        }
       } else if (percentile <= 80) {
-        classes.push('odx-table__cell--percentile-average')
-        if (formatter.value) { classes.push('odx-table__cell--formatted-average') }
+        classes.push("odx-table__cell--percentile-average");
+        if (formatter.value) {
+          classes.push("odx-table__cell--formatted-average");
+        }
       } else {
-        classes.push('odx-table__cell--percentile-poor')
-        if (formatter.value) { classes.push('odx-table__cell--formatted-poor') }
+        classes.push("odx-table__cell--percentile-poor");
+        if (formatter.value) {
+          classes.push("odx-table__cell--formatted-poor");
+        }
       }
-    } 
-    if (
-      indicator.endsWith('_percent') || indicator === 'percent') {
-
+    }
+    if (indicator.endsWith("_percent") || indicator === "percent") {
       if (percentile <= 20) {
-        classes.push('odx-table__cell--percentile-top')
+        classes.push("odx-table__cell--percentile-top");
       } else if (percentile <= 40) {
-        classes.push('odx-table__cell--percentile-excellent')
+        classes.push("odx-table__cell--percentile-excellent");
       } else if (percentile <= 60) {
-        classes.push('odx-table__cell--percentile-good')
+        classes.push("odx-table__cell--percentile-good");
       } else if (percentile <= 80) {
-        classes.push('odx-table__cell--percentile-average')
+        classes.push("odx-table__cell--percentile-average");
       } else {
-        classes.push('odx-table__cell--percentile-poor')
+        classes.push("odx-table__cell--percentile-poor");
       }
-    }else {
-      classes.push('odx-small')
+    } else {
+      classes.push("odx-small");
     }
   }
 
-  return classes.join(' ')
-}
+  return classes.join(" ");
+};
 
 const getIndicatorHeader = (indicator) => {
-  if (indicator.key.endsWith('_score')) {
-    const baseKey = indicator.key.replace('_score', '')
-    if (baseKey === 'turnover' && targetsData.value?.targetTree?.turnover) {
-      return targetsData.value.targetTree.turnover.maxScore.toString()
+  if (indicator.key.endsWith("_score")) {
+    const baseKey = indicator.key.replace("_score", "");
+    if (baseKey === "turnover" && targetsData.value?.targetTree?.turnover) {
+      return targetsData.value.targetTree.turnover.maxScore.toString();
     } else if (targetsData.value?.targetTree?.[baseKey]) {
-      return targetsData.value.targetTree[baseKey].maxScore.toString()
+      return targetsData.value.targetTree[baseKey].maxScore.toString();
     }
-    return 'Бал'
+    return "Бал";
   }
-  return indicator.label
-}
+  return indicator.label;
+};
 
 const getRegionCellClass = (indicator, region, weekId) => {
-  const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId) || {}
+  const regionWeekData = region.weeklyData?.find((w) => w.weekId === weekId) || {};
 
   if (region.columnRanks && region.columnRanks[weekId]) {
-    regionWeekData.columnRanks = { [indicator]: region.columnRanks[weekId][indicator] }
+    regionWeekData.columnRanks = { [indicator]: region.columnRanks[weekId][indicator] };
   }
 
-  return getCellClass(indicator, regionWeekData, true, weekId, region)
-}
+  return getCellClass(indicator, regionWeekData, true, weekId, region);
+};
 
 const getSortArrowClass = (weekId, indicator) => {
-  if (regionSortBy.value.weekId === weekId && regionSortBy.value.columnKey === indicator) {
-    return regionSortBy.value.direction === 'desc' ? 'odx-sort-arrow--desc' : 'odx-sort-arrow--asc'
+  if (
+    regionSortBy.value.weekId === weekId &&
+    regionSortBy.value.columnKey === indicator
+  ) {
+    return regionSortBy.value.direction === "desc"
+      ? "odx-sort-arrow--desc"
+      : "odx-sort-arrow--asc";
   }
-  return 'odx-sort-arrow--inactive'
-}
+  return "odx-sort-arrow--inactive";
+};
 
 const refreshData = async () => {
-  await loadData()
-}
+  await loadData();
+};
 
 onMounted(() => {
-  // Слушаем события изменения планов
-  window.addEventListener('plansDataUpdated', handlePlansDataUpdate)
-  window.addEventListener('dashboard-limit-changed', e => {
-    limit.value = e.detail
-  })
-  loadData()
-})
 
-// Очистка слушателей
+  window.addEventListener("plansDataUpdated", handlePlansDataUpdate);
+  window.addEventListener("dashboard-limit-changed", (e) => {
+    limit.value = e.detail;
+  });
+  loadMonthlyData();
+});
+
 onUnmounted(() => {
-  window.removeEventListener('plansDataUpdated', handlePlansDataUpdate)
-})
-
+  window.removeEventListener("plansDataUpdated", handlePlansDataUpdate);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -2047,7 +2584,7 @@ onUnmounted(() => {
   padding: 0;
   margin: 0;
   background: var(--odx-neutral);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   position: relative;
   box-sizing: border-box;
 
@@ -2280,7 +2817,7 @@ onUnmounted(() => {
       transition: all 0.3s ease;
 
       &::after {
-        content: '';
+        content: "";
         position: absolute;
         width: 16px;
         height: 16px;
@@ -2293,7 +2830,7 @@ onUnmounted(() => {
       }
     }
 
-    input[type="checkbox"]:checked+&__slider {
+    input[type="checkbox"]:checked + &__slider {
       // background: var(--odx-primary);
 
       &::after {
@@ -2322,7 +2859,6 @@ onUnmounted(() => {
     border-spacing: 0;
 
     &__header {
-
       position: sticky;
       top: 0;
       z-index: 999;
@@ -2336,7 +2872,7 @@ onUnmounted(() => {
       // border-bottom: 1px solid var(--odx-border);
       // transition: all 0.15s ease;
       will-change: transform;
-      transition: all .2s ease;
+      transition: all 0.2s ease;
       transform-origin: center;
 
       &:hover {
@@ -2354,7 +2890,6 @@ onUnmounted(() => {
           box-shadow: none;
         }
       }
-
     }
 
     &__cell {
@@ -2379,22 +2914,21 @@ onUnmounted(() => {
         border-right: 2px solid #91b6db;
         justify-content: flex-start;
         padding-left: 16px;
-
       }
 
       &--group {
         font-size: 15px;
         font-weight: 700;
         border-bottom: 1px solid #91b6db;
-
       }
 
       &--group-header {
         font-size: 13px;
         cursor: pointer;
         border-right: 1px solid #91b6db;
+
         &:hover {
-          background-color: rgba(0, 0, 0, 0.2);
+          background-color: white;
         }
       }
 
@@ -2402,9 +2936,10 @@ onUnmounted(() => {
         font-size: 12px;
         cursor: pointer;
         border-right: 1px solid #91b6db;
+
         &:hover {
-          background-color: rgba(0, 0, 0, 0.2);
-          color: white;
+          background-color: white;
+          // color: white;
         }
       }
 
@@ -2443,7 +2978,6 @@ onUnmounted(() => {
         color: #dc2626;
         font-weight: 600;
       }
-      
 
       &--formatted-top {
         background-color: #d0ffea;
@@ -2475,7 +3009,7 @@ onUnmounted(() => {
       display: flex;
       width: 100%;
       overflow: hidden;
-      transition: all .2s ease;
+      transition: all 0.2s ease;
       transform-origin: center;
     }
 
@@ -2517,19 +3051,19 @@ onUnmounted(() => {
     justify-content: center;
     width: 100%;
     padding: 4px 0px;
-
   }
 
   .odx-metric-header {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     width: 100%;
   }
+
   .odx_right {
     // background-color: red;
-    border-right: none! important;
+    border-right: none !important;
   }
 
   .odx-sort-arrow {
@@ -2556,7 +3090,6 @@ onUnmounted(() => {
       opacity: 0.3;
     }
   }
-
 
   .odx-region-info,
   .odx-store-info {
@@ -2610,7 +3143,7 @@ onUnmounted(() => {
       display: flex;
       width: 100%;
       align-items: center;
-      transition: all .2s ease;
+      transition: all 0.2s ease;
       transform-origin: center;
     }
 
@@ -2648,7 +3181,7 @@ onUnmounted(() => {
     border-radius: 4px;
     transition: all 0.2s ease;
     border: 1px solid transparent;
-    transition: all .2s ease;
+    transition: all 0.2s ease;
     transform-origin: center;
 
     &:hover {
@@ -2694,11 +3227,10 @@ onUnmounted(() => {
     border-radius: 20px;
     position: relative;
     transition: all 0.3s ease;
-
   }
 
   .toggle-slider::after {
-    content: '';
+    content: "";
     position: absolute;
     width: 16px;
     height: 16px;
@@ -2710,11 +3242,11 @@ onUnmounted(() => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
-  .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider {
+  .tooltip-toggle input[type="checkbox"]:checked + .toggle-slider {
     background: #003268;
   }
 
-  .tooltip-toggle input[type="checkbox"]:checked+.toggle-slider::after {
+  .tooltip-toggle input[type="checkbox"]:checked + .toggle-slider::after {
     transform: translateX(16px);
   }
 
@@ -2722,7 +3254,6 @@ onUnmounted(() => {
     user-select: none;
     white-space: nowrap;
     color: silver;
-
   }
 
   .odx-tooltip {
@@ -2751,7 +3282,6 @@ onUnmounted(() => {
       font-weight: bold;
       margin: 5px 0;
     }
-
 
     &::-webkit-scrollbar {
       width: 4px;
@@ -2789,7 +3319,6 @@ onUnmounted(() => {
   }
 
   .kpi {
-
     .comp {
       width: 60px;
       height: 60px;
@@ -2832,7 +3361,7 @@ onUnmounted(() => {
       z-index: 1001;
       backdrop-filter: blur(4px);
       animation: fadeIn 0.3s ease;
-      border-left: var(--shadow-md)
+      border-left: var(--shadow-md);
     }
 
     @keyframes fadeIn {
@@ -3417,7 +3946,6 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-
 .odx-table__row-enter-active,
 .odx-table__row-leave-active {
   transition: all 0.4s ease;
@@ -3463,7 +3991,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 12px;
-  /* Position the tooltip */
+  
   position: absolute;
   right: -10px;
   bottom: -50%;
@@ -3475,7 +4003,7 @@ onUnmounted(() => {
 }
 
 .odx_top {
-  height: 50px!important;
+  height: 50px !important;
 }
 
 .period-buttons {
@@ -3486,7 +4014,7 @@ onUnmounted(() => {
 }
 
 .period-btn {
-  padding: 6px;
+  padding: 5px;
   border: 2px solid #949ea7;
   background: #949ea7;
   color: white;
@@ -3533,227 +4061,370 @@ onUnmounted(() => {
 // }
 
 .presentation {
-    max-width: 1300px;
-    margin: 0 auto;
+  max-width: 1300px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 3rem;
+
+  h1 {
+    font-size: 2.2rem;
+    color: #1e293b;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #64748b;
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    color: #334155;
+    margin: 2.5rem 0 1.5rem 0;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .table-container {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    padding: 3rem;
+    border: 1px solid #e2e8f0;
+  }
 
-    h1 {
-        font-size: 2.2rem;
-        color: #1e293b;
-        text-align: center;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-    }
+  th,
+  td {
+    padding: 12px 16px;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
 
-    .subtitle {
-        text-align: center;
-        color: #64748b;
-        margin-bottom: 3rem;
-        font-size: 1.1rem;
-    }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+  }
 
-    h2 {
-        font-size: 1.5rem;
-        color: #334155;
-        margin: 2.5rem 0 1.5rem 0;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 0.5rem;
-        font-weight: 600;
-    }
+  td {
+    font-size: 0.9rem;
+    color: #475569;
+  }
 
-    .table-container {
-        margin: 1.5rem 0;
-        overflow-x: auto;
-    }
+  .formula-box {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    padding: 1.5rem;
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    text-align: center;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+  }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border: 1px solid #e2e8f0;
-    }
+  .metrics-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+  }
 
-    th,
-    td {
-        padding: 12px 16px;
-        text-align: left;
-        border: 1px solid #e2e8f0;
-        vertical-align: top;
-    }
+  .metric-group {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+  }
 
-    th {
-        background: #f1f5f9;
-        font-weight: 600;
-        color: #334155;
-        font-size: 0.95rem;
-    }
+  .metric-group-header {
+    background: #f1f5f9;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+  }
 
-    td {
-        font-size: 0.9rem;
-        color: #475569;
-    }
+  .metric-group-content {
+    padding: 16px;
+  }
 
-    .formula-box {
-        background: #f8fafc;
-        border: 2px solid #e2e8f0;
-        padding: 1.5rem;
-        border-radius: 6px;
-        margin: 1.5rem 0;
-        text-align: center;
-        font-family: 'JetBrains Mono', 'Courier New', monospace;
-        font-size: 15px;
-        font-weight: 600;
-        color: #1e293b;
+  .metric-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .metric-item:last-child {
+    border-bottom: none;
+  }
+
+  .metric-name {
+    font-weight: 500;
+    color: #334155;
+  }
+
+  .metric-desc {
+    color: #64748b;
+    font-size: 0.85rem;
+    text-align: right;
+  }
+
+  .two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 1.5rem 0;
+  }
+
+  .info-block {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border-left: 4px solid #64748b;
+  }
+
+  .info-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #334155;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  li {
+    padding: 0.3rem 0;
+    color: #475569;
+    position: relative;
+    padding-left: 1.5rem;
+  }
+
+  li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #64748b;
+    font-weight: bold;
+  }
+
+  .ranking-table {
+    margin: 1rem 0;
+  }
+
+  .ranking-table th {
+    background: #334155;
+    color: white;
+  }
+
+  .ranking-table .rank-1 {
+    background: #f0fdf4;
+  }
+
+  .ranking-table .rank-2 {
+    background: #fefce8;
+  }
+
+  .ranking-table .rank-3 {
+    background: #fff7ed;
+  }
+
+  .ranking-table .rank-4 {
+    background: #fef2f2;
+  }
+
+  .ranking-table .rank-5 {
+    background: #f5dddd;
+  }
+
+  @media (max-width: 1024px) {
+    .two-column {
+      grid-template-columns: 1fr;
+      gap: 1rem;
     }
 
     .metrics-table {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
-        margin: 1.5rem 0;
+      grid-template-columns: 1fr;
     }
 
-    .metric-group {
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        overflow: hidden;
+    .presentation {
+      padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    body {
+      padding: 1rem;
     }
 
-    .metric-group-header {
-        background: #f1f5f9;
-        padding: 12px 16px;
-        font-weight: 600;
-        color: #334155;
-        border-bottom: 1px solid #e2e8f0;
+    h1 {
+      font-size: 1.8rem;
     }
 
-
-    .metric-group-content {
-        padding: 16px;
+    .presentation {
+      padding: 1rem;
     }
-
-    .metric-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .metric-item:last-child {
-        border-bottom: none;
-    }
-
-    .metric-name {
-        font-weight: 500;
-        color: #334155;
-    }
-
-    .metric-desc {
-        color: #64748b;
-        font-size: 0.85rem;
-        text-align: right;
-    }
-
-    .two-column {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        margin: 1.5rem 0;
-    }
-
-    .info-block {
-        background: #f8fafc;
-        padding: 1.5rem;
-        border-radius: 6px;
-        border-left: 4px solid #64748b;
-    }
-
-    .info-title {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #334155;
-    }
-
-    ul {
-        list-style: none;
-        padding-left: 0;
-    }
-
-    li {
-        padding: 0.3rem 0;
-        color: #475569;
-        position: relative;
-        padding-left: 1.5rem;
-    }
-
-    li::before {
-        content: "•";
-        position: absolute;
-        left: 0;
-        color: #64748b;
-        font-weight: bold;
-    }
-
-    .ranking-table {
-        margin: 1rem 0;
-    }
-
-    .ranking-table th {
-        background: #334155;
-        color: white;
-    }
-
-    .ranking-table .rank-1 {
-        background: #f0fdf4;
-    }
-
-    .ranking-table .rank-2 {
-        background: #fefce8;
-    }
-
-    .ranking-table .rank-3 {
-        background: #fff7ed;
-    }
-
-    .ranking-table .rank-4 {
-        background: #fef2f2;
-    }
-
-    .ranking-table .rank-5 {
-        background: #f5dddd;
-    }
-
-    @media (max-width: 1024px) {
-        .two-column {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
-
-        .metrics-table {
-            grid-template-columns: 1fr;
-        }
-
-        .presentation {
-            padding: 1.5rem;
-        }
-    }
-
-    @media (max-width: 768px) {
-        body {
-            padding: 1rem;
-        }
-
-        h1 {
-            font-size: 1.8rem;
-        }
-
-        .presentation {
-            padding: 1rem;
-        }
-    }
+  }
 }
 
+.data-info {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.data-stats {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.odx-controls__export {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--odx-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.monthly-btn {
+  background: #f59e0b !important;
+  border-color: #f59e0b !important;
+  
+  &:hover:not(:disabled) {
+    background: #d97706 !important;
+  }
+  
+  &.active {
+    background: #92400e !important;
+    border-color: #92400e !important;
+  }
+}
+
+.data-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  min-width: 200px;
+}
+
+.mode-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  
+  &.mode-monthly {
+    color: #f59e0b;
+  }
+}
+
+.stats-text {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.odx-controls__compare {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--odx-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+  background: #10b981;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.monthly-info {
+  padding: 8px 20px;
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  margin: 10px 20px;
+}
+
+.monthly-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.period-range {
+  font-weight: 600;
+}
+
+.total-periods {
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .data-info {
+    min-width: auto;
+    flex: 1;
+  }
+  
+  .stats-text {
+    font-size: 9px;
+  }
+  
+  .monthly-summary {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+}
 </style>

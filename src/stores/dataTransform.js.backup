@@ -1,0 +1,1064 @@
+import { defineStore } from 'pinia'
+
+export const useDataTransformStore = defineStore('dataTransform', {
+  state: () => ({
+    rawDailyData: [],
+    transformedData: null,        // Недельные данные
+    monthlyTransformedData: null, // Месячные данные
+    isLoading: false,
+    error: null,
+    lastUpdate: null,
+    transformType: 'weekly',      // 'weekly' или 'monthly'
+    
+    // 🆕 Динамические показатели
+    availableIndicators: [],      // Список всех показателей из данных
+    baseIndicators: ['plan', 'fact'], // Базовые показатели (всегда есть)
+    dynamicIndicators: [],        // Динамические показатели (определяются из API)
+    
+    // 🆕 Настройки завершенных периодов
+    completedPeriodsOnly: true,   // Показывать только завершенные периоды
+    currentDate: null             // Текущая дата для определения завершенных периодов
+  }),
+
+  getters: {
+    // Получить список уникальных недель
+    availableWeeks: (state) => {
+      if (!state.transformedData?.weeks) return []
+      return state.transformedData.weeks
+    },
+
+    // Получить список уникальных месяцев
+    availableMonths: (state) => {
+      if (!state.monthlyTransformedData?.months) return []
+      return state.monthlyTransformedData.months
+    },
+
+    // Получить список регионов
+    availableRegions: (state) => {
+      const data = state.transformType === 'monthly' 
+        ? state.monthlyTransformedData 
+        : state.transformedData
+      if (!data?.regions) return []
+      return Object.values(data.regions)
+    },
+
+    // Статистика преобразования
+    transformStats: (state) => {
+      const data = state.transformType === 'monthly' 
+        ? state.monthlyTransformedData 
+        : state.transformedData
+
+      if (!state.rawDailyData.length || !data) {
+        return { 
+          dailyRecords: 0, 
+          periods: 0, 
+          regions: 0, 
+          stores: 0, 
+          type: state.transformType,
+          indicators: state.availableIndicators.length
+        }
+      }
+
+      const regions = Object.keys(data.regions).length
+      const stores = Object.values(data.regions)
+        .reduce((total, region) => total + (region.stores?.length || 0), 0)
+
+      const periods = state.transformType === 'monthly' 
+        ? (data.months?.length || 0)
+        : (data.weeks?.length || 0)
+
+      return {
+        dailyRecords: state.rawDailyData.length,
+        periods,
+        regions,
+        stores,
+        type: state.transformType,
+        indicators: state.availableIndicators.length,
+        dynamicIndicators: state.dynamicIndicators.length
+      }
+    },
+
+    // Получить текущие активные данные
+    currentData: (state) => {
+      return state.transformType === 'monthly' 
+        ? state.monthlyTransformedData 
+        : state.transformedData
+    },
+
+    // 🆕 Информация о завершенных периодах
+    completedPeriodsInfo: (state) => {
+      if (!state.rawDailyData.length) return null
+      
+      const allPeriods = state.transformType === 'monthly' 
+        ? state.getUniqueMonths(state.rawDailyData)
+        : state.getUniqueWeeks(state.rawDailyData)
+      
+      const completedCount = state.getCompletedPeriods(allPeriods, state.transformType).length
+      
+      return {
+        total: allPeriods.length,
+        completed: completedCount,
+        incomplete: allPeriods.length - completedCount,
+        showingCompleted: state.completedPeriodsOnly
+      }
+    }
+  },
+
+  actions: {
+    /**
+     * 🆕 Анализ входящих данных для определения доступных показателей
+     * @param {Array} dailyData - массив дневных данных
+     */
+    analyzeDataStructure(dailyData) {
+      if (!dailyData.length) return
+
+      const firstRecord = dailyData[0]
+      const allIndicators = new Set()
+      const dynamicIndicators = new Set()
+      
+      // Анализируем все записи для поиска всех возможных показателей
+      dailyData.forEach(record => {
+        Object.keys(record).forEach(key => {
+          // Исключаем служебные поля
+          if (!['region_data', 'shop', 'week'].includes(key)) {
+            allIndicators.add(key)
+            
+            // Если это не базовые показатели, добавляем в динамические
+            if (!this.baseIndicators.includes(key)) {
+              dynamicIndicators.add(key)
+            }
+          }
+        })
+      })
+
+      this.dynamicIndicators = Array.from(dynamicIndicators).sort()
+      this.availableIndicators = Array.from(allIndicators).sort()
+
+      console.log('🔍 Анализ структуры данных:', {
+        всего_показателей: this.availableIndicators.length,
+        базовых: this.baseIndicators.length,
+        динамических: this.dynamicIndicators.length,
+        показатели: this.availableIndicators
+      })
+    },
+
+    /**
+     * 🆕 Получение уникальных недель из данных
+     * @param {Array} dailyData 
+     * @returns {Array} массив уникальных недель
+     */
+    getUniqueWeeks(dailyData) {
+      const weeks = new Map()
+      
+      dailyData.forEach(record => {
+        const weekKey = `${record.week.number}-${record.week.start.split('.')[2]}`
+        if (!weeks.has(weekKey)) {
+          weeks.set(weekKey, {
+            number: record.week.number,
+            year: record.week.start.split('.')[2],
+            start: record.week.start,
+            end: record.week.end,
+            key: weekKey,
+            days: new Set()
+          })
+        }
+        weeks.get(weekKey).days.add(record.week.day)
+      })
+      
+      return Array.from(weeks.values()).sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year
+        return a.number - b.number
+      })
+    },
+
+    /**
+     * 🆕 Получение уникальных месяцев из данных
+     * @param {Array} dailyData 
+     * @returns {Array} массив уникальных месяцев
+     */
+    getUniqueMonths(dailyData) {
+      const months = new Map()
+      
+      dailyData.forEach(record => {
+        const [day, month, year] = record.week.day.split('.')
+        const monthKey = `${year}-${month.padStart(2, '0')}`
+        
+        if (!months.has(monthKey)) {
+          months.set(monthKey, {
+            year: parseInt(year),
+            month: parseInt(month),
+            key: monthKey,
+            days: new Set(),
+            startDate: null,
+            endDate: null
+          })
+        }
+        
+        const monthData = months.get(monthKey)
+        monthData.days.add(record.week.day)
+        
+        // Определяем диапазон дат
+        const currentDate = record.week.day
+        if (!monthData.startDate || currentDate < monthData.startDate) {
+          monthData.startDate = currentDate
+        }
+        if (!monthData.endDate || currentDate > monthData.endDate) {
+          monthData.endDate = currentDate
+        }
+      })
+      
+      return Array.from(months.values()).sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year
+        return a.month - b.month
+      })
+    },
+
+    /**
+     * 🆕 Определение завершенных периодов
+     * @param {Array} periods - все периоды
+     * @param {string} type - 'weekly' или 'monthly'
+     * @returns {Array} завершенные периоды
+     */
+    getCompletedPeriods(periods, type = 'weekly') {
+      if (!periods.length) return []
+      
+      const currentDate = new Date()
+      const completed = []
+      
+      periods.forEach(period => {
+        let isCompleted = false
+        
+        if (type === 'weekly') {
+          // Неделя считается завершенной если прошла её конечная дата
+          const [endDay, endMonth, endYear] = period.end.split('.')
+          const weekEndDate = new Date(endYear, endMonth - 1, endDay, 23, 59, 59)
+          isCompleted = currentDate > weekEndDate
+        } else if (type === 'monthly') {
+          // Месяц считается завершенным если начался следующий месяц
+          const monthEndDate = new Date(period.year, period.month, 0, 23, 59, 59) // последний день месяца
+          isCompleted = currentDate > monthEndDate
+        }
+        
+        if (isCompleted) {
+          completed.push(period)
+        }
+      })
+      
+      console.log(`📅 Завершенные ${type === 'weekly' ? 'недели' : 'месяцы'}:`, {
+        всего: periods.length,
+        завершенных: completed.length,
+        текущая_дата: currentDate.toLocaleDateString('ru-RU')
+      })
+      
+      return completed
+    },
+
+    /**
+     * Загрузить и преобразовать данные с выбором типа
+     * @param {Array} dailyData - массив дневных данных
+     * @param {string} type - тип преобразования: 'weekly' или 'monthly'
+     */
+    async loadAndTransformData(dailyData, type = 'weekly') {
+      this.isLoading = true
+      this.error = null
+
+      try {
+
+        this.rawDailyData = dailyData
+        this.transformType = type
+        this.currentDate = new Date().toISOString()
+
+        // 🆕 Анализируем структуру данных
+        this.analyzeDataStructure(dailyData)
+
+        if (type === 'monthly') {
+          this.monthlyTransformedData = this.transformDailyToMonthly(dailyData)
+        } else {
+          this.transformedData = this.transformDailyToWeekly(dailyData)
+        }
+
+        this.lastUpdate = new Date().toISOString()
+
+      } catch (error) {
+        console.error('❌ Ошибка преобразования данных:', error)
+        this.error = error.message
+        throw error
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    /**
+     * 🆕 Преобразование дневных данных в недельные (динамическое)
+     * @param {Array} dailyData - массив дневных записей
+     * @returns {Object} преобразованные данные в недельном формате
+     */
+    transformDailyToWeekly(dailyData) {
+      
+      // 1. Получаем все недели и фильтруем завершенные
+      const allWeeks = this.getUniqueWeeks(dailyData)
+      const weeksToProcess = this.completedPeriodsOnly 
+        ? this.getCompletedPeriods(allWeeks, 'weekly')
+        : allWeeks
+      
+      // 2. Группируем данные по неделямЗавершенные недели
+      const weeklyGroups = this.groupByWeeks(dailyData, weeksToProcess)
+      
+      // 3. Создаем структуру weeks
+      const weeks = this.createWeeksStructure(weeksToProcess)
+      
+      // 4. Создаем структуру regions с динамическими показателями
+      const regions = this.createRegionsStructureWeekly(weeklyGroups, weeks)
+
+      return { weeks, regions }
+    },
+
+    /**
+     * 🆕 Группировка дневных данных по завершенным неделям
+     * @param {Array} dailyData 
+     * @param {Array} weeksToProcess - недели для обработки
+     * @returns {Map} сгруппированные данные
+     */
+    groupByWeeks(dailyData, weeksToProcess) {
+      const groups = new Map()
+      const weekKeys = new Set(weeksToProcess.map(w => w.key))
+
+      for (const record of dailyData) {
+        const weekKey = `${record.week.number}-${record.week.start.split('.')[2]}`
+        
+        // Обрабатываем только завершенные недели
+        if (!weekKeys.has(weekKey)) continue
+        
+        if (!groups.has(weekKey)) {
+          groups.set(weekKey, {
+            weekInfo: weeksToProcess.find(w => w.key === weekKey),
+            records: []
+          })
+        }
+        
+        groups.get(weekKey).records.push(record)
+      }
+
+      return groups
+    },
+
+    /**
+     * 🆕 Создание структуры недель
+     * @param {Array} weeksToProcess 
+     * @returns {Array} массив недель
+     */
+    createWeeksStructure(weeksToProcess) {
+      return weeksToProcess.map(week => ({
+        id: week.key,
+        name: this.formatWeekName(week),
+        dateRange: `${week.start} - ${week.end}`,
+        start: week.start,
+        end: week.end,
+        number: week.number,
+        year: week.year,
+        daysCount: week.days.size
+      }))
+    },
+
+    /**
+     * 🆕 Создание структуры регионов с динамическими показателями (недельная)
+     * @param {Map} weeklyGroups 
+     * @param {Array} weeks 
+     * @returns {Object} объект регионов
+     */
+    createRegionsStructureWeekly(weeklyGroups, weeks) {
+      const regions = {}
+      const regionStoreMap = new Map()
+
+      // Собираем уникальные комбинации регион-магазин
+      for (const [weekKey, data] of weeklyGroups) {
+        for (const record of data.records) {
+          const regionKey = `region_${record.region_data.id}`
+          const storeKey = record.shop.id.toString()
+
+          if (!regionStoreMap.has(regionKey)) {
+            regionStoreMap.set(regionKey, {
+              regionInfo: record.region_data,
+              stores: new Map()
+            })
+          }
+
+          const regionData = regionStoreMap.get(regionKey)
+          
+          if (!regionData.stores.has(storeKey)) {
+            regionData.stores.set(storeKey, {
+              storeInfo: record.shop,
+              weeklyData: new Map()
+            })
+          }
+
+          const storeData = regionData.stores.get(storeKey)
+          
+          if (!storeData.weeklyData.has(weekKey)) {
+            storeData.weeklyData.set(weekKey, [])
+          }
+          
+          storeData.weeklyData.get(weekKey).push(record)
+        }
+      }
+
+      // Создаем финальную структуру с агрегированными данными
+      for (const [regionKey, regionData] of regionStoreMap) {
+        regions[regionKey] = {
+          id: regionKey,
+          name: regionData.regionInfo.name,
+          color: regionData.regionInfo.color,
+          stores: []
+        }
+
+        for (const [storeKey, storeData] of regionData.stores) {
+          const store = {
+            id: storeKey,
+            name: storeData.storeInfo.name,
+            originalId: storeData.storeInfo.id,
+            weeklyData: []
+          }
+
+          // Агрегируем дневные данные в недельные
+          for (const week of weeks) {
+            const weekKey = week.id
+            const dailyRecords = storeData.weeklyData.get(weekKey) || []
+            
+            const weeklyRecord = this.aggregateDailyToWeekly(dailyRecords, weekKey)
+            store.weeklyData.push(weeklyRecord)
+          }
+
+          regions[regionKey].stores.push(store)
+        }
+      }
+
+      return regions
+    },
+
+    /**
+     * 🆕 Динамическая агрегация дневных данных в недельные
+     * @param {Array} dailyRecords - записи за дни недели
+     * @param {string} weekId - ID недели
+     * @returns {Object} агрегированная недельная запись
+     */
+    aggregateDailyToWeekly(dailyRecords, weekId) {
+      if (!dailyRecords.length) {
+        // Создаем пустую запись со всеми доступными показателями
+        const emptyRecord = { weekId, daysCount: 0 }
+        this.availableIndicators.forEach(indicator => {
+          emptyRecord[indicator] = 0
+        })
+        return emptyRecord
+      }
+
+      // Динамически суммируем все доступные показатели
+      const aggregated = { weekId }
+      
+      // Инициализируем все показатели
+      this.availableIndicators.forEach(indicator => {
+        aggregated[indicator] = 0
+      })
+
+      // Суммируем все показатели
+      dailyRecords.forEach(record => {
+        this.availableIndicators.forEach(indicator => {
+          if (record[indicator] !== undefined && record[indicator] !== null) {
+            aggregated[indicator] += Number(record[indicator]) || 0
+          }
+        })
+      })
+
+      // Рассчитываем процент выполнения плана
+      aggregated.percent = aggregated.plan > 0 
+        ? Math.round((aggregated.fact / aggregated.plan) * 100) 
+        : 0
+
+      // Дополнительная информация
+      aggregated.daysCount = dailyRecords.length
+
+      return aggregated
+    },
+
+    /**
+     * 🆕 Преобразование дневных данных в месячные (динамическое)
+     * @param {Array} dailyData - массив дневных записей
+     * @returns {Object} преобразованные данные в месячном формате
+     */
+    transformDailyToMonthly(dailyData) {
+      console.log('📅 Начинаем динамическое месячное преобразование...')
+      
+      // 1. Получаем все месяцы и фильтруем завершенные
+      const allMonths = this.getUniqueMonths(dailyData)
+      const monthsToProcess = this.completedPeriodsOnly 
+        ? this.getCompletedPeriods(allMonths, 'monthly')
+        : allMonths
+      
+      // 2. Группируем данные по месяцам
+      const monthlyGroups = this.groupByMonths(dailyData, monthsToProcess)
+      
+      // 3. Создаем структуру months
+      const months = this.createMonthsStructure(monthsToProcess)
+      
+      // 4. Создаем структуру regions с динамическими показателями
+      const regions = this.createRegionsStructureMonthly(monthlyGroups, months)
+
+      return { months, regions }
+    },
+
+    /**
+     * 🆕 Группировка дневных данных по завершенным месяцам
+     * @param {Array} dailyData 
+     * @param {Array} monthsToProcess - месяцы для обработки
+     * @returns {Map} сгруппированные данные
+     */
+    groupByMonths(dailyData, monthsToProcess) {
+      const groups = new Map()
+      const monthKeys = new Set(monthsToProcess.map(m => m.key))
+
+      for (const record of dailyData) {
+        const [day, month, year] = record.week.day.split('.')
+        const monthKey = `${year}-${month.padStart(2, '0')}`
+        
+        // Обрабатываем только завершенные месяцы
+        if (!monthKeys.has(monthKey)) continue
+        
+        if (!groups.has(monthKey)) {
+          groups.set(monthKey, {
+            monthInfo: monthsToProcess.find(m => m.key === monthKey),
+            records: []
+          })
+        }
+        
+        groups.get(monthKey).records.push(record)
+      }
+
+      return groups
+    },
+
+    /**
+     * 🆕 Создание структуры месяцев
+     * @param {Array} monthsToProcess 
+     * @returns {Array} массив месяцев
+     */
+    createMonthsStructure(monthsToProcess) {
+      const monthNames = [
+        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+      ]
+
+      return monthsToProcess.map(month => ({
+        id: month.key,
+        name: `${monthNames[month.month - 1]} ${month.year}`,
+        dateRange: `${month.startDate} - ${month.endDate}`,
+        year: month.year,
+        month: month.month,
+        daysCount: month.days.size
+      }))
+    },
+
+    /**
+     * 🆕 Создание структуры регионов с динамическими показателями (месячная)
+     * @param {Map} monthlyGroups 
+     * @param {Array} months 
+     * @returns {Object} объект регионов
+     */
+    createRegionsStructureMonthly(monthlyGroups, months) {
+      const regions = {}
+      const regionStoreMap = new Map()
+
+      // Собираем уникальные комбинации регион-магазин
+      for (const [monthKey, data] of monthlyGroups) {
+        for (const record of data.records) {
+          const regionKey = `region_${record.region_data.id}`
+          // const storeKey = `store_${record.shop.id}`
+          const storeKey = record.shop.id.toString()
+
+
+          if (!regionStoreMap.has(regionKey)) {
+            regionStoreMap.set(regionKey, {
+              regionInfo: record.region_data,
+              stores: new Map()
+            })
+          }
+
+          const regionData = regionStoreMap.get(regionKey)
+          
+          if (!regionData.stores.has(storeKey)) {
+            regionData.stores.set(storeKey, {
+              storeInfo: record.shop,
+              monthlyData: new Map()
+            })
+          }
+
+          const storeData = regionData.stores.get(storeKey)
+          
+          if (!storeData.monthlyData.has(monthKey)) {
+            storeData.monthlyData.set(monthKey, [])
+          }
+          
+          storeData.monthlyData.get(monthKey).push(record)
+        }
+      }
+
+      // Создаем финальную структуру с агрегированными данными
+      for (const [regionKey, regionData] of regionStoreMap) {
+        regions[regionKey] = {
+          id: regionKey,
+          name: regionData.regionInfo.name,
+          color: regionData.regionInfo.color,
+          stores: []
+        }
+
+        for (const [storeKey, storeData] of regionData.stores) {
+          const store = {
+            id: storeKey,
+            name: storeData.storeInfo.name,
+            originalId: storeData.storeInfo.id,
+            monthlyData: []
+          }
+
+          // Агрегируем дневные данные в месячные
+          for (const month of months) {
+            const monthKey = month.id
+            const dailyRecords = storeData.monthlyData.get(monthKey) || []
+            
+            const monthlyRecord = this.aggregateDailyToMonthly(dailyRecords, monthKey)
+            store.monthlyData.push(monthlyRecord)
+          }
+
+          regions[regionKey].stores.push(store)
+        }
+      }
+
+      return regions
+    },
+
+    /**
+     * 🆕 Динамическая агрегация дневных данных в месячные
+     * @param {Array} dailyRecords - записи за дни месяца
+     * @param {string} monthId - ID месяца
+     * @returns {Object} агрегированная месячная запись
+     */
+    aggregateDailyToMonthly(dailyRecords, monthId) {
+      if (!dailyRecords.length) {
+        // Создаем пустую запись со всеми доступными показателями
+        const emptyRecord = { monthId, daysCount: 0, averageDaily: 0 }
+        this.availableIndicators.forEach(indicator => {
+          emptyRecord[indicator] = 0
+        })
+        return emptyRecord
+      }
+
+      // Динамически суммируем все доступные показатели
+      const aggregated = { monthId }
+      
+      // Инициализируем все показатели
+      this.availableIndicators.forEach(indicator => {
+        aggregated[indicator] = 0
+      })
+
+      // Суммируем все показатели
+      dailyRecords.forEach(record => {
+        this.availableIndicators.forEach(indicator => {
+          if (record[indicator] !== undefined && record[indicator] !== null) {
+            aggregated[indicator] += Number(record[indicator]) || 0
+          }
+        })
+      })
+
+      // Рассчитываем процент выполнения плана
+      aggregated.percent = aggregated.plan > 0 
+        ? Math.round((aggregated.fact / aggregated.plan) * 100) 
+        : 0
+
+      // Средний дневной оборот
+      aggregated.averageDaily = dailyRecords.length > 0 
+        ? Math.round(aggregated.fact / dailyRecords.length)
+        : 0
+
+      // Дополнительная информация
+      aggregated.daysCount = dailyRecords.length
+
+      return aggregated
+    },
+
+    // 🆕 ===== МЕТОДЫ ФИЛЬТРАЦИИ ПОСЛЕДНИХ НЕДЕЛЬ =====
+
+    /**
+     * Получить данные за последние N недель
+     * @param {number} weeksCount - количество недель (по умолчанию 2)
+     * @returns {Object} данные за N последних недель
+     */
+    getLastWeeksData(weeksCount = 2) {
+      if (!this.transformedData) return null
+      
+      const weeks = this.transformedData.weeks
+      if (!weeks.length) return null
+
+      // Берем последние N недель
+      const lastWeeks = weeks.slice(-weeksCount)
+      
+      console.log(`📊 Фильтруем последние ${weeksCount} недель:`, 
+        lastWeeks.map(w => w.name).join(', ')
+      )
+      
+      // Фильтруем regions только по этим неделям
+      const filteredRegions = {}
+      
+      for (const [regionKey, region] of Object.entries(this.transformedData.regions)) {
+        filteredRegions[regionKey] = {
+          ...region,
+          stores: region.stores.map(store => ({
+            ...store,
+            weeklyData: store.weeklyData.filter(weekData => 
+              lastWeeks.some(week => week.id === weekData.weekId)
+            )
+          }))
+        }
+      }
+
+      return {
+        weeks: lastWeeks,
+        regions: filteredRegions
+      }
+    },
+
+    /**
+     * Применить фильтр последних недель к текущим данным
+     * @param {number} weeksCount - количество недель для отображения
+     */
+    applyLastWeeksFilter(weeksCount = 2) {
+      if (!this.transformedData) {
+        console.warn('⚠️ Нет недельных данных для фильтрации')
+        return
+      }
+
+      const filteredData = this.getLastWeeksData(weeksCount)
+      if (filteredData) {
+        // Заменяем текущие данные отфильтрованными
+        this.transformedData = filteredData
+      }
+    },
+
+    /**
+     * Получить все доступные недели без фильтрации
+     * @returns {Object} полные данные без фильтрации
+     */
+    getAllWeeksData() {
+      // Для получения всех недель нужно заново преобразовать исходные данные
+      if (!this.rawDailyData.length) return null
+      
+      // Временно отключаем фильтр завершенных периодов
+      const originalSetting = this.completedPeriodsOnly
+      this.completedPeriodsOnly = false
+      
+      const allData = this.transformDailyToWeekly(this.rawDailyData)
+      
+      // Восстанавливаем настройку
+      this.completedPeriodsOnly = originalSetting
+      
+      return allData
+    },
+
+    /**
+     * Переключение между "последние недели" и "все недели"
+     * @param {boolean} showOnlyLast - показывать только последние недели
+     * @param {number} weeksCount - количество недель (если showOnlyLast = true)
+     */
+    toggleWeeksFilter(showOnlyLast = true, weeksCount = 2) {
+      if (!this.rawDailyData.length) {
+        throw new Error('Нет исходных данных для переключения фильтра')
+      }
+
+      if (showOnlyLast) {
+        // Показать только последние N недель
+        const allData = this.getAllWeeksData()
+        this.transformedData = allData
+        this.applyLastWeeksFilter(weeksCount)
+      } else {
+        // Показать все недели
+        this.transformedData = this.getAllWeeksData()
+        console.log('✅ Показаны все доступные недели')
+      }
+    },
+
+    /**
+     * Получить данные за последние N месяцев
+     * @param {number} monthsCount - количество месяцев (по умолчанию 2)
+     * @returns {Object} данные за N месяцев
+     */
+    getLastMonthsData(monthsCount = 2) {
+      if (!this.monthlyTransformedData) return null
+      
+      const months = this.monthlyTransformedData.months
+      if (!months.length) return null
+
+      // Берем последние N месяцев
+      const lastMonths = months.slice(-monthsCount)
+      
+      // Фильтруем regions только по этим месяцам
+      const filteredRegions = {}
+      
+      for (const [regionKey, region] of Object.entries(this.monthlyTransformedData.regions)) {
+        filteredRegions[regionKey] = {
+          ...region,
+          stores: region.stores.map(store => ({
+            ...store,
+            monthlyData: store.monthlyData.filter(monthData => 
+              lastMonths.some(month => month.id === monthData.monthId)
+            )
+          }))
+        }
+      }
+
+      return {
+        months: lastMonths,
+        regions: filteredRegions
+      }
+    },
+
+    /**
+     * Сравнение двух месяцев для аналитики
+     * @param {string} month1Id - ID первого месяца (YYYY-MM)
+     * @param {string} month2Id - ID второго месяца (YYYY-MM)
+     * @returns {Object} результат сравнения
+     */
+    compareMonths(month1Id, month2Id) {
+      if (!this.monthlyTransformedData) {
+        throw new Error('Нет месячных данных. Сначала выполните преобразование с типом "monthly"')
+      }
+
+      const month1 = this.monthlyTransformedData.months.find(m => m.id === month1Id)
+      const month2 = this.monthlyTransformedData.months.find(m => m.id === month2Id)
+      
+      if (!month1 || !month2) {
+        throw new Error(`Месяц не найден: ${month1Id} или ${month2Id}`)
+      }
+
+      const comparison = {
+        month1: { ...month1, totalFact: 0, totalPlan: 0 },
+        month2: { ...month2, totalFact: 0, totalPlan: 0 },
+        stores: [],
+        indicatorsComparison: {} // 🆕 Сравнение всех показателей
+      }
+
+      // Инициализируем сравнение по всем показателям
+      this.availableIndicators.forEach(indicator => {
+        comparison.indicatorsComparison[indicator] = {
+          month1Total: 0,
+          month2Total: 0,
+          difference: 0,
+          changePercent: 0
+        }
+      })
+
+      // Сравниваем каждый магазин
+      for (const region of Object.values(this.monthlyTransformedData.regions)) {
+        for (const store of region.stores) {
+          const store1Data = store.monthlyData.find(m => m.monthId === month1Id)
+          const store2Data = store.monthlyData.find(m => m.monthId === month2Id)
+          
+          if (store1Data && store2Data) {
+            const storeComparison = {
+              storeId: store.id,
+              storeName: store.name,
+              regionName: region.name,
+              month1: store1Data,
+              month2: store2Data,
+              differences: {}
+            }
+
+            // 🆕 Динамически сравниваем все показатели
+            this.availableIndicators.forEach(indicator => {
+              const val1 = store1Data[indicator] || 0
+              const val2 = store2Data[indicator] || 0
+              const diff = val2 - val1
+              const changePercent = val1 > 0 ? Math.round((diff / val1) * 100) : 0
+
+              storeComparison.differences[indicator] = {
+                value: diff,
+                percent: changePercent
+              }
+
+              // Накапливаем для общих итогов
+              comparison.indicatorsComparison[indicator].month1Total += val1
+              comparison.indicatorsComparison[indicator].month2Total += val2
+            })
+
+            comparison.stores.push(storeComparison)
+            comparison.month1.totalFact += store1Data.fact || 0
+            comparison.month1.totalPlan += store1Data.plan || 0
+            comparison.month2.totalFact += store2Data.fact || 0
+            comparison.month2.totalPlan += store2Data.plan || 0
+          }
+        }
+      }
+
+      // Рассчитываем итоговые изменения по всем показателям
+      Object.keys(comparison.indicatorsComparison).forEach(indicator => {
+        const data = comparison.indicatorsComparison[indicator]
+        data.difference = data.month2Total - data.month1Total
+        data.changePercent = data.month1Total > 0 
+          ? Math.round((data.difference / data.month1Total) * 100)
+          : 0
+      })
+
+      // Общие итоги сравнения
+      comparison.totals = {
+        factGrowth: comparison.month2.totalFact - comparison.month1.totalFact,
+        factGrowthPercent: comparison.month1.totalFact > 0 
+          ? Math.round(((comparison.month2.totalFact - comparison.month1.totalFact) / comparison.month1.totalFact) * 100)
+          : 0,
+        planExecution1: comparison.month1.totalPlan > 0 
+          ? Math.round((comparison.month1.totalFact / comparison.month1.totalPlan) * 100)
+          : 0,
+        planExecution2: comparison.month2.totalPlan > 0 
+          ? Math.round((comparison.month2.totalFact / comparison.month2.totalPlan) * 100)  
+          : 0
+      }
+
+      return comparison
+    },
+
+    // ===== СЛУЖЕБНЫЕ МЕТОДЫ =====
+
+    /**
+     * Переключение между недельным и месячным режимом
+     * @param {string} type - 'weekly' или 'monthly'
+     */
+    async switchTransformType(type) {
+      if (!this.rawDailyData.length) {
+        throw new Error('Нет исходных данных для преобразования')
+      }
+
+      if (this.transformType === type) {
+        console.log(`📋 Уже используется режим: ${type}`)
+        return
+      }
+
+      await this.loadAndTransformData(this.rawDailyData, type)
+    },
+
+    /**
+     * Получить данные в формате, совместимом со старым Dashboard
+     * @returns {Object|null} данные в старом формате
+     */
+    getLegacyFormatData() {
+      return this.currentData
+    },
+
+    /**
+     * Очистить все данные
+     */
+    clearData() {
+      this.rawDailyData = []
+      this.transformedData = null
+      this.monthlyTransformedData = null
+      this.error = null
+      this.lastUpdate = null
+      this.transformType = 'weekly'
+      this.availableIndicators = []
+      this.dynamicIndicators = []
+      this.currentDate = null
+    },
+
+    /**
+     * Экспорт недельных данных в CSV
+     * @returns {string} CSV строка
+     */
+    exportToCSV() {
+      if (!this.transformedData) return ''
+
+      const headers = ['Регион', 'Магазин', 'Неделя', ...this.availableIndicators]
+      const rows = [headers.join(',')]
+
+      for (const region of Object.values(this.transformedData.regions)) {
+        for (const store of region.stores) {
+          for (const weekData of store.weeklyData) {
+            const week = this.transformedData.weeks.find(w => w.id === weekData.weekId)
+            const row = [
+              `"${region.name}"`,
+              `"${store.name}"`,
+              `"${week?.name || weekData.weekId}"`,
+              ...this.availableIndicators.map(indicator => weekData[indicator] || 0)
+            ]
+            rows.push(row.join(','))
+          }
+        }
+      }
+
+      return rows.join('\n')
+    },
+
+    /**
+     * Экспорт месячных данных в CSV
+     * @returns {string} CSV строка
+     */
+    exportMonthlyToCSV() {
+      if (!this.monthlyTransformedData) return ''
+
+      const headers = ['Регион', 'Магазин', 'Месяц', ...this.availableIndicators, 'Дней в месяце', 'Средний день']
+      const rows = [headers.join(',')]
+
+      for (const region of Object.values(this.monthlyTransformedData.regions)) {
+        for (const store of region.stores) {
+          for (const monthData of store.monthlyData) {
+            const month = this.monthlyTransformedData.months.find(m => m.id === monthData.monthId)
+            const row = [
+              `"${region.name}"`,
+              `"${store.name}"`,
+              `"${month?.name || monthData.monthId}"`,
+              ...this.availableIndicators.map(indicator => monthData[indicator] || 0),
+              monthData.daysCount,
+              monthData.averageDaily
+            ]
+            rows.push(row.join(','))
+          }
+        }
+      }
+
+      return rows.join('\n')
+    },
+
+    /**
+     * Форматирование названия недели
+     * @param {Object} weekInfo 
+     * @returns {string} отформатированное название
+     */
+    formatWeekName(weekInfo) {
+      const months = [
+        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+      ]
+
+      // Парсим дату start для получения месяца и года
+      const [day, month, year] = weekInfo.start.split('.')
+      const monthIndex = parseInt(month) - 1
+      
+      return `${months[monthIndex]} ${year} (№${weekInfo.number})`
+    },
+
+    /**
+     * Фильтрация данных по дате
+     * @param {string} startDate - начальная дата (DD.MM.YYYY)
+     * @param {string} endDate - конечная дата (DD.MM.YYYY)
+     * @returns {Array} отфильтрованные дневные данные
+     */
+    filterDataByDateRange(startDate, endDate) {
+      if (!this.rawDailyData.length) return []
+
+      const parseDate = (dateStr) => {
+        const [day, month, year] = dateStr.split('.')
+        return new Date(year, month - 1, day)
+      }
+
+      const start = parseDate(startDate)
+      const end = parseDate(endDate)
+
+      return this.rawDailyData.filter(record => {
+        const recordDate = parseDate(record.week.day)
+        return recordDate >= start && recordDate <= end
+      })
+    }
+  }
+})
