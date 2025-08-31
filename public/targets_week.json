@@ -21,7 +21,7 @@
       "type": "negative"
     },
     "back_product": {
-      "name": "Повернення-",
+      "name": "Повернення",
       "maxScore": 10,
       "type": "negative"
     }

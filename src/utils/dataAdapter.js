@@ -129,9 +129,9 @@ export function convertDailyDataToWeekly(dailyData, period) {
   // Сортируем периоды
   const sortedWeeks = Array.from(weeksMap.values()).sort((a, b) => {
     if (period === 'Два місяці') {
-      return a.id.localeCompare(b.id);
+      return b.id.localeCompare(a.id);
     } else {
-      return parseInt(a.id) - parseInt(b.id);
+      return parseInt(b.id) - parseInt(a.id);
     }
   });
 
@@ -203,14 +203,14 @@ export function getDateRangeDebugInfo(period) {
   const now = new Date();
   const range = getDateRangeForPeriod(period);
   
-  console.log(`🗓️ Период: ${period}`);
-  console.log(`📅 Сегодня: ${formatDate(now)}`);
-  console.log(`📊 Диапазон: ${range.start_date} - ${range.end_date}`);
+  console.log(`🗓️ Період: ${period}`);
+  console.log(`📅 Сьогодні: ${formatDate(now)}`);
+  console.log(`📊 Діапазон: ${range.start_date} - ${range.end_date}`);
   
   if (period === 'Два місяці') {
     const start = parseDate(range.start_date);
     const end = parseDate(range.end_date);
-    console.log(`📆 Месяцы: ${start.toLocaleString('uk-UA', { month: 'long', year: '2-digit' })} - ${end.toLocaleString('uk-UA', { month: 'long', year: 'numeric' })}`);
+    console.log(`📆 Місяці: ${start.toLocaleString('uk-UA', { month: 'long', year: '2-digit' })} - ${end.toLocaleString('uk-UA', { month: 'long', year: 'numeric' })}`);
   }
   
   return range;
@@ -251,7 +251,7 @@ function formatDate(date) {
 export function exportToCSV() {
   if (!this.convertDailyDataToWeekly) return ''
 
-  const headers = ['Регион', 'Магазин', 'Неделя']
+  const headers = ['Регіон', 'Магазин', 'Тиждень']
   const rows = [headers.join(',')]
 
   for (const region of Object.values(this.transformedData.regions)) {
@@ -275,7 +275,7 @@ export function exportToCSV() {
 export function exportMonthlyToCSV() {
   if (!this.convertDailyDataToWeekly) return ''
 
-  const headers = ['Регион', 'Магазин', 'Месяц', 'Дней в месяце', 'Средний день']
+  const headers = ['Регіон', 'Магазин', 'Місяць', 'Днів у місяці', 'Середній день']
   const rows = [headers.join(',')]
 
   for (const region of Object.values(this.convertDailyDataToWeekly.regions)) {

@@ -68,7 +68,7 @@
     <div v-if="error" class="odx-error">
       <div class="odx-error__icon">⚠️</div>
       <div class="odx-error__message">{{ error }}</div>
-      <button class="odx-error__retry" @click="refreshData">Попробовать снова</button>
+      <button class="odx-error__retry" @click="refreshData">Повторити</button>
     </div>
 
     <div v-if="!loading && !error" class="odx-dashboard">
@@ -208,8 +208,8 @@
           </div>
         </div>
       </div>
-      <div class="space" style="height: 500px;"></div>
-      <div id="target-section" class="presentation">
+      <!-- <div class="space" style="height: 500px;"></div> -->
+      <div v-if="faqOpen" id="target-section" class="presentation">
 
 
         <h3>Типи показників</h3>
@@ -662,27 +662,28 @@ const planScore = ref(0)
 const showPlansEditor = ref(false)
 const dynamicTargetsData = ref(null)
 const darkColors = ref([
-  '#1b263b', // тёмно-синий
-  '#0d1b2a', // глубокий морской
-  '#1a1a2e', // сине-фиолетовый
-  '#2c3e50', // графитовый
-  '#22333b', // угольно-зелёный
-  '#1b4332', // тёмно-зелёный
-  '#2d6a4f', // хвойный
-  '#3a0ca3', // тёмный индиго
-  '#240046', // насыщенный фиолетовый
-  '#4b1459', // тёмная слива
-  '#5a189a', // виноградный
-  '#641220', // бордово-красный
-  '#800f2f', // тёмная малина
-  '#6a040f', // вишнёвый
-  '#5c3c00', // тёмно-янтарный
-  '#4e342e', // кофейный
-  '#3e2723', // шоколадный
-  '#2b2d31'  // нейтральный тёмный
+  "#e3f2fd", // базовый небесный
+  "#d6f0f9", // ледяной голубой
+  "#ccebf5", // мягкий аквамарин
+  "#e0f7fa", // светлый циан
+  "#d0ece7", // мятный стальной
+  "#d7eaf7", // серо-голубой
+  "#dae7f2", // холодный стальной
+  "#cfd8dc", // светлый графитово-серый
+  "#c5cae9", // серо-лавандовый (холодный синий подтон)
+  "#d1c4e9", // холодный пастельный фиолетовый
+  "#b3e5fc", // свежий небесный
+  "#b2dfdb", // бирюзово-серый
+  "#b0bec5", // стальной серый
+  "#a7c7d9", // ледяной аквамарин
+  "#a2c4c9", // серо-бирюзовый
+  "#9ebbd7", // холодный серо-синий
+  "#9cc6c6", // зелёно-циановый пастельный
+  "#90caf9"  // яркий голубой акцент
 ])
 const selectedColor = ref('#e3f2fd')
 const isPaletteOpen = ref(false)
+const faqOpen = ref(false)
 
 const selectedPeriod = ref('Два місяці')
 const STORAGE_KEY_LIMIT = 'dashboardLimit'
@@ -973,7 +974,6 @@ const processedData = computed(() => {
     let regionScore = 0
     if (region.stores) {
       region.stores.forEach(store => {
-        console.log( store )
         regionScore += store.overallTotalScore || 0
       })
     }
@@ -2539,6 +2539,7 @@ const refreshData = async () => {
 }
 
 const scrollToSection = (id) => {
+  faqOpen.value = true
   const element = document.getElementById(id);
   if (element) {
     element.scrollIntoView({
