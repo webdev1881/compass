@@ -7,22 +7,22 @@
     },
     "losses": {
       "name": "Списання",
-      "maxScore": 20,
+      "maxScore": 25,
       "type": "negative"
     },
     "shortages": {
       "name": "Нестачі",
-      "maxScore": 100,
+      "maxScore": 25,
       "type": "negative"
     },
     "fop": {
       "name": "ФОП",
-      "maxScore": 15,
+      "maxScore": 25,
       "type": "negative"
     },
     "back_product": {
       "name": "Повернення",
-      "maxScore": 10,
+      "maxScore": 25,
       "type": "negative"
     }
   },

@@ -655,7 +655,7 @@ const targetsData = ref(null)
 const sortByTotalScore = ref(true)
 const regions = ref([])
 const tooltipEnabled = ref(true)
-const formatter = ref(false)
+const formatter = ref(true)
 const KPITopStores = ref(5)
 const isOpen = ref(false)
 const planScore = ref(0)
@@ -687,7 +687,7 @@ const faqOpen = ref(false)
 
 const selectedPeriod = ref('Два місяці')
 const STORAGE_KEY_LIMIT = 'dashboardLimit'
-const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200)
+const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 999)
 
 // const loadData = async () => {
 //   try {
@@ -1757,25 +1757,30 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-      if (key === 'turnover') return
+  if (key === 'turnover') return
 
-      const targetPercent = storeTargetConfig[key] || 0
-      const actualValue = weekData[key] || 0
-      const target = targetPercent * weekData.fact
+  const targetPercent = storeTargetConfig[key] || 0
+  const actualValue = weekData[key] || 0
+  const target = targetPercent * weekData.fact
 
-      let achievementPercent = 0
+  let achievementPercent = 0
 
-      if (target > 0) {
-        if (targetConfig.type === 'negative') {
-          achievementPercent = Math.min((target / actualValue) * 100, limit.value)
-        } else {
-          achievementPercent = (actualValue / target) * 100
-        }
+  if (target > 0) {
+    if (targetConfig.type === 'negative') {
+      // ИСПРАВЛЕНИЕ: если actualValue = 0, то achievementPercent = 0 (0 баллов)
+      if (actualValue === 0) {
+        achievementPercent = 0
+      } else {
+        achievementPercent = Math.min((target / actualValue) * 100, limit.value)
       }
+    } else {
+      achievementPercent = (actualValue / target) * 100
+    }
+  }
 
-      weekData[`${key}_percent`] = Math.round(achievementPercent)
-      weekData[`${key}_target`] = target
-    })
+  weekData[`${key}_percent`] = Math.round(achievementPercent)
+  weekData[`${key}_target`] = target
+})
   })
 
   Object.entries(targetTree).forEach(([key, targetConfig]) => {
@@ -1865,45 +1870,48 @@ const calculateRegionMetrics = () => {
       regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
 
       Object.entries(targetTree).forEach(([key, targetConfig]) => {
-        if (key === 'turnover') return
-        let totalValue = 0
-        let totalTarget = 0
+  if (key === 'turnover') return
+  let totalValue = 0
+  let totalTarget = 0
+  
+  region.stores.forEach(store => {
+    const storeWeekData = getStoreWeekData(store, week.id)
+    let storeTargetConfig = null
+    const storeIdWithoutPrefix = store.id.replace('store_', '')
+    
+    if (storeTargets[storeIdWithoutPrefix]) {
+      storeTargetConfig = storeTargets[storeIdWithoutPrefix]
+    } else if (storeTargets[store.id]) {
+      storeTargetConfig = storeTargets[store.id]
+    } else {
+      storeTargetConfig = {}
+    }
+    
+    const targetPercent = storeTargetConfig[key] || 0
 
-        region.stores.forEach(store => {
-          const storeWeekData = getStoreWeekData(store, week.id)
+    totalValue += storeWeekData[key] || 0
+    totalTarget += targetPercent * (storeWeekData.fact || 0)
+  })
 
-          // ИСПРАВЛЕНИЕ: изменить const на let
-          let storeTargetConfig = findStoreTargetConfig(storeTargets, store.id)
-          const storeIdWithoutPrefix = store.id.replace('store_', '')
+  regionWeekData[key] = totalValue
 
-          if (storeTargets[storeIdWithoutPrefix]) {
-            storeTargetConfig = storeTargets[storeIdWithoutPrefix]
-          } else if (storeTargets[store.id]) {
-            storeTargetConfig = storeTargets[store.id]
-          } else {
-            storeTargetConfig = {}
-          }
+  let achievementPercent = 0
+  if (totalTarget > 0) {
+    if (targetConfig.type === 'negative') {
+      // ИСПРАВЛЕНИЕ: если totalValue = 0, то achievementPercent = 0
+      if (totalValue === 0) {
+        achievementPercent = 0
+      } else {
+        achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
+      }
+    } else {
+      achievementPercent = (totalValue / totalTarget) * 100
+    }
+  }
 
-          const targetPercent = storeTargetConfig[key] || 0
-
-          totalValue += storeWeekData[key] || 0
-          totalTarget += targetPercent * (storeWeekData.fact || 0)
-        })
-
-        regionWeekData[key] = totalValue
-
-        let achievementPercent = 0
-        if (totalTarget > 0) {
-          if (targetConfig.type === 'negative') {
-            achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
-          } else {
-            achievementPercent = (totalValue / totalTarget) * 100
-          }
-        }
-
-        regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
-        regionWeekData[`${key}_target`] = totalTarget
-      })
+  regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
+  regionWeekData[`${key}_target`] = totalTarget
+})
     })
 
     // Остальная логика остается без изменений...
@@ -2105,7 +2113,7 @@ const calculateOverallScores = (allStores) => {
 
 const weeks = computed(() => {
   if (!salesData.value?.weeks) return []
-  return [...salesData.value.weeks].sort((a, b) => a.id - b.id)
+  return [...salesData.value.weeks].sort((a, b) => b.id - a.id)
 })
 
 const calculateColumnRanks = (weekId, allStores) => {
