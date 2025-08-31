@@ -14,32 +14,41 @@ export function convertDailyDataToWeekly(dailyData, period) {
   // Группируем данные по неделям, регионам и магазинам
   dailyData.forEach(dayRecord => {
     const weekNumber = dayRecord.week.number;
-    let weekKey, weekName;
+    let weekKey, weekName, dateRange;
     
     if (period === 'Два місяці') {
+      
       // Для месяцев группируем по месяцам
       const dayDate = parseDate(dayRecord.week.day);
       const monthKey = `${dayDate.getFullYear()}-${dayDate.getMonth()}`;
       weekKey = monthKey;
-      weekName = dayDate.toLocaleString('uk-UA', { month: 'long', year: 'numeric' });
+      weekName = getMonthName(dayDate);
+      
+      // ИСПРАВЛЕНИЕ: создаем dateRange на основе границ месяца, а не данных
+      const monthStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), 1);
+      const monthEnd = new Date(dayDate.getFullYear(), dayDate.getMonth() + 1, 0);
+      dateRange = `${formatDate(monthStart)} - ${formatDate(monthEnd)}`;
     } else {
       // Для недель оставляем как есть
       weekKey = weekNumber.toString();
       weekName = `Тиждень ${weekNumber}`;
+      dateRange = `${dayRecord.week.start} - ${dayRecord.week.end}`;
     }
 
     const regionKey = `region_${dayRecord.region_data.id}`;
-    const storeKey = `${dayRecord.shop.id}`;
+    const storeKey = `store_${dayRecord.shop.id}`;
 
     // Создаем период если его нет
     if (!weeksMap.has(weekKey)) {
       weeksMap.set(weekKey, {
         id: weekKey,
         name: weekName,
-        dateRange: `${dayRecord.week.start} - ${dayRecord.week.end}`
+        dateRange: dateRange
       });
-    } else {
-      // Обновляем dateRange для охвата всего периода
+    }
+    // ИСПРАВЛЕНИЕ: для месяцев НЕ обновляем dateRange
+    // Для недель можем обновлять, если нужно
+    else if (period !== 'Два місяці') {
       const existing = weeksMap.get(weekKey);
       const currentStart = parseDate(existing.dateRange.split(' - ')[0]);
       const currentEnd = parseDate(existing.dateRange.split(' - ')[1]);
@@ -132,7 +141,27 @@ export function convertDailyDataToWeekly(dailyData, period) {
   };
 }
 
+// Добавить функцию для получения красивого названия месяца
+function getMonthName(date, locale = 'uk-UA') {
+  try {
+    return date.toLocaleString(locale, { 
+      month: 'long', 
+      year: 'numeric' 
+    }).replace(/^\w/, (c) => c.toUpperCase()); // Делаем первую букву заглавной
+  } catch (error) {
+    // Fallback на английский, если украинская локаль не поддерживается
+    const months = [
+      'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
+      'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
+    ];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+}
+
+
+
 export function getDateRangeForPeriod(period) {
+  // const now = new Date('2025-07-20'); // Для отладки
   const now = new Date();
   let startDate, endDate;
 
@@ -181,7 +210,7 @@ export function getDateRangeDebugInfo(period) {
   if (period === 'Два місяці') {
     const start = parseDate(range.start_date);
     const end = parseDate(range.end_date);
-    console.log(`📆 Месяцы: ${start.toLocaleString('uk-UA', { month: 'long', year: 'numeric' })} - ${end.toLocaleString('uk-UA', { month: 'long', year: 'numeric' })}`);
+    console.log(`📆 Месяцы: ${start.toLocaleString('uk-UA', { month: 'long', year: '2-digit' })} - ${end.toLocaleString('uk-UA', { month: 'long', year: 'numeric' })}`);
   }
   
   return range;
@@ -217,4 +246,53 @@ function formatDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
+}
+
+export function exportToCSV() {
+  if (!this.convertDailyDataToWeekly) return ''
+
+  const headers = ['Регион', 'Магазин', 'Неделя']
+  const rows = [headers.join(',')]
+
+  for (const region of Object.values(this.transformedData.regions)) {
+    for (const store of region.stores) {
+      for (const weekData of store.weeklyData) {
+        const week = this.transformedData.weeks.find(w => w.id === weekData.weekId)
+        const row = [
+          `"${region.name}"`,
+          `"${store.name}"`,
+          `"${week?.name || weekData.weekId}"`,
+          ...this.availableIndicators.map(indicator => weekData[indicator] || 0)
+        ]
+        rows.push(row.join(','))
+      }
+    }
+  }
+
+  return rows.join('\n')
+}
+
+export function exportMonthlyToCSV() {
+  if (!this.convertDailyDataToWeekly) return ''
+
+  const headers = ['Регион', 'Магазин', 'Месяц', 'Дней в месяце', 'Средний день']
+  const rows = [headers.join(',')]
+
+  for (const region of Object.values(this.convertDailyDataToWeekly.regions)) {
+    for (const store of region.stores) {
+      for (const monthData of store.monthlyData) {
+        const month = this.convertDailyDataToWeekly.months.find(m => m.id === monthData.monthId)
+        const row = [
+          `"${region.name}"`,
+          `"${store.name}"`,
+          `"${month?.name || monthData.monthId}"`,
+          ...this.availableIndicators.map(indicator => monthData[indicator] || 0),
+          monthData.daysCount,
+          monthData.averageDaily
+        ]
+        rows.push(row.join(','))
+      }
+    }
+  }
+  return rows.join('\n')
 }

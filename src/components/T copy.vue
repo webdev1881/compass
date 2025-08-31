@@ -5,18 +5,15 @@
       <div class="period-buttons">
         <button @click="loadData()" :class="{ active: selectedPeriod === 'Два місяці' }"
           :disabled="loading || selectedPeriod === 'Два місяці'" class="period-btn">
-          {{ 'Місяці' }}
+          {{ 'Два місяці' }}
         </button>
         <button @click="loadData2()" :class="{ active: selectedPeriod === 'Два тижні' }"
           :disabled="loading || selectedPeriod === 'Два тижні'" class="period-btn">
-          {{ 'Тижні' }}
+          {{ 'Два тижні' }}
         </button>
       </div>
       <div :style="headerStyle" class="odx-controls__refresh" @click="refreshData" :disabled="loading">
         Оновити
-      </div>
-      <div :style="headerStyle" class="odx-controls__export" @click="exportToExcel" :disabled="loading || !salesData">
-        📁 Екпорт в Excel
       </div>
       <div class="tooltip-controls">
         <label class="tooltip-toggle">
@@ -26,6 +23,9 @@
         </label>
       </div>
 
+      <div :style="headerStyle" class="odx-controls__export" @click="exportToExcel" :disabled="loading || !salesData">
+        📁 Експорт Excel
+      </div>
       <a @click="scrollToSection('target-section')" href="#q">
         <div class="odx_q">?</div>
       </a>
@@ -500,7 +500,7 @@
                   <div class="region-indicator" :style="{ backgroundColor: region.color }"></div>
                   <span class="region-name">{{ region.name }}</span>
                 </div>
-                <div class="region-score">{{ formatNumber(region.averageScore) }}</div>
+                <div class="region-score">{{ formatNumber(region.score) }}</div>
               </div>
             </div>
           </div>
@@ -530,7 +530,7 @@
                 <div class="kpi-value">{{ processedData.problemStores.length }}</div>
                 <div v-if="processedData.problemStores.length" class="odx-tip_tooltext"
                   :style="`background-color: ${selectedColor};`">
-                  <div v-for="val in (processedData.problemStores)" :key="val.id || val.name" class="odx-tip_tooltext_item">
+                  <div v-for="val in (processedData.problemStores)" class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ val.overallTotalScore }}</div>
                   </div>
@@ -542,7 +542,7 @@
                 <div class="kpi-value">{{ processedData.belowPlanStores.length }}</div>
                 <div v-if="processedData.belowPlanStores.length" class="odx-tip_tooltext"
                   :style="`background-color: ${selectedColor};`">
-                  <div v-for="val in (processedData.belowPlanStores)" :key="val.id || val.name" class="odx-tip_tooltext_item">
+                  <div v-for="val in (processedData.belowPlanStores)" class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact) / (val.weeklyData[0].plan +
                       val.weeklyData[1].plan) * 100).toFixed(1) }}%</div>
@@ -772,7 +772,7 @@ const loadData = async () => {
     console.error('помилка завантаження даних:', err)
     error.value = err.message || 'помилка завантаження даних'
   } finally {
-    setTimeout(() => { loading.value = false }, 200)
+    setTimeout(() => { loading.value = false }, 400)
   }
 }
 
@@ -858,7 +858,7 @@ const loadData2 = async () => {
     console.error('помилка завантаження даних:', err)
     error.value = err.message || 'помилка завантаження даних'
   } finally {
-    setTimeout(() => { loading.value = false }, 200)
+    setTimeout(() => { loading.value = false }, 400)
   }
 }
 
@@ -973,12 +973,11 @@ const processedData = computed(() => {
     let regionScore = 0
     if (region.stores) {
       region.stores.forEach(store => {
-        console.log( store )
         regionScore += store.overallTotalScore || 0
       })
     }
-    return { ...region, score: regionScore, averageScore: Math.round(regionScore / region.stores.length) || 0 }
-  }).sort((a, b) => b.score - a.score).slice(0, 2)
+    return { ...region, score: regionScore }
+  }).sort((a, b) => b.score - a.score).slice(0, 5)
 
   const topStores = [...allStores]
     .sort((a, b) => (b.overallTotalScore || 0) - (a.overallTotalScore || 0))
@@ -2778,30 +2777,6 @@ const createKPISheet = (workbook) => {
   
   XLSX.utils.book_append_sheet(workbook, worksheet, 'KPI')
 }
-// Функция для показа уведомлений (если еще нет)
-const showNotification = (message, type = 'info') => {
-  const notification = document.createElement('div')
-  notification.className = `notification notification-${type}`
-  notification.textContent = message
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 6px;
-    color: white;
-    font-weight: 600;
-    z-index: 10000;
-    animation: slideInRight 0.3s ease;
-    background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-  `
-
-  document.body.appendChild(notification)
-
-  setTimeout(() => {
-    notification.remove()
-  }, 3000)
-}
 
 onMounted(() => {
   // Слушаем события изменения планов
@@ -3639,7 +3614,7 @@ onUnmounted(() => {
       right: 0;
       bottom: 0;
       z-index: 1001;
-      backdrop-filter: blur(1px);
+      backdrop-filter: blur(4px);
       animation: fadeIn 0.3s ease;
       border-left: var(--shadow-md)
     }
@@ -4563,42 +4538,5 @@ onUnmounted(() => {
       padding: 1rem;
     }
   }
-}
-
-.odx-controls__export {
-  display: flex;
-  align-items: center;
-  padding: 6px 12px;
-  border: 1px solid var(--odx-border);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  // font-weight: 500;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.notification {
-  animation: slideInRight 0.3s ease;
 }
 </style>

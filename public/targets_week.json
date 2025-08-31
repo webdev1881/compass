@@ -20,8 +20,8 @@
       "maxScore": 15,
       "type": "negative"
     },
-    "shiftRemainder": {
-      "name": "Повернення",
+    "back_product": {
+      "name": "Повернення-",
       "maxScore": 10,
       "type": "negative"
     }
@@ -32,7 +32,7 @@
       "shortages": 0.0016,
       "fop": 0.05,
       "shiftRemainder": 0.002,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "100 БЦ (РУЛЬКА)"
     },
     "0": {
@@ -40,7 +40,7 @@
       "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0103,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "101 БЦ (ЩЕДРИК)"
     },
     "00": {
@@ -48,7 +48,7 @@
       "shortages": 0.0019,
       "fop": 0.05,
       "shiftRemainder": 0.0062,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "102 БЦ (РУЛЬКА)"
     },
     "000": {
@@ -56,7 +56,7 @@
       "shortages": 0.0019,
       "fop": 0.05,
       "shiftRemainder": 0.0062,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "87 БЦ (ЩЕДРИК) Грушевского"
     },
     "752": {
@@ -64,7 +64,7 @@
       "shortages": 0.0032,
       "fop": 0.05,
       "shiftRemainder": 0.0039,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "001 Днепр (РУЛЬКА)"
     },
     "741": {
@@ -72,7 +72,7 @@
       "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.011,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "108 Киев (РУЛЬКА)"
     },
     "552": {
@@ -80,7 +80,7 @@
       "shortages": 0.0027,
       "fop": 0.05,
       "shiftRemainder": 0.0046,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "199 Первомайский (РУЛЬКА)"
     },
     "0000": {
@@ -88,7 +88,7 @@
       "shortages": 0.0016,
       "fop": 0.05,
       "shiftRemainder": 0.0042,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "210 Люботин (ЩЕДРИК)"
     },
     "559": {
@@ -96,7 +96,7 @@
       "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0049,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "220 Ольшаны (РУЛЬКА)"
     },
     "548": {
@@ -104,7 +104,7 @@
       "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0032,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "222 Лозовая (РУЛЬКА)"
     },
     "555": {
@@ -112,7 +112,7 @@
       "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0039,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "229 Красноград (РУЛЬКА)"
     },
     "569": {
@@ -120,7 +120,7 @@
       "shortages": 0.0011,
       "fop": 0.05,
       "shiftRemainder": 0.0013,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "230 Чугуев (РУЛЬКА)"
     },
     "00000": {
@@ -128,7 +128,7 @@
       "shortages": 0.0032,
       "fop": 0.05,
       "shiftRemainder": 0.0123,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "235 Харьков (РУЛЬКА)"
     },
     "544": {
@@ -136,7 +136,7 @@
       "shortages": 0.0021,
       "fop": 0.05,
       "shiftRemainder": 0.001,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "240 Богодухов (РУЛЬКА)"
     },
     "565": {
@@ -144,7 +144,7 @@
       "shortages": 0.0027,
       "fop": 0.05,
       "shiftRemainder": 0.0028,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "267 Пересичное (РУЛЬКА)"
     },
     "547": {
@@ -152,7 +152,7 @@
       "shortages": 0.0016,
       "fop": 0.05,
       "shiftRemainder": 0.0155,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "271 Горького (ЩЕДРИК)"
     },
     "000000": {
@@ -160,7 +160,7 @@
       "shortages": 0.0032,
       "fop": 0.05,
       "shiftRemainder": 0.0122,
-      "unprocessed": 0,
+      "back_product": 0.047,
       "store": "282 Максимовка (ЩЕДРИК)"
     }
   }
