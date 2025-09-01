@@ -22,10 +22,10 @@
           Скинути
         </button>
         <button @click="downloadTemplate" class="btn btn-secondary">
-          Шаблон Excel
+            Шаблон Excel
         </button>
         <label class="btn btn-secondary">
-          Завантажити Excel
+            Завантажити Excel
           <input type="file" ref="fileInput" @change="handleFileUpload" accept=".xlsx,.xls" style="display: none;">
         </label>
       </div>
@@ -68,7 +68,7 @@
 
         <div class="filters">
           <img src="../assets/icons/srch.png" alt="" class="inp_search">
-
+          <!-- <img src="../../../icons/srch.png" alt="" class="inp_search"> -->
           <input type="text" v-model="searchStore" placeholder="Пошук магазину..." class="search-input">
           <select v-model="selectedTarget" class="target-filter">
             <option value="">Всі показники</option>
@@ -106,7 +106,7 @@
         </div>
       </div>
 
-
+      <!-- Швидкі дії -->
       <div class="plans-section">
         <h3>⚡ Швидкі дії</h3>
         <div class="quick-actions">
@@ -200,7 +200,7 @@ const fileInput = ref(null)
 const uploadProgress = ref(0)
 const showUploadModal = ref(false)
 const STORAGE_KEY_LIMIT = 'dashboardLimit'
-const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 999)
+const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 200)
 
 const STORAGE_KEY_MONTH = 'targetsData_month'
 const STORAGE_KEY_WEEK = 'targetsData_week'
@@ -212,10 +212,10 @@ const getCurrentTargetsFile = () => {
   return currentPeriod.value === 'month' ?
     'targets_month.json' :
     'targets_week.json'
-
+  // '/com/static/data/targets_week.json'
 }
 
-const currentPeriod = ref('month')
+const currentPeriod = ref('month') // 'month' или 'week'
 
 const templateInput = ref(null)
 const dataInput = ref(null)
@@ -354,7 +354,9 @@ const applyBulkValue = (targetKey) => {
     targetsData.value.storeTargets[storeId][targetKey] = value
   })
 
+
   markAsChanged()
+  console.log(`✓ Застосовано значення ${value} для ${targetKey} до всіх магазинів`)
 }
 
 const saveChanges = () => {
@@ -377,7 +379,14 @@ const getCurrentDashboardPeriod = () => {
   return currentPeriod.value === 'month' ? 'Два місяці' : 'Два тижні'
 }
 
+// Обновите emitDataUpdate для передачи правильного периода
 const emitDataUpdate = () => {
+  console.log('📡 Відправка оновлених даних в Dashboard...')
+  console.log('📊 Відправлені дані:', {
+    'targetTree keys': Object.keys(targetsData.value.targetTree),
+    'storeTargets keys': Object.keys(targetsData.value.storeTargets),
+    'period': currentPeriod.value
+  })
 
   const event = new CustomEvent('plansDataUpdated', {
     detail: {
@@ -388,6 +397,7 @@ const emitDataUpdate = () => {
   })
 
   window.dispatchEvent(event)
+  console.log('✅ Подія plansDataUpdated відправлена')
 }
 
 const resetToDefaults = () => {
@@ -450,6 +460,8 @@ const showNotification = (message, type = 'info') => {
 
 }
 
+
+// ЕДИНСТВЕННАЯ функция загрузки файлов
 const handleFileUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
@@ -503,16 +515,21 @@ const handleFileUpload = async (event) => {
 
 const parseExcelData = (workbook) => {
   console.log('📋 Парсинг Excel файлу...')
+  console.log('📄 Доступні аркуші:', workbook.SheetNames)
 
   const result = {
     targetTree: {},
     storeTargets: {}
   }
 
+  // Парсинг листа "Бали"
   if (workbook.SheetNames.includes('Бали')) {
+    console.log('✅ Найден лист "Бали", начинаем парсинг настроек...')
 
     const settingsSheet = workbook.Sheets['Бали']
     const settingsData = XLSX.utils.sheet_to_json(settingsSheet, { header: 1 })
+
+    console.log('📊 Данные с листа "Бали":', settingsData)
 
     for (let i = 1; i < settingsData.length; i++) {
       const row = settingsData[i]
@@ -526,89 +543,104 @@ const parseExcelData = (workbook) => {
         }
 
         result.targetTree[key] = targetConfig
+        console.log(`➕ Добавлен показатель: ${key} =`, targetConfig)
       }
     }
   }
 
-  if (workbook.SheetNames.includes('Цілі')) {
-    console.log('✅ Найден лист "Цілі", парсим плани магазинів...')
-    const targetsSheet = workbook.Sheets['Цілі']
-    const targetsDataSheet = XLSX.utils.sheet_to_json(targetsSheet, { header: 1 })
+  // Парсинг листа "Цілі"
+if (workbook.SheetNames.includes('Цілі')) {
+  console.log('✅ Найден лист "Цілі", парсим плани магазинів...')
+  const targetsSheet = workbook.Sheets['Цілі']
+  const targetsDataSheet = XLSX.utils.sheet_to_json(targetsSheet, { header: 1 })
 
-    if (targetsDataSheet.length >= 2) {
-      const headers = targetsDataSheet[0]
+  if (targetsDataSheet.length >= 2) {
+    const headers = targetsDataSheet[0]
+    console.log('📊 Заголовки листа "Цілі":', headers)
+    
+    const nameToKeyMapping = {
+      'Списання': 'losses',
+      'Нестачі': 'shortages',
+      'ФОП': 'fop',
+      'Повернення': 'shiftRemainder',
+      'Повернення': 'back_product',
+      'Непроведені': 'unprocessed'
+    }
 
-      const nameToKeyMapping = {
-        'Списання': 'losses',
-        'Нестачі': 'shortages',
-        'ФОП': 'fop',
-        'Повернення': 'shiftRemainder',
-        'Повернення': 'back_product',
-        'Непроведені': 'unprocessed'
-      }
+    const targetKeys = []
+    // ИСПРАВЛЕНИЕ: читаем заголовки показателей с колонки 2 до конца
+    for (let colIndex = 2; colIndex < headers.length; colIndex++) {
+      const headerName = headers[colIndex]
+      if (headerName) {
+        let key = null
+        
+        // Ищем по маппингу названий
+        for (const [name, keyValue] of Object.entries(nameToKeyMapping)) {
+          if (headerName.includes(name)) {
+            key = keyValue
+            break
+          }
+        }
 
-      const targetKeys = []
-
-      for (let colIndex = 2; colIndex < headers.length; colIndex++) {
-        const headerName = headers[colIndex]
-        if (headerName) {
-          let key = null
-
-          for (const [name, keyValue] of Object.entries(nameToKeyMapping)) {
-            if (headerName.includes(name)) {
-              key = keyValue
+        // Ищем в настройках показателей
+        if (!key && Object.keys(result.targetTree).length > 0) {
+          for (const [treeKey, treeValue] of Object.entries(result.targetTree)) {
+            if (headerName.includes(treeValue.name) || treeValue.name.includes(headerName)) {
+              key = treeKey
               break
             }
           }
-
-          if (!key && Object.keys(result.targetTree).length > 0) {
-            for (const [treeKey, treeValue] of Object.entries(result.targetTree)) {
-              if (headerName.includes(treeValue.name) || treeValue.name.includes(headerName)) {
-                key = treeKey
-                break
-              }
+        }
+        else if (!key && targetsData.value && targetsData.value.targetTree) {
+          for (const [treeKey, treeValue] of Object.entries(targetsData.value.targetTree)) {
+            if (headerName.includes(treeValue.name) || treeValue.name.includes(headerName)) {
+              key = treeKey
+              break
             }
-          }
-          else if (!key && targetsData.value && targetsData.value.targetTree) {
-            for (const [treeKey, treeValue] of Object.entries(targetsData.value.targetTree)) {
-              if (headerName.includes(treeValue.name) || treeValue.name.includes(headerName)) {
-                key = treeKey
-                break
-              }
-            }
-          }
-
-          if (key) {
-            targetKeys.push({ key, colIndex })
-          } else {
           }
         }
-      }
 
-      console.log(`📋 Найдено показників: ${targetKeys.length}`)
-
-      for (let i = 1; i < targetsDataSheet.length; i++) {
-        const row = targetsDataSheet[i]
-        if (row[0]) {
-          const storeId = row[0].toString()
-          const storeName = row[1] || `Магазин ${storeId}`
-
-          result.storeTargets[storeId] = {
-            store: storeName
-          }
-
-          targetKeys.forEach(({ key, colIndex }) => {
-            const value = Number(row[colIndex])
-            if (!isNaN(value)) {
-              result.storeTargets[storeId][key] = value
-              console.log(`📊 ${storeId}.${key} = ${value} (колонка ${colIndex})`)
-            } else {
-            }
-          })
+        if (key) {
+          targetKeys.push({ key, colIndex }) // Сохраняем и ключ и индекс колонки
+          console.log(`📌 Найден показатель: ${key} в колонке ${colIndex} (${headerName})`)
+        } else {
+          console.warn(`⚠️ Не найден ключ для колонки ${colIndex}: ${headerName}`)
         }
       }
     }
+
+    console.log(`📋 Найдено показників: ${targetKeys.length}`)
+
+    // Обрабатываем строки с данными
+    for (let i = 1; i < targetsDataSheet.length; i++) {
+      const row = targetsDataSheet[i]
+      if (row[0]) {
+        const storeId = row[0].toString()
+        const storeName = row[1] || `Магазин ${storeId}` // Колонка 1 = название
+
+        result.storeTargets[storeId] = {
+          store: storeName
+        }
+
+        // ИСПРАВЛЕНИЕ: используем сохраненный индекс колонки
+        targetKeys.forEach(({ key, colIndex }) => {
+          const value = Number(row[colIndex])
+          if (!isNaN(value)) {
+            result.storeTargets[storeId][key] = value
+            console.log(`📊 ${storeId}.${key} = ${value} (колонка ${colIndex})`)
+          } else {
+            console.warn(`⚠️ NaN значение для ${storeId}.${key} в колонке ${colIndex}: "${row[colIndex]}"`)
+          }
+        })
+      }
+    }
   }
+}
+
+  console.log('📤 Результат парсинга:', {
+    'targetTree keys': Object.keys(result.targetTree),
+    'storeTargets keys': Object.keys(result.storeTargets)
+  })
 
   return result
 }
@@ -625,14 +657,14 @@ const validateExcelData = (data) => {
       if (!target.name) {
         errors.push(`Відсутнє ім'я для показника: ${key}`)
       }
-      if (typeof target.maxScore !== 'number' || target.maxScore < 1 || target.maxScore > 5000) {
-        errors.push(`Некоректний максимальний бал для ${key}: ${target.maxScore} (повинен бути 1-5000)`)
+      if (typeof target.maxScore !== 'number' || target.maxScore < 1 || target.maxScore > 500) {
+        errors.push(`Некоректний максимальний бал для ${key}: ${target.maxScore} (повинен бути 1-500)`)
       }
       if (!['positive', 'negative'].includes(target.type)) {
         errors.push(`Некоректний тип показника ${key}: ${target.type} (повинен бути positive або negative)`)
       }
     })
-    console.log(`Перевірено налаштування ${Object.keys(data.targetTree).length} показників`)
+    console.log(`âœ… Перевірено налаштування ${Object.keys(data.targetTree).length} показників`)
   }
 
   if (!data.storeTargets || Object.keys(data.storeTargets).length === 0) {
@@ -664,11 +696,11 @@ const validateExcelData = (data) => {
       })
     })
 
-    console.log(`Перевірено дані ${Object.keys(data.storeTargets).length} магазинів`)
+    console.log(`âœ… Перевірено дані ${Object.keys(data.storeTargets).length} магазинів`)
   }
 
   if (warnings.length > 0) {
-    console.warn('Попередження:')
+    console.warn('âš ï¸ Попередження:')
     warnings.forEach(warning => console.warn(warning))
   }
 
@@ -680,7 +712,7 @@ const validateExcelData = (data) => {
     throw new Error(errorMessage)
   }
 
-  console.log(' Валідація завершена успішно')
+  console.log('✓ Валідація завершена успішно')
   return data
 }
 
@@ -688,37 +720,115 @@ const applyExcelData = async (data) => {
   const backup = JSON.parse(JSON.stringify(targetsData.value))
 
   try {
+    console.log('💾 Применяем данные из Excel...')
+    console.log('📥 Входящие данные:', data)
 
+    // ИСПРАВЛЕНИЕ: проверяем и применяем targetTree
     if (data.targetTree && Object.keys(data.targetTree).length > 0) {
+      console.log('🔧 Обновляем настройки показателей...')
+      console.log('📊 Старые настройки:', Object.keys(targetsData.value.targetTree))
+      console.log('📊 Новые настройки:', Object.keys(data.targetTree))
 
+      // Полностью заменяем targetTree
       targetsData.value.targetTree = { ...data.targetTree }
+
+      console.log('✅ Настройки показателей обновлены:', Object.keys(targetsData.value.targetTree))
     } else {
+      console.warn('⚠️ Нет данных targetTree для обновления')
     }
 
+    // Применяем storeTargets
     if (data.storeTargets && Object.keys(data.storeTargets).length > 0) {
+      console.log('🏪 Обновляем планы магазинов...')
+      console.log('📊 Старые планы магазинов:', Object.keys(targetsData.value.storeTargets))
+      console.log('📊 Новые планы магазинов:', Object.keys(data.storeTargets))
 
       targetsData.value.storeTargets = { ...data.storeTargets }
 
+      console.log('✅ Планы магазинов обновлены:', Object.keys(targetsData.value.storeTargets))
     } else {
+      console.warn('⚠️ Нет данных storeTargets для обновления')
     }
 
+    // Пересчитываем bulk values
     initBulkValues()
 
+    // Помечаем как измененное
     markAsChanged()
 
+    // Отправляем обновление в дашборд
     emitDataUpdate()
 
+    console.log('✓ Дані з Excel успішно застосовані')
+    console.log('🎯 Фінальний стан targetsData:', {
+      'targetTree': Object.keys(targetsData.value.targetTree),
+      'storeTargets': Object.keys(targetsData.value.storeTargets)
+    })
+
   } catch (error) {
+    console.error('❌ Помилка застосування даних:', error)
     targetsData.value = backup
     throw error
   }
 }
 
+// Функція загрузки готового шаблона (замещает текущие настройки)
+const handleTemplateUpload = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
 
+  try {
+    showUploadModal.value = true
+    uploadProgress.value = 0
+
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+      throw new Error('Неправильний формат файла .xlsx або .xls')
+    }
+
+    uploadProgress.value = 20
+
+    const arrayBuffer = await file.arrayBuffer()
+    uploadProgress.value = 40
+
+    const workbook = XLSX.read(arrayBuffer, {
+      type: 'array',
+      cellDates: true,
+      cellNF: true,
+      cellText: false
+    })
+
+    uploadProgress.value = 60
+
+    // Парсим как полный шаблон (и настройки, и планы)
+    const parsedData = parseTemplateData(workbook)
+    uploadProgress.value = 80
+
+    const validatedData = validateExcelData(parsedData)
+    uploadProgress.value = 90
+
+    await applyExcelData(validatedData)
+    uploadProgress.value = 100
+
+    showNotification('Шаблон успішно завантажено!', 'success')
+
+  } catch (error) {
+    console.error('Помилка завантаження шаблона:', error)
+    showNotification(`Помилка завантаження шаблона: ${error.message}`, 'error')
+  } finally {
+    if (templateInput.value) {
+      templateInput.value.value = ''
+    }
+    setTimeout(() => {
+      showUploadModal.value = false
+      uploadProgress.value = 0
+    }, 1000)
+  }
+}
 const downloadTemplate = () => {
   try {
     const workbook = XLSX.utils.book_new()
 
+    // Лист 1: Настройки показателей
     const settingsData = [['Ключ', 'Название', 'Макс. балл', 'Тип', 'Описание']]
 
     Object.keys(targetsData.value.targetTree).forEach(key => {
@@ -735,12 +845,14 @@ const downloadTemplate = () => {
     const settingsSheet = XLSX.utils.aoa_to_sheet(settingsData)
     XLSX.utils.book_append_sheet(workbook, settingsSheet, 'Бали')
 
+    // Лист 2: Планы по магазинам
     const currentStores = targetsData.value.storeTargets
     const storeIds = Object.keys(currentStores)
 
     const indicators = Object.keys(targetsData.value.targetTree)
       .filter(key => key !== 'turnover')
 
+    // ИСПРАВЛЕНИЕ: название магазина во второй колонке
     const targetsHeaders = ['ID Магазина', 'Название магазина', ...indicators.map(key => targetsData.value.targetTree[key].name)]
     const targetsDataArray = [targetsHeaders]
 
@@ -748,7 +860,7 @@ const downloadTemplate = () => {
       const storeData = currentStores[storeId]
       const row = [
         storeId,
-        storeData.store || `Магазин ${storeId}`,
+        storeData.store || `Магазин ${storeId}`, // ИСПРАВЛЕНИЕ: название во втором столбце
         ...indicators.map(key => storeData[key] || 0)
       ]
       targetsDataArray.push(row)
@@ -759,12 +871,20 @@ const downloadTemplate = () => {
 
     const fileName = `Шаблон_планов_SMK_${currentPeriod.value === 'month' ? 'Місяці' : 'Тижні'}_${new Date().toISOString().slice(0, 10)}.xlsx`
     XLSX.writeFile(workbook, fileName)
+
+    console.log(`📥 Шаблон Excel скачан: ${fileName} (${storeIds.length} магазинов)`)
     showNotification(`Шаблон Excel скачан! ${storeIds.length} магазинов`, 'info')
 
   } catch (error) {
+    console.error('⚠ Ошибка создания шаблона:', error)
     showNotification('Ошибка создания шаблона!', 'error')
   }
 }
+
+
+
+
+
 
 const handleKeydown = (event) => {
   if (event.ctrlKey && event.key === 's') {
@@ -1315,6 +1435,7 @@ onUnmounted(() => {
     grid-template-columns: 1fr;
   }
 
+
   .search-input,
   .target-filter {
     min-width: auto;
@@ -1353,7 +1474,7 @@ onUnmounted(() => {
   left: 3px;
   height: 35px;
   width: 35px;
-  
+  /* padding-left: 10px; */
 }
 
 @keyframes slideInRight {
@@ -1367,6 +1488,8 @@ onUnmounted(() => {
     opacity: 1;
   }
 }
+
+/* ==== EXCEL UPLOAD STYLES ==== */
 
 .upload-odx_modal {
   max-width: 500px;
@@ -1467,6 +1590,7 @@ onUnmounted(() => {
   color: #1e40af;
 }
 
+/* Адаптивність для мобільних */
 @media (max-width: 480px) {
   .upload-odx_modal {
     max-width: 95%;
@@ -1509,6 +1633,7 @@ onUnmounted(() => {
     margin: 0;
   }
 }
+
 
 .plans-actions {
   display: flex;

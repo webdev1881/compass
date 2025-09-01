@@ -1,3 +1,7 @@
+/**
+ * Адаптер для конвертации нового формата данных в старый
+ */
+
 export function convertDailyDataToWeekly(dailyData, period) {
   if (!Array.isArray(dailyData) || dailyData.length === 0) {
     return { weeks: [], regions: {} };
@@ -7,20 +11,25 @@ export function convertDailyDataToWeekly(dailyData, period) {
   const regionsMap = new Map();
   const storesMap = new Map();
 
+  // Группируем данные по неделям, регионам и магазинам
   dailyData.forEach(dayRecord => {
     const weekNumber = dayRecord.week.number;
     let weekKey, weekName, dateRange;
     
     if (period === 'Два місяці') {
+      
+      // Для месяцев группируем по месяцам
       const dayDate = parseDate(dayRecord.week.day);
       const monthKey = `${dayDate.getFullYear()}-${dayDate.getMonth()}`;
       weekKey = monthKey;
       weekName = getMonthName(dayDate);
       
+      // ИСПРАВЛЕНИЕ: создаем dateRange на основе границ месяца, а не данных
       const monthStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), 1);
       const monthEnd = new Date(dayDate.getFullYear(), dayDate.getMonth() + 1, 0);
       dateRange = `${formatDate(monthStart)} - ${formatDate(monthEnd)}`;
     } else {
+      // Для недель оставляем как есть
       weekKey = weekNumber.toString();
       weekName = `Тиждень ${weekNumber}`;
       dateRange = `${dayRecord.week.start} - ${dayRecord.week.end}`;
@@ -29,13 +38,17 @@ export function convertDailyDataToWeekly(dailyData, period) {
     const regionKey = `region_${dayRecord.region_data.id}`;
     const storeKey = `store_${dayRecord.shop.id}`;
 
+    // Создаем период если его нет
     if (!weeksMap.has(weekKey)) {
       weeksMap.set(weekKey, {
         id: weekKey,
         name: weekName,
         dateRange: dateRange
       });
-    } else if (period !== 'Два місяці') {
+    }
+    // ИСПРАВЛЕНИЕ: для месяцев НЕ обновляем dateRange
+    // Для недель можем обновлять, если нужно
+    else if (period !== 'Два місяці') {
       const existing = weeksMap.get(weekKey);
       const currentStart = parseDate(existing.dateRange.split(' - ')[0]);
       const currentEnd = parseDate(existing.dateRange.split(' - ')[1]);
@@ -48,6 +61,7 @@ export function convertDailyDataToWeekly(dailyData, period) {
       existing.dateRange = `${formatDate(finalStart)} - ${formatDate(finalEnd)}`;
     }
 
+    // Создаем регион если его нет
     if (!regionsMap.has(regionKey)) {
       regionsMap.set(regionKey, {
         id: regionKey,
@@ -57,6 +71,7 @@ export function convertDailyDataToWeekly(dailyData, period) {
       });
     }
 
+    // Создаем магазин если его нет
     const storeUniqueKey = `${regionKey}_${storeKey}`;
     if (!storesMap.has(storeUniqueKey)) {
       const store = {
@@ -68,6 +83,7 @@ export function convertDailyDataToWeekly(dailyData, period) {
       regionsMap.get(regionKey).stores.push(store);
     }
 
+    // Находим или создаем weeklyData для этого периода
     const store = storesMap.get(storeUniqueKey);
     let weeklyData = store.weeklyData.find(w => w.weekId === weekKey);
     
@@ -79,6 +95,7 @@ export function convertDailyDataToWeekly(dailyData, period) {
         percent: 0
       };
       
+      // Добавляем все динамические поля (кроме plan и fact)
       const dynamicFields = Object.keys(dayRecord).filter(key => 
         !['region_data', 'shop', 'week', 'plan', 'fact'].includes(key)
       );
@@ -90,9 +107,11 @@ export function convertDailyDataToWeekly(dailyData, period) {
       store.weeklyData.push(weeklyData);
     }
 
+    // Суммируем данные по дням периода
     weeklyData.plan += dayRecord.plan || 0;
     weeklyData.fact += dayRecord.fact || 0;
     
+    // Суммируем все динамические поля
     Object.keys(dayRecord).forEach(key => {
       if (!['region_data', 'shop', 'week', 'plan', 'fact'].includes(key)) {
         weeklyData[key] = (weeklyData[key] || 0) + (dayRecord[key] || 0);
@@ -100,12 +119,14 @@ export function convertDailyDataToWeekly(dailyData, period) {
     });
   });
 
+  // Вычисляем проценты после суммирования
   Object.values(storesMap).forEach(store => {
     store.weeklyData.forEach(weekData => {
       weekData.percent = weekData.plan > 0 ? Math.round((weekData.fact / weekData.plan) * 100) : 0;
     });
   });
 
+  // Сортируем периоды
   const sortedWeeks = Array.from(weeksMap.values()).sort((a, b) => {
     if (period === 'Два місяці') {
       return b.id.localeCompare(a.id);
@@ -120,13 +141,15 @@ export function convertDailyDataToWeekly(dailyData, period) {
   };
 }
 
+// Добавить функцию для получения красивого названия месяца
 function getMonthName(date, locale = 'uk-UA') {
   try {
     return date.toLocaleString(locale, { 
       month: 'long', 
       year: 'numeric' 
-    }).replace(/^\w/, (c) => c.toUpperCase());
+    }).replace(/^\w/, (c) => c.toUpperCase()); // Делаем первую букву заглавной
   } catch (error) {
+    // Fallback на английский, если украинская локаль не поддерживается
     const months = [
       'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
       'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
@@ -137,25 +160,36 @@ function getMonthName(date, locale = 'uk-UA') {
 
 
 
-export function getDateRangeForPeriod(period, referenceDate) {
-  // const now = new Date(referenceDate) || new Date();
-  const now = new Date('2025-08-20');
+export function getDateRangeForPeriod(period) {
+  // const now = new Date('2025-07-20'); // Для отладки
+  const now = new Date();
   let startDate, endDate;
 
   if (period === 'Два місяці') {
+    // Берем два последних ПОЛНЫХ месяца
+    // Если сегодня 30.08, то берем июнь (01.06-30.06) и июль (01.07-31.07)
+    
+    // Конец прошлого месяца
     endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    
+    // Начало месяца, который был два месяца назад
     startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
     
-  } else {
+  } else { // 'Два тижні'
+    // Берем две последние ПОЛНЫЕ недели (понедельник-воскресенье)
+    
+    // Находим понедельник текущей недели
     const day = now.getDay();
     const mondayThisWeek = new Date(now);
     mondayThisWeek.setDate(now.getDate() - day + (day === 0 ? -6 : 1));
     
+    // Воскресенье прошлой недели (конец периода)
     endDate = new Date(mondayThisWeek);
     endDate.setDate(mondayThisWeek.getDate() - 1);
     
+    // Понедельник недели, которая была две недели назад (начало периода)
     startDate = new Date(endDate);
-    startDate.setDate(endDate.getDate() - 13);
+    startDate.setDate(endDate.getDate() - 13); // 13 дней назад от воскресенья = понедельник 2 недели назад
   }
 
   return {
@@ -164,19 +198,25 @@ export function getDateRangeForPeriod(period, referenceDate) {
   };
 }
 
+// Добавим функцию для отладки
 export function getDateRangeDebugInfo(period) {
   const now = new Date();
   const range = getDateRangeForPeriod(period);
   
+  console.log(`🗓️ Період: ${period}`);
+  console.log(`📅 Сьогодні: ${formatDate(now)}`);
+  console.log(`📊 Діапазон: ${range.start_date} - ${range.end_date}`);
   
   if (period === 'Два місяці') {
     const start = parseDate(range.start_date);
     const end = parseDate(range.end_date);
+    console.log(`📆 Місяці: ${start.toLocaleString('uk-UA', { month: 'long', year: '2-digit' })} - ${end.toLocaleString('uk-UA', { month: 'long', year: 'numeric' })}`);
   }
   
   return range;
 }
 
+// Добавить функцию для получения названий периодов
 export function getPeriodName(period, startDate, endDate) {
   const start = parseDate(startDate);
   const end = parseDate(endDate);
@@ -231,7 +271,6 @@ export function exportToCSV() {
 
   return rows.join('\n')
 }
-
 
 export function exportMonthlyToCSV() {
   if (!this.convertDailyDataToWeekly) return ''
