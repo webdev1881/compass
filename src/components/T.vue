@@ -36,7 +36,6 @@
       alt="Palette">
 
 
-      <!-- Палитра -->
     <div class="odx-color-palette" :class="{ 'odx-color-palette--open': isPaletteOpen }">
       <div class="odx-color-palette__content">
         <h3>Палітра:</h3>
@@ -46,15 +45,7 @@
             @click="changeColor(color)" :title="color" />
         </div>
         <div class="odx-format-controls">
-            <!-- <input
-              type="date"
-              v-model="today"
-              :name="today"
-              :id="today"
-              value="2025-07-025"
-              min="2025-05-01"
-              style="margin-bottom: 30px;"
-            /> -->
+
           <label class="odx-toggle">
             <input type="checkbox" v-model="formatter" @click="formatter = !formatter" />
             <span class="odx-toggle__slider" :style="headerStyle"></span>
@@ -147,15 +138,16 @@
                   <div class="odx-table__data">
                     <div v-for="week in weeks" :key="week.id" class="odx-week">
                       <div class="odx-week__columns">
-<div v-for="indicator in availableIndicators"
-  :key="`region-${region.id}-${week.id}-${indicator.key}`"
-  class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
-  :class="getRegionCellClass(indicator.key, region, week.id, getRegionData(region, week.id, indicator.key))"
-  :style="getStyle(indicator.key)"
-  @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
-  @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-  {{ getRegionData(region, week.id, indicator.key) }}
-</div>
+                        <div v-for="indicator in availableIndicators"
+                          :key="`region-${region.id}-${week.id}-${indicator.key}`"
+                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+                          :class="getRegionCellClass(indicator.key, region, week.id, getRegionData(region, week.id, indicator.key))"
+                          :style="getStyle(indicator.key)"
+                          :data-trend="indicator.key === 'rank' ? getStoreWeekData(store, week.id).rankTrend : ''"
+                          @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
+                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+                          {{ getRegionData(region, week.id, indicator.key) }}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -200,25 +192,17 @@
                   <div class="odx-table__data">
                     <div v-for="week in weeks" :key="week.id" class="odx-week">
                       <div class="odx-week__columns">
-                        <!-- <div v-for="indicator in availableIndicators"
+
+                        <div v-for="indicator in availableIndicators"
                           :key="`store-${store.id}-${week.id}-${indicator.key}`"
                           class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
-                          :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id), false), indicator.key]"
+                          :class="getCellClass(indicator.key, getStoreWeekData(store, week.id), false, null, null, getStoreData(store, week.id, indicator.key))"
                           :style="getStyle(indicator.key)"
+                          :data-trend="indicator.key === 'rank' ? getStoreWeekData(store, week.id).rankTrend : ''"
                           @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-                          
                           {{ getStoreData(store, week.id, indicator.key) }}
-                        </div> -->
-                        <div v-for="indicator in availableIndicators"
-  :key="`store-${store.id}-${week.id}-${indicator.key}`"
-  class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
-  :class="getCellClass(indicator.key, getStoreWeekData(store, week.id), false, null, null, getStoreData(store, week.id, indicator.key))"
-  :style="getStyle(indicator.key)"
-  @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
-  @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-  {{ getStoreData(store, week.id, indicator.key) }}
-</div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -228,7 +212,9 @@
           </div>
         </div>
       </div>
-      
+
+      <div class="space" style="height: 500px;"></div>
+
       <div v-if="faqOpen" id="target-section" class="presentation">
 
         <h3>Типи показників</h3>
@@ -548,7 +534,8 @@
                 <div class="kpi-value">{{ processedData.problemStores.length }}</div>
                 <div v-if="processedData.problemStores.length" class="odx-tip_tooltext"
                   :style="`background-color: ${selectedColor};`">
-                  <div v-for="val in (processedData.problemStores)" :key="val.id || val.name" class="odx-tip_tooltext_item">
+                  <div v-for="val in (processedData.problemStores)" :key="val.id || val.name"
+                    class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ val.overallTotalScore }}</div>
                   </div>
@@ -560,7 +547,8 @@
                 <div class="kpi-value">{{ processedData.belowPlanStores.length }}</div>
                 <div v-if="processedData.belowPlanStores.length" class="odx-tip_tooltext"
                   :style="`background-color: ${selectedColor};`">
-                  <div v-for="val in (processedData.belowPlanStores)" :key="val.id || val.name" class="odx-tip_tooltext_item">
+                  <div v-for="val in (processedData.belowPlanStores)" :key="val.id || val.name"
+                    class="odx-tip_tooltext_item">
                     <div class="item">{{ val.name }}</div>
                     <div class="item">{{ ((val.weeklyData[0].fact + val.weeklyData[1].fact) / (val.weeklyData[0].plan +
                       val.weeklyData[1].plan) * 100).toFixed(1) }}%</div>
@@ -662,7 +650,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch, Transition } from 'vue'
 import Plans from '../components/Plans.vue'
-import { convertDailyDataToWeekly, getDateRangeForPeriod} from '../utils/dataAdapter.js'
+import { convertDailyDataToWeekly, getDateRangeForPeriod } from '../utils/dataAdapter.js'
 import * as XLSX from 'xlsx'
 
 const loading = ref(true)
@@ -1380,50 +1368,12 @@ const calculateWeeklyRanks = () => {
       }
     })
 
-    // const allEntities = []
-
-    // regions.value.forEach(region => {
-    //   const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-    //   if (regionWeekData) {
-    //     allEntities.push({
-    //       type: 'region',
-    //       entity: region,
-    //       weekData: regionWeekData,
-    //       totalScore: regionWeekData.totalScore || 0
-    //     })
-    //   }
-    // })
-
-    // regions.value.forEach(region => {
-    //   if (region.stores) {
-    //     region.stores.forEach(store => {
-    //       const storeWeekData = getStoreWeekData(store, week.id)
-    //       allEntities.push({
-    //         type: 'store',
-    //         entity: store,
-    //         weekData: storeWeekData,
-    //         totalScore: storeWeekData.totalScore || 0
-    //       })
-    //     })
-    //   }
-    // })
-
-    // allEntities.sort((a, b) => b.totalScore - a.totalScore)
     regionEntities.sort((a, b) => b.totalScore - a.totalScore)
 
     regionEntities.forEach((item, index) => {
       const regionRank = index + 1
       item.weekData.rank = regionRank
     })
-
-    // allEntities.forEach((item, index) => {
-    //   const rank = index + 1
-    //   item.weekData.rank = rank
-
-    //   if (item.type === 'region') {
-
-    //   }
-    // })
 
     const storeEntities = []
     regions.value.forEach(region => {
@@ -1447,6 +1397,65 @@ const calculateWeeklyRanks = () => {
     })
 
   })
+}
+
+const calculateRankTrends = () => {
+  if (!salesData.value || !regions.value || salesData.value.weeks.length < 2) return
+
+  const sortedWeeks = [...salesData.value.weeks].sort((a, b) => a.id.localeCompare(b.id))
+
+  console.log('📈 Рассчитываем тренды рангов между периодами...')
+
+  for (let weekIndex = 1; weekIndex < sortedWeeks.length; weekIndex++) {
+    const currentWeek = sortedWeeks[weekIndex]
+    const previousWeek = sortedWeeks[weekIndex - 1]
+
+    console.log(`🔄 Сравнение: ${previousWeek.name} → ${currentWeek.name}`)
+
+    regions.value.forEach(region => {
+      const currentWeekData = region.weeklyData?.find(w => w.weekId === currentWeek.id)
+      const previousWeekData = region.weeklyData?.find(w => w.weekId === previousWeek.id)
+
+      if (currentWeekData && previousWeekData) {
+        const currentRank = currentWeekData.rank || 0
+        const previousRank = previousWeekData.rank || 0
+
+        currentWeekData.rankTrend = getRankTrend(previousRank, currentRank)
+
+        console.log(`📊 ${region.name}: ${previousRank} → ${currentRank} (${currentWeekData.rankTrend})`)
+      }
+    })
+
+    regions.value.forEach(region => {
+      if (region.stores) {
+        region.stores.forEach(store => {
+          const currentWeekData = getStoreWeekData(store, currentWeek.id)
+          const previousWeekData = getStoreWeekData(store, previousWeek.id)
+
+          const currentRank = currentWeekData.rank || 0
+          const previousRank = previousWeekData.rank || 0
+
+          currentWeekData.rankTrend = getRankTrend(previousRank, currentRank)
+        })
+      }
+    })
+  }
+
+  console.log('✅ Тренды рангов рассчитаны')
+}
+
+const getRankTrend = (previousRank, currentRank) => {
+  if (previousRank === 0 || currentRank === 0) {
+    return 'none'
+  }
+
+  if (currentRank === previousRank) {
+    return 'same'
+  } else if (currentRank < previousRank) {
+    return 'up'
+  } else {
+    return 'down'
+  }
 }
 
 const availableIndicators = computed(() => {
@@ -1519,12 +1528,12 @@ const visibleGroups = computed(() => {
 })
 
 const dynamicRowWidth = computed(() => {
-  const total = visibleIndicators.value.length - 2 // исключаем rank и totalScore
+  const total = visibleIndicators.value.length - 2
   return total > 0 ? '100%' : '0%'
 })
 
 function getStyle(key) {
-  const total = visibleIndicators.value.length - 2 // исключаем rank и totalScore
+  const total = visibleIndicators.value.length - 2
   const isVisible = visible[key]
 
   let width = ''
@@ -1554,8 +1563,8 @@ function getGroupStyle(groupKey) {
   let groupWidth = ''
 
   if (groupKey === 'score' || groupKey === 'rank') {
-    return { width: `${staticWidth.value *2 }px` }
-    // groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
+    return { width: `${staticWidth.value * 2}px` }
+
   } else {
     groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
   }
@@ -1564,12 +1573,11 @@ function getGroupStyle(groupKey) {
     width: groupWidth,
     transform: group.visibleCount > 0 ? 'width:100%' : 'width:0%',
     transition: 'width 0.2s',
-    // willChange: 'transform',
+
     transformOrigin: 'left right',
     background: group.visibleCount > 2 ? darkenColor(selectedColor.value, 9) : '',
   }
 }
-
 
 const initializeSorting = () => {
   if (weeks.value && weeks.value.length > 0) {
@@ -1617,6 +1625,8 @@ const processData = () => {
 
   calculateWeeklyRanks()
 
+  calculateRankTrends()
+
   initializeSorting()
 }
 
@@ -1649,30 +1659,30 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-  if (key === 'turnover') return
+      if (key === 'turnover') return
 
-  const targetPercent = storeTargetConfig[key] || 0
-  const actualValue = weekData[key] || 0
-  const target = targetPercent * weekData.fact
+      const targetPercent = storeTargetConfig[key] || 0
+      const actualValue = weekData[key] || 0
+      const target = targetPercent * weekData.fact
 
-  let achievementPercent = 0
+      let achievementPercent = 0
 
-  if (target > 0) {
-    if (targetConfig.type === 'negative') {
+      if (target > 0) {
+        if (targetConfig.type === 'negative') {
 
-      if (actualValue === 0) {
-        achievementPercent = 0
-      } else {
-        achievementPercent = Math.min((target / actualValue) * 100, limit.value)
+          if (actualValue === 0) {
+            achievementPercent = 0
+          } else {
+            achievementPercent = Math.min((target / actualValue) * 100, limit.value)
+          }
+        } else {
+          achievementPercent = (actualValue / target) * 100
+        }
       }
-    } else {
-      achievementPercent = (actualValue / target) * 100
-    }
-  }
 
-  weekData[`${key}_percent`] = Math.round(achievementPercent)
-  weekData[`${key}_target`] = target
-})
+      weekData[`${key}_percent`] = Math.round(achievementPercent)
+      weekData[`${key}_target`] = target
+    })
   })
 
   Object.entries(targetTree).forEach(([key, targetConfig]) => {
@@ -1762,48 +1772,48 @@ const calculateRegionMetrics = () => {
       regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
 
       Object.entries(targetTree).forEach(([key, targetConfig]) => {
-  if (key === 'turnover') return
-  let totalValue = 0
-  let totalTarget = 0
+        if (key === 'turnover') return
+        let totalValue = 0
+        let totalTarget = 0
 
-  region.stores.forEach(store => {
-    const storeWeekData = getStoreWeekData(store, week.id)
-    let storeTargetConfig = null
-    const storeIdWithoutPrefix = store.id.replace('store_', '')
+        region.stores.forEach(store => {
+          const storeWeekData = getStoreWeekData(store, week.id)
+          let storeTargetConfig = null
+          const storeIdWithoutPrefix = store.id.replace('store_', '')
 
-    if (storeTargets[storeIdWithoutPrefix]) {
-      storeTargetConfig = storeTargets[storeIdWithoutPrefix]
-    } else if (storeTargets[store.id]) {
-      storeTargetConfig = storeTargets[store.id]
-    } else {
-      storeTargetConfig = {}
-    }
+          if (storeTargets[storeIdWithoutPrefix]) {
+            storeTargetConfig = storeTargets[storeIdWithoutPrefix]
+          } else if (storeTargets[store.id]) {
+            storeTargetConfig = storeTargets[store.id]
+          } else {
+            storeTargetConfig = {}
+          }
 
-    const targetPercent = storeTargetConfig[key] || 0
+          const targetPercent = storeTargetConfig[key] || 0
 
-    totalValue += storeWeekData[key] || 0
-    totalTarget += targetPercent * (storeWeekData.fact || 0)
-  })
+          totalValue += storeWeekData[key] || 0
+          totalTarget += targetPercent * (storeWeekData.fact || 0)
+        })
 
-  regionWeekData[key] = totalValue
+        regionWeekData[key] = totalValue
 
-  let achievementPercent = 0
-  if (totalTarget > 0) {
-    if (targetConfig.type === 'negative') {
+        let achievementPercent = 0
+        if (totalTarget > 0) {
+          if (targetConfig.type === 'negative') {
 
-      if (totalValue === 0) {
-        achievementPercent = 0
-      } else {
-        achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
-      }
-    } else {
-      achievementPercent = (totalValue / totalTarget) * 100
-    }
-  }
+            if (totalValue === 0) {
+              achievementPercent = 0
+            } else {
+              achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
+            }
+          } else {
+            achievementPercent = (totalValue / totalTarget) * 100
+          }
+        }
 
-  regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
-  regionWeekData[`${key}_target`] = totalTarget
-})
+        regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
+        regionWeekData[`${key}_target`] = totalTarget
+      })
     })
 
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
@@ -2089,7 +2099,7 @@ const getStoreData = (store, weekId, indicator) => {
   const weekData = getStoreWeekData(store, weekId, indicator)
 
   switch (indicator) {
-    case 'rank': return weekData.rank || '-'
+    case 'rank': return formatRankWithTrend(weekData.rank, weekData.rankTrend)
     case 'totalScore': return weekData.totalScore || '-'
     case 'plan': return formatNumber(weekData.plan)
     case 'fact': return formatNumber(weekData.fact)
@@ -2108,9 +2118,10 @@ const getStoreData = (store, weekId, indicator) => {
 
 const getRegionData = (region, weekId, indicator) => {
   const value = getRegionIndicatorValue(region, weekId, indicator)
+  const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId)
 
   switch (value) {
-    case 'rank': return value || '-'
+    case 'rank': return formatRankWithTrend(value, regionWeekData?.rankTrend)
     case 'totalScore': return value || '-'
     case 'percent': return `${value}%`
     case 'plan':
@@ -2125,6 +2136,27 @@ const getRegionData = (region, weekId, indicator) => {
         return formatNumber(value) || '-'
       }
   }
+}
+
+const formatRankWithTrend = (rank, trend) => {
+  if (!rank || rank === 0) return '-'
+
+  let arrow = ''
+  switch (trend) {
+    case 'up':
+      arrow = ' ↑'
+      break
+    case 'down':
+      arrow = ' ↓'
+      break
+    case 'same':
+      arrow = ' →'
+      break
+    default:
+      arrow = ''
+  }
+
+  return `${rank}${arrow}`
 }
 
 const calculateTurnoverPercent = (plan, fact) => {
@@ -2162,9 +2194,9 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
     }
   }
 
-  if (cellValue === '-' || cellValue === 0 || cellValue === '0' || cellValue === '0%' || 
-      cellValue === null || cellValue === undefined || cellValue === '') {
-    
+  if (cellValue === '-' || cellValue === 0 || cellValue === '0' || cellValue === '0%' ||
+    cellValue === null || cellValue === undefined || cellValue === '') {
+
     if (indicator === 'totalScore') {
       classes.push('odx-table__cell--score')
     }
@@ -2897,6 +2929,7 @@ onUnmounted(() => {
         cursor: pointer;
         border-right: 1px solid #91b6db;
         border-top: 1px solid #91b6db;
+
         &:hover {
           background-color: #7da8f333;
         }
@@ -3081,6 +3114,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 8px;
+    cursor: default;
 
     &__indicator {
       width: 10px;
@@ -3979,7 +4013,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 12px;
-  
+
   position: absolute;
   right: -10px;
   bottom: -50%;
@@ -4293,11 +4327,13 @@ onUnmounted(() => {
     cursor: not-allowed;
   }
 }
+
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -4309,21 +4345,36 @@ onUnmounted(() => {
 }
 
 .odx-table__cell {
-  
+
   &--rank {
     font-weight: 700;
     color: var(--odx-warning);
     background: #e3f2fd;
-    
+
     &.odx-table__cell--percentile-top {
       background: rgba(34, 197, 94, 0.2);
       color: #059669;
     }
-    
+
     &.odx-table__cell--percentile-poor {
-      background: rgba(239, 68, 68, 0.2);
-      color: #dc2626;
+      background: rgba(239, 68, 68, 0.2);  color: #dc2626;
     }
+  }
+}
+
+.odx-table__cell--rank {
+  font-weight: 700 !important;
+
+  &[data-trend="up"] {
+    color: #059669 !important;
+  }
+
+  &[data-trend="down"] {
+    color: #dc2626 !important;
+  }
+
+  &[data-trend="same"] {
+    color: #d97706 !important;
   }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <T />
-    <Plans />
+    <!-- <Plans /> -->
     <!-- <Tt /> -->
     <!-- <TableComponent /> -->
     <!-- <TableComponent0 /> -->

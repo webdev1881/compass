@@ -35,6 +35,8 @@
       src="https://toppng.com/uploads/preview/the-icon-is-shaped-like-an-oval-that-slightly-resembles-paint-palette-icon-11553394861oazcgcebd1.png"
       alt="Palette">
 
+
+      <!-- Палитра -->
     <div class="odx-color-palette" :class="{ 'odx-color-palette--open': isPaletteOpen }">
       <div class="odx-color-palette__content">
         <h3>Палітра:</h3>
@@ -44,10 +46,19 @@
             @click="changeColor(color)" :title="color" />
         </div>
         <div class="odx-format-controls">
+            <!-- <input
+              type="date"
+              v-model="today"
+              :name="today"
+              :id="today"
+              value="2025-07-025"
+              min="2025-05-01"
+              style="margin-bottom: 30px;"
+            /> -->
           <label class="odx-toggle">
             <input type="checkbox" v-model="formatter" @click="formatter = !formatter" />
             <span class="odx-toggle__slider" :style="headerStyle"></span>
-            <span class="odx-toggle__label">Форматування</span>
+            <div class="odx-toggle__label">Форматування</div>
           </label>
         </div>
       </div>
@@ -136,15 +147,15 @@
                   <div class="odx-table__data">
                     <div v-for="week in weeks" :key="week.id" class="odx-week">
                       <div class="odx-week__columns">
-                        <div v-for="indicator in availableIndicators"
-                          :key="`region-${region.id}-${week.id}-${indicator.key}`"
-                          class="odx-table__cell odx-table__cell--data odx-tooltip-trigger "
-                          :class="getRegionCellClass(indicator.key, region, week.id)" :style="getStyle(indicator.key)"
-                          @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
-                          @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-                          {{ getRegionData(region, week.id, indicator.key) }}
-                          <!-- | {{ region.overallTotalScore }} -->
-                        </div>
+<div v-for="indicator in availableIndicators"
+  :key="`region-${region.id}-${week.id}-${indicator.key}`"
+  class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+  :class="getRegionCellClass(indicator.key, region, week.id, getRegionData(region, week.id, indicator.key))"
+  :style="getStyle(indicator.key)"
+  @mouseenter="showTooltip($event, region, 'region', week.id, indicator.key)"
+  @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+  {{ getRegionData(region, week.id, indicator.key) }}
+</div>
                       </div>
                     </div>
                   </div>
@@ -189,16 +200,26 @@
                   <div class="odx-table__data">
                     <div v-for="week in weeks" :key="week.id" class="odx-week">
                       <div class="odx-week__columns">
-                        <div v-for="indicator in availableIndicators"
+                        <!-- <div v-for="indicator in availableIndicators"
                           :key="`store-${store.id}-${week.id}-${indicator.key}`"
                           class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
                           :class="[getCellClass(indicator.key, getStoreWeekData(store, week.id), false), indicator.key]"
                           :style="getStyle(indicator.key)"
                           @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
                           @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
-                          <!-- {{ indicator }} -->
+                          
                           {{ getStoreData(store, week.id, indicator.key) }}
-                        </div>
+                        </div> -->
+                        <div v-for="indicator in availableIndicators"
+  :key="`store-${store.id}-${week.id}-${indicator.key}`"
+  class="odx-table__cell odx-table__cell--data odx-tooltip-trigger"
+  :class="getCellClass(indicator.key, getStoreWeekData(store, week.id), false, null, null, getStoreData(store, week.id, indicator.key))"
+  :style="getStyle(indicator.key)"
+  :data-trend="indicator.key === 'rank' ? getStoreWeekData(store, week.id).rankTrend : ''"
+  @mouseenter="showTooltip($event, store, 'store', week.id, indicator.key)"
+  @mouseleave="hideTooltip" @mousemove="updateTooltipPosition">
+  {{ getStoreData(store, week.id, indicator.key) }}
+</div>
                       </div>
                     </div>
                   </div>
@@ -208,9 +229,8 @@
           </div>
         </div>
       </div>
-      <!-- <div class="space" style="height: 500px;"></div> -->
+      
       <div v-if="faqOpen" id="target-section" class="presentation">
-
 
         <h3>Типи показників</h3>
 
@@ -454,7 +474,6 @@
       </div>
     </div>
 
-
     <div class="kpi">
       <div v-if="!isOpen" @click="togglePanel" class="kpi-toggle-btn" title="Открыть панель КПИ">
         <img src="https://i.ibb.co/fV6qHXLb/com.png" alt="" class="comp">
@@ -638,14 +657,13 @@
     </div>
     <div class="space" style="height: 500px;"></div>
 
-
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, reactive, nextTick, watch, Transition } from 'vue'
 import Plans from '../components/Plans.vue'
-import { convertDailyDataToWeekly, getDateRangeForPeriod, getDateRangeDebugInfo, exportToCSV, exportMonthlyToCSV } from '../utils/dataAdapter.js'
+import { convertDailyDataToWeekly, getDateRangeForPeriod} from '../utils/dataAdapter.js'
 import * as XLSX from 'xlsx'
 
 const loading = ref(true)
@@ -662,24 +680,24 @@ const planScore = ref(0)
 const showPlansEditor = ref(false)
 const dynamicTargetsData = ref(null)
 const darkColors = ref([
-  "#e3f2fd", // базовый небесный
-  "#d6f0f9", // ледяной голубой
-  "#ccebf5", // мягкий аквамарин
-  "#e0f7fa", // светлый циан
-  "#d0ece7", // мятный стальной
-  "#d7eaf7", // серо-голубой
-  "#dae7f2", // холодный стальной
-  "#cfd8dc", // светлый графитово-серый
-  "#c5cae9", // серо-лавандовый (холодный синий подтон)
-  "#d1c4e9", // холодный пастельный фиолетовый
-  "#b3e5fc", // свежий небесный
-  "#b2dfdb", // бирюзово-серый
-  "#b0bec5", // стальной серый
-  "#a7c7d9", // ледяной аквамарин
-  "#a2c4c9", // серо-бирюзовый
-  "#9ebbd7", // холодный серо-синий
-  "#9cc6c6", // зелёно-циановый пастельный
-  "#90caf9"  // яркий голубой акцент
+  "#e3f2fd",
+  "#d6f0f9",
+  "#ccebf5",
+  "#e0f7fa",
+  "#d0ece7",
+  "#d7eaf7",
+  "#dae7f2",
+  "#cfd8dc",
+  "#c5cae9",
+  "#d1c4e9",
+  "#b3e5fc",
+  "#b2dfdb",
+  "#b0bec5",
+  "#a7c7d9",
+  "#a2c4c9",
+  "#9ebbd7",
+  "#9cc6c6",
+  "#90caf9"
 ])
 const selectedColor = ref('#e3f2fd')
 const isPaletteOpen = ref(false)
@@ -689,35 +707,7 @@ const selectedPeriod = ref('Два місяці')
 const STORAGE_KEY_LIMIT = 'dashboardLimit'
 const limit = ref(parseInt(localStorage.getItem(STORAGE_KEY_LIMIT)) || 999)
 
-// const loadData = async () => {
-//   try {
-//     loading.value = true
-//     error.value = null
-//     selectedPeriod.value = 'Місяць'
-//     const [salesResponse, targetsResponse] = await Promise.all([
-//       // fetch('/com/static/data/output.json'),
-//       // fetch('/com/static/data/targets.json'),
-//       fetch('output.json'),
-//       fetch('targets.json')
-//     ])
-//     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
-//     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-//     if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Невірна структура даних продаж')}
-//     if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Невірна структура даних Цілей')}
-//     const savedTargets = getSavedTargetsFromMemory()
-//     salesData.value = salesDataResult
-//     targetsData.value = savedTargets || targetsDataResult
-//     dynamicTargetsData.value = targetsData.value
-//     regions.value = Object.values(salesDataResult.regions)
-//     initializeVisibility()
-//     processData()
-//     getSavedColor()
-
-//   } catch (err) {
-//     console.error('помилка  даных:', err)
-//     error.value = err.message || 'помилка  даных'
-//   } finally {setTimeout(() => {loading.value = false}, 400)}
-// }
+const today = ref('2025-08-21')
 
 const loadData = async () => {
   try {
@@ -725,9 +715,7 @@ const loadData = async () => {
     error.value = null
     selectedPeriod.value = 'Два місяці'
 
-    // const dateRange = getDateRangeForPeriod('Два місяці')
-    const dateRange = getDateRangeDebugInfo('Два місяці')
-
+    const dateRange = getDateRangeForPeriod('Два місяці', today.value)
 
     const [targetsResponse, dailyResponse] = await Promise.all([
       fetch('targets_month.json'),
@@ -749,8 +737,6 @@ const loadData = async () => {
       dailyResponse.json()
     ])
 
-    console.log(targetsDataResult)
-    // Конвертируем новый формат в старый
     const salesDataResult = convertDailyDataToWeekly(dailyDataResult, 'Два місяці')
 
     if (!salesDataResult.weeks || !salesDataResult.regions) {
@@ -774,40 +760,9 @@ const loadData = async () => {
     error.value = err.message || 'помилка завантаження даних'
   } finally {
     loading.value = false
-    // setTimeout(() => { loading.value = false }, 200)
+
   }
 }
-
-
-// const loadData2 = async () => {
-//   try {
-//     loading.value = true
-//     error.value = null
-//     selectedPeriod.value = 'Неділя'
-//     const [salesResponse, targetsResponse] = await Promise.all([
-//       // fetch('/com/static/data/output.json'),
-//       // fetch('/com/static/data/targets.json'),
-//       fetch('output.json'),
-//       fetch('targets.json')
-//     ])
-//     if (!salesResponse.ok || !targetsResponse.ok) {throw new Error(`HTTP error! status: ${salesResponse.status || targetsResponse.status}`)}
-//     const [salesDataResult, targetsDataResult] = await Promise.all([salesResponse.json(), targetsResponse.json()])
-//     if (!salesDataResult.weeks || !salesDataResult.regions) {throw new Error('Неверная структура данных продаж')}
-//     if (!targetsDataResult.targetTree || !targetsDataResult.storeTargets) {throw new Error('Неверная структура данных целей')}
-//     const savedTargets = getSavedTargetsFromMemory()
-//     salesData.value = salesDataResult
-//     targetsData.value = savedTargets || targetsDataResult
-//     dynamicTargetsData.value = targetsData.value
-//     regions.value = Object.values(salesDataResult.regions)
-//     initializeVisibility()
-//     processData()
-//     getSavedColor()
-
-//   } catch (err) {
-//     console.error('Ошибка загрузки данных:', err)
-//     error.value = err.message || 'Ошибка загрузки данных'
-//   } finally {setTimeout(() => {loading.value = false}, 400)}
-// }
 
 const loadData2 = async () => {
   try {
@@ -837,7 +792,6 @@ const loadData2 = async () => {
       dailyResponse.json()
     ])
 
-    // Конвертируем новый формат в старый
     const salesDataResult = convertDailyDataToWeekly(dailyDataResult, 'Два тижні')
 
     if (!salesDataResult.weeks || !salesDataResult.regions) {
@@ -879,7 +833,7 @@ const getSavedColor = () => {
     return selectedColor.value
   } catch (err) {
     console.error('Ошибка чтения цвета из localStorage:', err)
-    return selectedColor.value // Цвет по умолчанию
+    return selectedColor.value
   }
 }
 
@@ -903,7 +857,6 @@ const saveTargetsToMemory = (data, period) => {
   }
 }
 
-
 const handlePlansDataUpdate = (event) => {
   const newTargetsData = event.detail.data || event.detail
 
@@ -926,11 +879,6 @@ const handlePlansDataUpdate = (event) => {
 const togglePlansEditor = () => {
   showPlansEditor.value = !showPlansEditor.value
 }
-
-
-
-
-
 
 const togglePanel = () => { isOpen.value = !isOpen.value }
 const closePanel = () => { isOpen.value = false }
@@ -956,8 +904,6 @@ const processedData = computed(() => {
   const totalRegions = regions.value.length
   const totalScore = allStores.reduce((sum, store) => sum + (store.overallTotalScore || 0), 0)
   const averageScore = totalStores > 0 ? Math.round(totalScore / totalStores) : 0
-
-
 
   let totalPlan = 0
   let totalFact = 0
@@ -1081,7 +1027,7 @@ const processedData = computed(() => {
       let totalScore = 0
       let successfulStores = 0
       let problemStores = []
-      const storeAverages = [] // Массив для хранения средних баллов каждого магазина
+      const storeAverages = []
 
       allStores.forEach(store => {
         let storeScore = 0
@@ -1104,7 +1050,7 @@ const processedData = computed(() => {
         ? storeAverages.reduce((sum, score) => sum + score, 0) / storeAverages.length
         : 0
 
-      const thresholdScore = overallAverageScore * 0.7 // 70% от среднего = средний минус 30%
+      const thresholdScore = overallAverageScore * 0.7
 
       storeAverages.forEach((averageStoreScore, index) => {
 
@@ -1143,9 +1089,6 @@ const processedData = computed(() => {
     targetsOverview,
   }
 })
-
-
-
 
 const handleKeydown = (event) => {
   if (event.key === 'Escape' && isOpen.value) {
@@ -1337,8 +1280,6 @@ const getDisplayValue = (weekData, indicator) => {
   }
 }
 
-
-
 const darkenColor = (color, percent = 20) => {
   const num = parseInt(color.replace("#", ""), 16)
   const amt = Math.round(2.55 * percent)
@@ -1356,7 +1297,7 @@ const hoverColor = () => {
 const headerStyle = computed(() => ({
   backgroundColor: selectedColor.value,
   color: '#0f4478',
-  // borderCollapse: 'separate',
+
   border: '1px solid #91b6db',
   borderSpacing: 0
 }))
@@ -1375,9 +1316,9 @@ const indicatorGroups = computed(() => {
   const groups = [
     {
       key: 'score',
-      label: 'Заг. бал',
+      label: 'БАЛ',
       indicators: [
-        { key: 'rank', label: 'РАНГ' },
+        { key: 'rank', label: '' },
         { key: 'totalScore', label: `${planScore.value}` },
       ]
     }
@@ -1423,13 +1364,10 @@ const indicatorGroups = computed(() => {
   return groups
 })
 
-// ДОБАВИТЬ эту функцию
 const calculateWeeklyRanks = () => {
   if (!salesData.value || !regions.value) return
 
   salesData.value.weeks.forEach(week => {
-    console.log(`🏆 Рассчитываем ранги для ${week.name}...`)
-
 
     const regionEntities = []
     regions.value.forEach(region => {
@@ -1442,40 +1380,36 @@ const calculateWeeklyRanks = () => {
         })
       }
     })
-    
-    // Собираем все объекты (регионы + магазины) для данной недели
-    const allEntities = []
 
-    // Добавляем регионы
-    regions.value.forEach(region => {
-      const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-      if (regionWeekData) {
-        allEntities.push({
-          type: 'region',
-          entity: region,
-          weekData: regionWeekData,
-          totalScore: regionWeekData.totalScore || 0
-        })
-      }
-    })
+    // const allEntities = []
 
-    // Добавляем магазины
-    regions.value.forEach(region => {
-      if (region.stores) {
-        region.stores.forEach(store => {
-          const storeWeekData = getStoreWeekData(store, week.id)
-          allEntities.push({
-            type: 'store', 
-            entity: store,
-            weekData: storeWeekData,
-            totalScore: storeWeekData.totalScore || 0
-          })
-        })
-      }
-    })
+    // regions.value.forEach(region => {
+    //   const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
+    //   if (regionWeekData) {
+    //     allEntities.push({
+    //       type: 'region',
+    //       entity: region,
+    //       weekData: regionWeekData,
+    //       totalScore: regionWeekData.totalScore || 0
+    //     })
+    //   }
+    // })
 
-    // Сортируем по totalScore (по убыванию - лучший результат = ранг 1)
-    allEntities.sort((a, b) => b.totalScore - a.totalScore)
+    // regions.value.forEach(region => {
+    //   if (region.stores) {
+    //     region.stores.forEach(store => {
+    //       const storeWeekData = getStoreWeekData(store, week.id)
+    //       allEntities.push({
+    //         type: 'store',
+    //         entity: store,
+    //         weekData: storeWeekData,
+    //         totalScore: storeWeekData.totalScore || 0
+    //       })
+    //     })
+    //   }
+    // })
+
+    // allEntities.sort((a, b) => b.totalScore - a.totalScore)
     regionEntities.sort((a, b) => b.totalScore - a.totalScore)
 
     regionEntities.forEach((item, index) => {
@@ -1483,15 +1417,14 @@ const calculateWeeklyRanks = () => {
       item.weekData.rank = regionRank
     })
 
-    // Присваиваем ранги
-    allEntities.forEach((item, index) => {
-      const rank = index + 1
-      item.weekData.rank = rank
-      
-      if (item.type === 'region') {
-        // console.log(`📊 Регион ${item.entity.name}: ранг ${rank}, балл ${item.totalScore}`)
-      }
-    })
+    // allEntities.forEach((item, index) => {
+    //   const rank = index + 1
+    //   item.weekData.rank = rank
+
+    //   if (item.type === 'region') {
+
+    //   }
+    // })
 
     const storeEntities = []
     regions.value.forEach(region => {
@@ -1517,6 +1450,70 @@ const calculateWeeklyRanks = () => {
   })
 }
 
+// ДОБАВИТЬ функцию сравнения рангов между периодами
+const calculateRankTrends = () => {
+  if (!salesData.value || !regions.value || salesData.value.weeks.length < 2) return
+
+  const sortedWeeks = [...salesData.value.weeks].sort((a, b) => a.id.localeCompare(b.id))
+  
+  console.log('📈 Рассчитываем тренды рангов между периодами...')
+
+  // Для каждого периода (кроме первого) сравниваем с предыдущим
+  for (let weekIndex = 1; weekIndex < sortedWeeks.length; weekIndex++) {
+    const currentWeek = sortedWeeks[weekIndex]
+    const previousWeek = sortedWeeks[weekIndex - 1]
+    
+    console.log(`🔄 Сравнение: ${previousWeek.name} → ${currentWeek.name}`)
+
+    // РЕГИОНЫ: сравниваем ранги между периодами
+    regions.value.forEach(region => {
+      const currentWeekData = region.weeklyData?.find(w => w.weekId === currentWeek.id)
+      const previousWeekData = region.weeklyData?.find(w => w.weekId === previousWeek.id)
+
+      if (currentWeekData && previousWeekData) {
+        const currentRank = currentWeekData.rank || 0
+        const previousRank = previousWeekData.rank || 0
+
+        currentWeekData.rankTrend = getRankTrend(previousRank, currentRank)
+        
+        console.log(`📊 ${region.name}: ${previousRank} → ${currentRank} (${currentWeekData.rankTrend})`)
+      }
+    })
+
+    // МАГАЗИНЫ: сравниваем ранги между периодами
+    regions.value.forEach(region => {
+      if (region.stores) {
+        region.stores.forEach(store => {
+          const currentWeekData = getStoreWeekData(store, currentWeek.id)
+          const previousWeekData = getStoreWeekData(store, previousWeek.id)
+
+          const currentRank = currentWeekData.rank || 0
+          const previousRank = previousWeekData.rank || 0
+
+          currentWeekData.rankTrend = getRankTrend(previousRank, currentRank)
+        })
+      }
+    })
+  }
+
+  console.log('✅ Тренды рангов рассчитаны')
+}
+
+// Функция определения тренда ранга
+const getRankTrend = (previousRank, currentRank) => {
+  if (previousRank === 0 || currentRank === 0) {
+    return 'none' // Нет данных для сравнения
+  }
+  
+  if (currentRank === previousRank) {
+    return 'same' // Ранг не изменился
+  } else if (currentRank < previousRank) {
+    return 'up' // Ранг улучшился (меньше число = лучше позиция)
+  } else {
+    return 'down' // Ранг ухудшился (больше число = хуже позиция)
+  }
+}
+
 const availableIndicators = computed(() => {
   const indicators = []
   indicatorGroups.value.forEach(group => {
@@ -1533,6 +1530,7 @@ const availableIndicators = computed(() => {
 
 const visible = reactive({})
 const groupVisibility = reactive({})
+const staticWidth = ref(45)
 
 const initializeVisibility = () => {
   indicatorGroups.value.forEach(group => {
@@ -1586,20 +1584,26 @@ const visibleGroups = computed(() => {
 })
 
 const dynamicRowWidth = computed(() => {
-  const total = visibleIndicators.value.length
+  const total = visibleIndicators.value.length - 2 // исключаем rank и totalScore
   return total > 0 ? '100%' : '0%'
 })
 
 function getStyle(key) {
-  const total = visibleIndicators.value.length
+  const total = visibleIndicators.value.length - 2 // исключаем rank и totalScore
   const isVisible = visible[key]
-  const width = isVisible ? `${100 / total}%` : '0%'
+
+  let width = ''
+
+  if (key === 'totalScore' || key === 'rank') {
+    width = `${staticWidth.value}px`
+  } else {
+    width = isVisible ? `${100 / total}%` : '0%'
+  }
 
   return {
     width,
-    transform: isVisible ? 'width:105%' : 'width:0%',
-    // willChange: 'transform',
-    // transition: 'width 0.3s',
+    transform: isVisible ? 'width:100%' : 'width:0%',
+
     transformOrigin: 'left right',
     fontWeight: key === 'totalScore' ? '700' : 'normal',
     borderRight: isVisible ? '1px solid #91b6db!important' : 'none!important',
@@ -1610,76 +1614,32 @@ function getGroupStyle(groupKey) {
   const group = visibleGroups.value.find(g => g.key === groupKey)
   if (!group) return { width: '0%', transform: 'width:0%' }
 
-  const total = visibleIndicators.value.length
-  const groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
+  const total = visibleIndicators.value.length - 2
+
+  let groupWidth = ''
+
+  if (groupKey === 'score' || groupKey === 'rank') {
+    return { width: `${staticWidth.value *2 }px` }
+    // groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
+  } else {
+    groupWidth = group.visibleCount > 0 ? `${(group.visibleCount / total) * 100}%` : '0%'
+  }
 
   return {
     width: groupWidth,
     transform: group.visibleCount > 0 ? 'width:100%' : 'width:0%',
     transition: 'width 0.2s',
-    willChange: 'transform',
+    // willChange: 'transform',
     transformOrigin: 'left right',
     background: group.visibleCount > 2 ? darkenColor(selectedColor.value, 9) : '',
   }
 }
-
-// const processData = () => {
-//   if (!regions.value || !salesData.value || !targetsData.value) return
-
-//   regions.value.forEach(region => {
-//     if (region.stores) {
-//       region.stores.forEach(store => {
-//         store.regionId = region.id
-//         store.regionName = region.name
-//         store.regionColor = region.color
-//       })
-//     }
-//   })
-
-//   const allStores = []
-//   regions.value.forEach(region => {
-//     if (region.stores) {
-//       region.stores.forEach(store => {
-//         allStores.push(store)
-//       })
-//     }
-//   })
-
-//   salesData.value.weeks.forEach(week => {
-//     calculateWeeklyMetrics(week.id, allStores)
-//   })
-
-//   calculateRegionMetrics()
-//   calculateRegionColumnRanks()
-//   calculateOverallScores(allStores)
-// }
-
-// Добавьте эту функцию в начало script секции
-const findStoreTargetConfig = (storeTargets, storeId) => {
-  if (!storeTargets || typeof storeTargets !== 'object' || Array.isArray(storeTargets)) {
-    console.error('❌ storeTargets не является объектом:', storeTargets)
-    return {}
-  }
-
-  const idWithoutPrefix = storeId.replace('store_', '')
-  if (storeTargets[idWithoutPrefix]) {
-    return storeTargets[idWithoutPrefix]
-  }
-
-  if (storeTargets[storeId]) {
-    return storeTargets[storeId]
-  }
-
-  return {}
-}
-
 
 
 const initializeSorting = () => {
   if (weeks.value && weeks.value.length > 0) {
     const firstWeekId = weeks.value[0].id
 
-    // Обновляем сортировку только если weekId не установлен или недоступен
     if (!regionSortBy.value.weekId || !weeks.value.find(w => w.id === regionSortBy.value.weekId)) {
       regionSortBy.value.weekId = firstWeekId
     }
@@ -1690,7 +1650,6 @@ const initializeSorting = () => {
   }
 }
 
-// Обновите функцию processData, добавив вызов инициализации
 const processData = () => {
   if (!regions.value || !salesData.value || !targetsData.value) return
 
@@ -1723,128 +1682,27 @@ const processData = () => {
 
   calculateWeeklyRanks()
 
-  // Добавьте инициализацию сортировки после обработки данных
+  calculateRankTrends()
+
   initializeSorting()
 }
-
-// const calculateWeeklyMetrics = (weekId, allStores) => {
-//   const { targetTree, storeTargets } = targetsData.value
-
-//   allStores.forEach(store => {
-//     const weekData = getStoreWeekData(store, weekId)
-//     // console.log( 'store', store )
-//     // console.log( 'storeTargets', storeTargets )
-//     // console.log( 'storeTargets', storeTargets[store?.id] )
-//     const storeTargetConfig = storeTargets[store?.id] || {}
-//     weekData.percent = calculateTurnoverPercent(weekData.plan, weekData.fact)
-
-//     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-//       if (key === 'turnover') return
-
-//       const targetPercent = storeTargetConfig[key] || 0
-//       const actualValue = weekData[key] || 0
-//       const target = targetPercent * weekData.fact
-
-//       let achievementPercent = 0
-
-//       if (target > 0) {
-//         if (targetConfig.type === 'negative') {
-//           achievementPercent = Math.min((target / actualValue) * 100, limit.value)
-//         } else {
-//           achievementPercent = (actualValue / target) * 100
-//         }
-//       }
-
-//       weekData[`${key}_percent`] = Math.round(achievementPercent)
-//       weekData[`${key}_target`] = target
-//     })
-//   })
-
-//   Object.entries(targetTree).forEach(([key, targetConfig]) => {
-//     if (key === 'turnover') return
-//     const maxPercent = Math.max(...allStores.map(store => {
-//       const weekData = getStoreWeekData(store, weekId)
-//       return weekData[`${key}_percent`] || 0
-//     }))
-
-//     allStores.forEach(store => {
-//       const weekData = getStoreWeekData(store, weekId)
-//       const currentPercent = weekData[`${key}_percent`] || 0
-//       let score = 0
-
-//       if (maxPercent > 0 && currentPercent > 0) {
-//         score = Math.round((currentPercent / maxPercent) * targetConfig.maxScore)
-//       }
-
-//       weekData[`${key}_score`] = score
-//     })
-//   })
-
-//   if (targetTree.turnover) {
-//     const maxTurnoverPercent = Math.max(...allStores.map(store => {
-//       const weekData = getStoreWeekData(store, weekId)
-//       return weekData.percent || 0
-//     }))
-
-//     allStores.forEach(store => {
-//       const weekData = getStoreWeekData(store, weekId)
-//       const turnoverPercent = weekData.percent || 0
-//       let turnoverScore = 0
-
-//       if (maxTurnoverPercent > 0) {
-//         turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
-//       }
-
-//       weekData.turnover_score = turnoverScore
-//     })
-//   }
-
-//   allStores.forEach(store => {
-//     const weekData = getStoreWeekData(store, weekId)
-//     let totalScore = 0
-
-//     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-//       if (key === 'turnover') {
-//         totalScore += weekData.turnover_score || 0
-//       } else {
-//         totalScore += weekData[`${key}_score`] || 0
-//       }
-//     })
-
-//     weekData.totalScore = totalScore
-//   })
-
-//   calculateColumnRanks(weekId, allStores)
-// }
 
 const calculateWeeklyMetrics = (weekId, allStores) => {
   const { targetTree, storeTargets } = targetsData.value
 
-  // ОТЛАДКА: проверим структуру данных
-  // console.log('🔍 Debug calculateWeeklyMetrics:', {
-  //   'targetsData.value': targetsData.value,
-  //   'targetTree type': typeof targetTree,
-  //   'storeTargets type': typeof storeTargets,
-  //   'storeTargets keys': Object.keys(storeTargets || {}),
-  //   'is storeTargets array': Array.isArray(storeTargets),
-  //   'sample store': storeTargets ? storeTargets['719'] || storeTargets['544'] : 'not found'
-  // })
-
   allStores.forEach(store => {
     const weekData = getStoreWeekData(store, weekId)
 
-    // ИСПРАВЛЕНИЕ: изменить const на let
     let storeTargetConfig = {}
 
-    // Сначала пробуем ID без префикса (719)
     const storeIdWithoutPrefix = store.id.replace('store_', '')
     if (storeTargets && typeof storeTargets === 'object' && !Array.isArray(storeTargets)) {
-      // Сначала пробуем ID без префикса (719)
+
       const storeIdWithoutPrefix = store.id.replace('store_', '')
       if (storeTargets[storeIdWithoutPrefix]) {
         storeTargetConfig = storeTargets[storeIdWithoutPrefix]
       }
-      // Если не нашли, пробуем с префиксом (store_719)  
+
       else if (storeTargets[store.id]) {
         storeTargetConfig = storeTargets[store.id]
       }
@@ -1868,7 +1726,7 @@ const calculateWeeklyMetrics = (weekId, allStores) => {
 
   if (target > 0) {
     if (targetConfig.type === 'negative') {
-      // ИСПРАВЛЕНИЕ: если actualValue = 0, то achievementPercent = 0 (0 баллов)
+
       if (actualValue === 0) {
         achievementPercent = 0
       } else {
@@ -1974,12 +1832,12 @@ const calculateRegionMetrics = () => {
   if (key === 'turnover') return
   let totalValue = 0
   let totalTarget = 0
-  
+
   region.stores.forEach(store => {
     const storeWeekData = getStoreWeekData(store, week.id)
     let storeTargetConfig = null
     const storeIdWithoutPrefix = store.id.replace('store_', '')
-    
+
     if (storeTargets[storeIdWithoutPrefix]) {
       storeTargetConfig = storeTargets[storeIdWithoutPrefix]
     } else if (storeTargets[store.id]) {
@@ -1987,7 +1845,7 @@ const calculateRegionMetrics = () => {
     } else {
       storeTargetConfig = {}
     }
-    
+
     const targetPercent = storeTargetConfig[key] || 0
 
     totalValue += storeWeekData[key] || 0
@@ -1999,7 +1857,7 @@ const calculateRegionMetrics = () => {
   let achievementPercent = 0
   if (totalTarget > 0) {
     if (targetConfig.type === 'negative') {
-      // ИСПРАВЛЕНИЕ: если totalValue = 0, то achievementPercent = 0
+
       if (totalValue === 0) {
         achievementPercent = 0
       } else {
@@ -2015,7 +1873,6 @@ const calculateRegionMetrics = () => {
 })
     })
 
-    // Остальная логика остается без изменений...
     Object.entries(targetTree).forEach(([key, targetConfig]) => {
       if (key === 'turnover') return
       const maxPercent = Math.max(...regions.value.map(region => {
@@ -2073,128 +1930,6 @@ const calculateRegionMetrics = () => {
     })
   })
 }
-
-// const calculateRegionMetrics = () => {
-//   if (!regions.value || !salesData.value || !targetsData.value) return
-//   const { targetTree, storeTargets } = targetsData.value
-
-//   salesData.value.weeks.forEach(week => {
-//     regions.value.forEach(region => {
-//       if (!region.stores) return
-//       if (!region.weeklyData) {
-//         region.weeklyData = []
-//       }
-
-//       let regionWeekData = region.weeklyData.find(w => w.weekId === week.id)
-//       if (!regionWeekData) {
-//         regionWeekData = { weekId: week.id }
-//         region.weeklyData.push(regionWeekData)
-//       }
-
-//       let totalPlan = 0
-//       let totalFact = 0
-//       region.stores.forEach(store => {
-//         const storeWeekData = getStoreWeekData(store, week.id)
-//         totalPlan += storeWeekData.plan || 0
-//         totalFact += storeWeekData.fact || 0
-//       })
-
-//       regionWeekData.plan = totalPlan
-//       regionWeekData.fact = totalFact
-//       regionWeekData.percent = calculateTurnoverPercent(totalPlan, totalFact)
-
-//       Object.entries(targetTree).forEach(([key, targetConfig]) => {
-//         if (key === 'turnover') return
-//         let totalValue = 0
-//         let totalTarget = 0
-
-//         region.stores.forEach(store => {
-//           const storeWeekData = getStoreWeekData(store, week.id)
-
-//           // ИСПРАВЛЕНИЕ: убираем префикс "store_" для поиска в targets
-//           const storeIdForTargets = store.id.replace('store_', '')
-//           const storeTargetConfig = storeTargets[storeIdForTargets] || {}
-
-//           const targetPercent = storeTargetConfig[key] || 0
-
-//           totalValue += storeWeekData[key] || 0
-//           totalTarget += targetPercent * (storeWeekData.fact || 0)
-//         })
-
-//         regionWeekData[key] = totalValue
-
-//         let achievementPercent = 0
-//         if (totalTarget > 0) {
-//           if (targetConfig.type === 'negative') {
-//             achievementPercent = Math.min((totalTarget / totalValue) * 100, limit.value)
-//           } else {
-//             achievementPercent = (totalValue / totalTarget) * 100
-//           }
-//         }
-
-//         regionWeekData[`${key}_percent`] = Math.round(achievementPercent)
-//         regionWeekData[`${key}_target`] = totalTarget
-//       })
-//     })
-
-//     // Остальная логика без изменений...
-//     Object.entries(targetTree).forEach(([key, targetConfig]) => {
-//       if (key === 'turnover') return
-//       const maxPercent = Math.max(...regions.value.map(region => {
-//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-//         return regionWeekData?.[`${key}_percent`] || 0
-//       }))
-
-//       regions.value.forEach(region => {
-//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-//         if (!regionWeekData) return
-
-//         const achievementPercent = regionWeekData[`${key}_percent`] || 0
-//         let score = 0
-//         if (maxPercent > 0) {
-//           score = Math.round((achievementPercent / maxPercent) * targetConfig.maxScore)
-//         }
-//         regionWeekData[`${key}_score`] = score
-//       })
-//     })
-
-//     if (targetTree.turnover) {
-//       const maxTurnoverPercent = Math.max(...regions.value.map(region => {
-//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-//         return regionWeekData?.percent || 0
-//       }))
-
-//       regions.value.forEach(region => {
-//         const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-//         if (!regionWeekData) return
-
-//         const turnoverPercent = regionWeekData.percent || 0
-//         let turnoverScore = 0
-//         if (maxTurnoverPercent > 0) {
-//           turnoverScore = Math.round((turnoverPercent / maxTurnoverPercent) * targetTree.turnover.maxScore)
-//         }
-//         regionWeekData.turnover_score = turnoverScore
-//       })
-//     }
-
-//     regions.value.forEach(region => {
-//       const regionWeekData = region.weeklyData?.find(w => w.weekId === week.id)
-//       if (!regionWeekData) return
-
-//       let totalScore = 0
-
-//       Object.entries(targetTree).forEach(([key, targetConfig]) => {
-//         if (key === 'turnover') {
-//           totalScore += regionWeekData.turnover_score || 0
-//         } else {
-//           totalScore += regionWeekData[`${key}_score`] || 0
-//         }
-//       })
-
-//       regionWeekData.totalScore = totalScore
-//     })
-//   })
-// }
 
 const calculateOverallScores = (allStores) => {
   allStores.forEach(store => {
@@ -2287,46 +2022,6 @@ const getRegionIndicatorValue = (region, weekId, indicator) => {
   return regionWeekData[indicator] || 0
 }
 
-// const sortedRegions = computed(() => {
-//   if (!regions.value) return []
-//   let sorted = [...regions.value]
-
-//   sorted.forEach(region => {
-//     let totalScore = 0
-//     if (region.weeklyData) {
-//       region.weeklyData.forEach(weekData => {
-//         totalScore += weekData.totalScore || 0
-//       })
-//     }
-//     region.overallTotalScore = totalScore
-//   })
-
-
-
-//   sorted.sort((a, b) => {
-//     let aValue = 0
-//     let bValue = 0
-
-//     if (regionSortBy.value.columnKey === 'totalScore') {
-//       // aValue = a.overallTotalScore
-//       // bValue = b.overallTotalScore
-//       aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-//       bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-//     } else {
-//       aValue = getRegionIndicatorValue(a, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-//       bValue = getRegionIndicatorValue(b, regionSortBy.value.weekId, regionSortBy.value.columnKey)
-//     }
-
-//     return regionSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
-//   })
-
-//   // sorted.forEach((region, index) => {
-//   //   region.regionRank = index + 1
-//   // })
-
-//   return sorted
-// })
-
 const sortedRegions = computed(() => {
   if (!regions.value) return []
   let sorted = [...regions.value]
@@ -2341,7 +2036,6 @@ const sortedRegions = computed(() => {
     region.overallTotalScore = totalScore
   })
 
-  // Проверяем, что weekId существует в данных
   const validWeekId = regionSortBy.value.weekId && weeks.value.find(w => w.id === regionSortBy.value.weekId)
     ? regionSortBy.value.weekId
     : (weeks.value[0]?.id || '1')
@@ -2368,34 +2062,6 @@ const sortedRegions = computed(() => {
   return sorted
 })
 
-// const allStores = computed(() => {
-//   const stores = []
-
-//   regions.value.forEach(region => {
-//     if (region.stores) {
-//       region.stores.forEach(store => {
-//         stores.push({
-//           ...store,
-//           regionId: region.id,
-//           regionName: region.name,
-//           regionColor: region.color
-//         })
-//       })
-//     }
-//   })
-
-//   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
-//     stores.sort((a, b) => {
-//       let aValue = getStoreSortValue(a, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-//       let bValue = getStoreSortValue(b, storeSortBy.value.weekId, storeSortBy.value.columnKey)
-//       return storeSortBy.value.direction === 'desc' ? bValue - aValue : aValue - bValue
-//     })
-//   } else if (sortByTotalScore.value) {
-//     stores.sort((a, b) => (b.overallTotalScore) - (a.overallTotalScore))
-//   }
-
-//   return stores
-// })
 const allStores = computed(() => {
   const stores = []
 
@@ -2413,7 +2079,7 @@ const allStores = computed(() => {
   })
 
   if (storeSortBy.value.columnKey && storeSortBy.value.weekId) {
-    // Проверяем, что weekId существует в данных
+
     const validWeekId = weeks.value.find(w => w.id === storeSortBy.value.weekId)
       ? storeSortBy.value.weekId
       : (weeks.value[0]?.id || '1')
@@ -2490,15 +2156,15 @@ const getStoreData = (store, weekId, indicator) => {
   const weekData = getStoreWeekData(store, weekId, indicator)
 
   switch (indicator) {
-    case 'rank': return weekData.rank || '-'
+    case 'rank': return formatRankWithTrend(weekData.rank, weekData.rankTrend)
     case 'totalScore': return weekData.totalScore || '-'
     case 'plan': return formatNumber(weekData.plan)
     case 'fact': return formatNumber(weekData.fact)
-    case 'percent': return weekData.percent ? `${weekData.percent}%` : '0%'
+    case 'percent': return weekData.percent ? `${weekData.percent}%` : '-'
     case 'turnover_score': return weekData.turnover_score || '-'
     default:
       if (indicator.endsWith('_percent')) {
-        return weekData[indicator] ? `${weekData[indicator]}%` : '0%'
+        return weekData[indicator] ? `${weekData[indicator]}%` : '-'
       } else if (indicator.endsWith('_score')) {
         return weekData[indicator] || '-'
       } else {
@@ -2509,9 +2175,10 @@ const getStoreData = (store, weekId, indicator) => {
 
 const getRegionData = (region, weekId, indicator) => {
   const value = getRegionIndicatorValue(region, weekId, indicator)
+  const regionWeekData = region.weeklyData?.find(w => w.weekId === weekId)
 
   switch (value) {
-    case 'rank': return value || '-'
+    case 'rank': return formatRankWithTrend(value, regionWeekData?.rankTrend)
     case 'totalScore': return value || '-'
     case 'percent': return `${value}%`
     case 'plan':
@@ -2519,13 +2186,34 @@ const getRegionData = (region, weekId, indicator) => {
     case 'turnover_score': return value || '-'
     default:
       if (indicator.endsWith('_percent')) {
-        return `${value}%`
+        return `${value}%` || '-'
       } else if (indicator.endsWith('_score')) {
         return value || '-'
       } else {
         return formatNumber(value) || '-'
       }
   }
+}
+
+const formatRankWithTrend = (rank, trend) => {
+  if (!rank || rank === 0) return '-'
+  
+  let arrow = ''
+  switch (trend) {
+    case 'up':
+      arrow = ' ↑' // Зеленая стрелка вверх
+      break
+    case 'down': 
+      arrow = ' ↓' // Красная стрелка вниз
+      break
+    case 'same':
+      arrow = ' →' // Желтая стрелка вправо
+      break
+    default:
+      arrow = '' // Нет стрелки для первого периода
+  }
+  
+  return `${rank}${arrow}`
 }
 
 const calculateTurnoverPercent = (plan, fact) => {
@@ -2552,11 +2240,36 @@ const getRegionRowClass = (regionRank) => {
   return 'odx-table__row--region-low'
 }
 
-const getCellClass = (indicator, weekData, isRegion = false, weekId = null, region = null) => {
+const getCellClass = (indicator, weekData, isRegion = false, weekId = null, region = null, cellValue = null) => {
   const classes = []
+
+  if (cellValue === null) {
+    if (isRegion && region) {
+      cellValue = getRegionData(region, weekId, indicator)
+    } else {
+      cellValue = getStoreData({ weeklyData: [weekData] }, weekId, indicator)
+    }
+  }
+
+  if (cellValue === '-' || cellValue === 0 || cellValue === '0' || cellValue === '0%' || 
+      cellValue === null || cellValue === undefined || cellValue === '') {
+    
+    if (indicator === 'totalScore') {
+      classes.push('odx-table__cell--score')
+    }
+    if (indicator === 'rank') {
+      classes.push('odx-table__cell--rank')
+    }
+
+    return classes.join(' ')
+  }
 
   if (indicator === 'totalScore') {
     classes.push('odx-table__cell--score')
+  }
+
+  if (indicator === 'rank') {
+    classes.push('odx-table__cell--rank')
   }
 
   let rank = 0
@@ -2593,8 +2306,7 @@ const getCellClass = (indicator, weekData, isRegion = false, weekId = null, regi
         if (formatter.value) { classes.push('odx-table__cell--formatted-poor') }
       }
     }
-    if (
-      indicator.endsWith('_percent') || indicator === 'percent') {
+    if (indicator.endsWith('_percent') || indicator === 'percent') {
 
       if (percentile <= 20) {
         classes.push('odx-table__cell--percentile-top')
@@ -2660,7 +2372,6 @@ const scrollToSection = (id) => {
   }
 };
 
-// Функция экспорта дашборда в Excel
 const exportToExcel = () => {
   if (!salesData.value || !regions.value || !weeks.value) {
     showNotification('Нет данных для экспорта!', 'error')
@@ -2669,40 +2380,32 @@ const exportToExcel = () => {
 
   try {
     const workbook = XLSX.utils.book_new()
-    
-    // Лист 1: Сводная таблица по регионам
+
     createRegionsSummarySheet(workbook)
-    
-    // Лист 2: Детальные данные по магазинам
+
     createStoresDetailSheet(workbook)
-    
-    // Лист 3: Планы и настройки
+
     createPlansSheet(workbook)
-    
-    // Лист 4: KPI и аналитика
+
     createKPISheet(workbook)
-    
-    // Генерируем имя файла
+
     const periodName = selectedPeriod.value.replace(/\s+/g, '_')
     const dateStr = new Date().toISOString().slice(0, 10)
     const fileName = `Dashboard_SMK_${periodName}_${dateStr}.xlsx`
-    
-    // Сохраняем файл
+
     XLSX.writeFile(workbook, fileName)
-    
-    showNotification(`Excel файл сохранен: ${fileName}`, 'success')
-    
+
+    showNotification(`Excel файл збережено: ${fileName}`, 'success')
+
   } catch (error) {
     console.error('Ошибка экспорта в Excel:', error)
     showNotification('Ошибка при экспорте в Excel!', 'error')
   }
 }
 
-// Создание листа сводной таблицы по регионам
 const createRegionsSummarySheet = (workbook) => {
   const data = []
-  
-  // Заголовки
+
   const headers = ['Регион']
   weeks.value.forEach(week => {
     availableIndicators.value.forEach(indicator => {
@@ -2711,43 +2414,39 @@ const createRegionsSummarySheet = (workbook) => {
   })
   headers.push('Общий балл', 'Ранг')
   data.push(headers)
-  
-  // Данные по регионам
+
   sortedRegions.value.forEach(region => {
     const row = [region.name]
-    
+
     weeks.value.forEach(week => {
       availableIndicators.value.forEach(indicator => {
         const value = getRegionData(region, week.id, indicator.key)
         row.push(value === '-' ? 0 : value)
       })
     })
-    
+
     row.push(region.overallTotalScore || 0, region.regionRank || 0)
     data.push(row)
   })
-  
+
   const worksheet = XLSX.utils.aoa_to_sheet(data)
-  
-  // Применяем ширину колонок
-  const colWidths = [{ wch: 20 }] // Колонка "Регион"
+
+  const colWidths = [{ wch: 20 }]
   weeks.value.forEach(() => {
     availableIndicators.value.forEach(() => {
       colWidths.push({ wch: 12 })
     })
   })
-  colWidths.push({ wch: 12 }, { wch: 8 }) // Общий балл, Ранг
-  
+  colWidths.push({ wch: 12 }, { wch: 8 })
+
   worksheet['!cols'] = colWidths
-  
+
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Регионы')
 }
 
-// Создание детального листа по магазинам
 const createStoresDetailSheet = (workbook) => {
   const data = []
-  
-  // Заголовки
+
   const headers = ['Регион', 'Магазин', 'ID магазина']
   weeks.value.forEach(week => {
     availableIndicators.value.forEach(indicator => {
@@ -2756,141 +2455,131 @@ const createStoresDetailSheet = (workbook) => {
   })
   headers.push('Общий балл', 'Ранг')
   data.push(headers)
-  
-  // Данные по магазинам
+
   allStores.value.forEach(store => {
     const row = [
       store.regionName || 'Неизвестно',
       store.name || 'Неизвестно',
       store.id.replace('store_', '')
     ]
-    
+
     weeks.value.forEach(week => {
       availableIndicators.value.forEach(indicator => {
         const value = getStoreData(store, week.id, indicator.key)
         row.push(value === '-' ? 0 : value)
       })
     })
-    
+
     row.push(store.overallTotalScore || 0, store.overallRank || 0)
     data.push(row)
   })
-  
+
   const worksheet = XLSX.utils.aoa_to_sheet(data)
-  
-  // Ширина колонок
+
   worksheet['!cols'] = [
-    { wch: 15 }, // Регион
-    { wch: 25 }, // Магазин  
-    { wch: 12 }, // ID
-    ...Array(headers.length - 5).fill({ wch: 10 }), // Данные
-    { wch: 12 }, // Общий балл
-    { wch: 8 }   // Ранг
+    { wch: 15 },
+    { wch: 25 },
+    { wch: 12 },
+    ...Array(headers.length - 5).fill({ wch: 10 }),
+    { wch: 12 },
+    { wch: 8 }
   ]
-  
+
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Магазины')
 }
 
-// Создание листа с планами
 const createPlansSheet = (workbook) => {
   if (!targetsData.value) return
-  
+
   const data = []
-  
-  // Настройки показателей
+
   data.push(['НАСТРОЙКИ ПОКАЗАТЕЛЕЙ'])
   data.push(['Показатель', 'Название', 'Макс. балл', 'Тип'])
-  
+
   Object.entries(targetsData.value.targetTree).forEach(([key, target]) => {
     data.push([key, target.name, target.maxScore, target.type])
   })
-  
-  data.push([]) // Пустая строка
-  
-  // Планы по магазинам
+
+  data.push([])
+
   data.push(['ПЛАНЫ ПО МАГАЗИНАМ'])
   const planHeaders = ['ID магазина', 'Название']
   const indicators = Object.keys(targetsData.value.targetTree).filter(key => key !== 'turnover')
   planHeaders.push(...indicators.map(key => targetsData.value.targetTree[key].name))
   data.push(planHeaders)
-  
+
   Object.entries(targetsData.value.storeTargets).forEach(([storeId, storeData]) => {
     const row = [
       storeId,
       storeData.store || `Магазин ${storeId}`
     ]
-    
+
     indicators.forEach(key => {
       row.push(storeData[key] || 0)
     })
-    
+
     data.push(row)
   })
-  
+
   const worksheet = XLSX.utils.aoa_to_sheet(data)
   worksheet['!cols'] = [
-    { wch: 12 }, // ID
-    { wch: 25 }, // Название
-    ...Array(indicators.length).fill({ wch: 12 }) // Показатели
+    { wch: 12 },
+    { wch: 25 },
+    ...Array(indicators.length).fill({ wch: 12 })
   ]
-  
+
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Планы')
 }
 
-// Создание листа с KPI
 const createKPISheet = (workbook) => {
   if (!processedData.value) return
-  
+
   const data = []
-  
-  // Общая сводка
+
   data.push(['ОБЩАЯ СВОДКА'])
   data.push(['Показатель', 'Значение'])
   data.push(['Всего магазинов', processedData.value.totalStores])
   data.push(['Регионов', processedData.value.totalRegions])
   data.push(['Средний балл', processedData.value.averageScore])
   data.push(['Выполнение плана (%)', processedData.value.planExecutionPercent])
-  
-  data.push([]) // Пустая строка
-  
-  // Топ регионы
+
+  data.push([])
+
   data.push(['ТОП-5 РЕГИОНОВ'])
   data.push(['Место', 'Регион', 'Балл'])
   processedData.value.topRegions.forEach((region, index) => {
     data.push([index + 1, region.name, Math.round(region.score)])
   })
-  
-  data.push([]) // Пустая строка
-  
-  // Топ магазины
+
+  data.push([])
+
   data.push([`ТОП-${KPITopStores.value} МАГАЗИНОВ`])
   data.push(['Место', 'Магазин', 'Регион', 'Балл'])
   processedData.value.topStores.forEach((store, index) => {
     data.push([index + 1, store.name, store.regionName, Math.round(store.overallTotalScore)])
   })
-  
-  data.push([]) // Пустая строка
-  
-  // Проблемные зоны
+
+  data.push([])
+
   data.push(['ПРОБЛЕМНЫЕ ЗОНЫ'])
   data.push(['Показатель', 'Значение', 'Магазинов'])
   data.push(['В зоне риска', processedData.value.problemStores.length, ''])
   data.push(['Не выполняют план', processedData.value.belowPlanStores.length, ''])
-  
+
   processedData.value.topIssues.forEach(issue => {
     data.push([issue.name, formatNumber(issue.totalValue), issue.affectedStores])
   })
-  
+
   const worksheet = XLSX.utils.aoa_to_sheet(data)
   worksheet['!cols'] = [
-    { wch: 20 }, // Показатель/Место
-    { wch: 30 }, // Значение/Название
-    { wch: 15 }  // Доп. данные
+    { wch: 20 },
+    { wch: 30 },
+    { wch: 15 }
   ]
-  
+
   XLSX.utils.book_append_sheet(workbook, worksheet, 'KPI')
 }
-// Функция для показа уведомлений (если еще нет)
+
 const showNotification = (message, type = 'info') => {
   const notification = document.createElement('div')
   notification.className = `notification notification-${type}`
@@ -2916,7 +2605,7 @@ const showNotification = (message, type = 'info') => {
 }
 
 onMounted(() => {
-  // Слушаем события изменения планов
+
   window.addEventListener('plansDataUpdated', handlePlansDataUpdate)
   window.addEventListener('dashboard-limit-changed', e => {
     limit.value = e.detail
@@ -2924,7 +2613,6 @@ onMounted(() => {
   loadData()
 })
 
-// Очистка слушателей
 onUnmounted(() => {
   window.removeEventListener('plansDataUpdated', handlePlansDataUpdate)
 })
@@ -3274,7 +2962,7 @@ onUnmounted(() => {
       text-overflow: ellipsis;
       white-space: nowrap;
       transition: transform 0.5s ease;
-      will-change: transform;
+      // will-change: transform;
 
       &--static {
         min-width: 230px;
@@ -3349,7 +3037,6 @@ onUnmounted(() => {
         color: #dc2626;
         font-weight: 600;
       }
-
 
       &--formatted-top {
         background-color: #d0ffea;
@@ -3477,7 +3164,6 @@ onUnmounted(() => {
       opacity: 0.3;
     }
   }
-
 
   .odx-region-info,
   .odx-store-info {
@@ -3672,7 +3358,6 @@ onUnmounted(() => {
       font-weight: bold;
       margin: 5px 0;
     }
-
 
     &::-webkit-scrollbar {
       width: 4px;
@@ -4338,7 +4023,6 @@ onUnmounted(() => {
   text-overflow: ellipsis;
 }
 
-
 .odx-table__row-enter-active,
 .odx-table__row-leave-active {
   transition: all 0.4s ease;
@@ -4384,7 +4068,7 @@ onUnmounted(() => {
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 12px;
-  /* Position the tooltip */
+  
   position: absolute;
   right: -10px;
   bottom: -50%;
@@ -4551,7 +4235,6 @@ onUnmounted(() => {
     border-bottom: 1px solid #e2e8f0;
   }
 
-
   .metric-group-content {
     padding: 16px;
   }
@@ -4715,12 +4398,11 @@ onUnmounted(() => {
 }
 
 .odx-table__cell {
-  // ... существующие стили ...
   
   &--rank {
     font-weight: 700;
     color: var(--odx-warning);
-    background: rgba(245, 158, 11, 0.1);
+    background: #e3f2fd;
     
     &.odx-table__cell--percentile-top {
       background: rgba(34, 197, 94, 0.2);
@@ -4731,6 +4413,20 @@ onUnmounted(() => {
       background: rgba(239, 68, 68, 0.2);
       color: #dc2626;
     }
+  }
+}
+.odx-table__cell--rank {
+  font-weight: 700!important;
+  &[data-trend="up"] {
+    color: #059669 !important;
+  }
+  
+  &[data-trend="down"] {
+    color: #dc2626 !important;
+  }
+  
+  &[data-trend="same"] {
+    color: #d97706 !important;
   }
 }
 </style>
